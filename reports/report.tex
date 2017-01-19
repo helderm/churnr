@@ -1,0 +1,79 @@
+\documentclass{kththesis}
+
+% remove this if you are using XeLaTeX or LuaLaTeX
+\usepackage[utf8]{inputenc}
+
+% Use natbib abbreviated bibliography style
+\usepackage[square,numbers]{natbib}
+\bibliographystyle{unsrtnat}
+
+\usepackage{lipsum} % This is just to get some nonsense text in this template, can be safely removed
+
+\title{This is the English title}
+\alttitle{Detta är den svenska översättningen av titeln}
+\author{Helder Martins}
+\email{helder@kth.se}
+\supervisor{Hedvig Kjellström (KTH) and Sahar Asadi (Spotify)}
+\examiner{Patric Jensfelt}
+\programme{Master in Machine Learning}
+\school{School of Computer Science and Communication}
+\date{\today}
+
+
+\begin{document}
+
+% Title page
+\flyleaf
+
+\begin{abstract}
+  English abstract goes here.
+  \lipsum[1-2]
+\end{abstract}
+
+\clearpage
+
+\begin{otherlanguage}{swedish}
+  \begin{abstract}
+    Träutensilierna i ett tryckeri äro ingalunda en faktor där
+    trevnadens ordningens och ekonomiens upprätthållande, och dock är
+    det icke sällan som sorgliga erfarenheter göras ordningens och
+    ekon och miens därmed upprätthållande. Träutensilierna i ett
+    tryckeri äro ingalunda en oviktig faktor, för trevnadens
+    ordningens och och dock är det icke sällan.
+  \end{abstract}
+\end{otherlanguage}
+
+\cleardoublepage
+
+\tableofcontents
+
+
+% This is where the actual contents of the thesis starts
+\mainmatter
+
+
+\chapter{Introduction}
+
+We use the \emph{natbib} packages for citations.  We therefore use the
+command \texttt{citep} to get a reference in parenthesis, like this
+\citep{heisenberg2015}.  It is also possible to include the author as part
+of the sentence using \texttt{citet}, like talking about the work of
+\citet{einstein2016}.
+
+\lipsum
+
+\section{Research Question}
+
+\lipsum[6]
+
+\chapter{Methods}
+
+\lipsum
+
+\bibliography{references}
+
+\appendix
+
+\chapter{Unnecessary Appended Material}
+
+\end{document}
