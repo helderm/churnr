@@ -1,19 +1,27 @@
-\begin{thebibliography}{2}
+\begin{thebibliography}{3}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
   \providecommand{\doi}[1]{doi: #1}\else
   \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
 
-\bibitem[Heisenberg and Dirac(2015)]{heisenberg2015}
-Werner Heisenberg and Paul Dirac.
-\newblock To be or not to be.
-\newblock In Erwin Schrödinger, editor, \emph{Proceedings of the Uncertain
-  Society Annual Meeting}, pages 21--22, 2015.
+\bibitem[Pudipeddi et~al.(2014)Pudipeddi, Akoglu, and Tong]{Pudipeddi2014}
+Jagat Pudipeddi, Leman Akoglu, and Hanghang Tong.
+\newblock {User Churn in Focused Question Answering Sites: Characterizations
+  and Prediction}.
+\newblock pages 469--474, 2014.
 
-\bibitem[Einstein(2016)]{einstein2016}
-Albert Einstein.
-\newblock On the relative value of relatives.
-\newblock \emph{J. Irreproducible Results}, 17:\penalty0 4711--4721, 2016.
+\bibitem[Wangperawong et~al.(2016)Wangperawong, Brun, Laudy, and
+  Pavasuthipaisit]{Wangperawong2016}
+Artit Wangperawong, Cyrille Brun, Dr.~Olav Laudy, and Rujikorn Pavasuthipaisit.
+\newblock {Churn analysis using deep convolutional neural networks and
+  autoencoders}.
+\newblock pages 1--6, 2016.
+
+\bibitem[Tax et~al.(2016)Tax, Verenich, {La Rosa}, and Dumas]{Tax2016}
+Niek Tax, Ilya Verenich, Marcello {La Rosa}, and Marlon Dumas.
+\newblock {Predictive Business Process Monitoring with LSTM Neural Networks}.
+\newblock 2016.
+\newblock URL \url{http://arxiv.org/abs/1612.02130}.
 
 \end{thebibliography}
