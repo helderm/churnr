@@ -1,4 +1,4 @@
-\begin{thebibliography}{3}
+\begin{thebibliography}{5}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -23,5 +23,19 @@ Niek Tax, Ilya Verenich, Marcello {La Rosa}, and Marlon Dumas.
 \newblock {Predictive Business Process Monitoring with LSTM Neural Networks}.
 \newblock 2016.
 \newblock URL \url{http://arxiv.org/abs/1612.02130}.
+
+\bibitem[Runge et~al.(2014)Runge, Gao, Garcin, and Faltings]{Runge2014}
+Julian Runge, Peng Gao, Florent Garcin, and Boi Faltings.
+\newblock {Churn prediction for high-value players in casual social games}.
+\newblock \emph{IEEE Conference on Computatonal Intelligence and Games, CIG},
+  2014.
+\newblock ISSN 23254289.
+\newblock \doi{10.1109/CIG.2014.6932875}.
+
+\bibitem[Dror et~al.(2012)Dror, Pelleg, Rokhlenko, and Szpektor]{Dror2012}
+Gideon Dror, Dan Pelleg, Oleg Rokhlenko, and Idan Szpektor.
+\newblock {Churn prediction in new users of Yahoo! answers}.
+\newblock \emph{Proceedings of the 21st International Conference on World Wide
+  Web}, pages 829--834, 2012.
 
 \end{thebibliography}
