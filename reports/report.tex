@@ -54,31 +54,127 @@
 
 \chapter{Introduction}
 
-    Service providers, especially those that operates on the web, have experienced a rapid increase in their user base in the last few years. However, the number of companies in each market increased in a similar fashion, and maintaining your current users within your service grew in importance since the process of acquiring new users is costly and difficult to execute properly. One of the important steps towards that goal is to predict accurately what is the chance of a user leaving the service provider at any given time with the intent of acting before it happens, a problem which is called \emph{churn prediction}. Several classical techniques for predicting churn like Decision Trees and Logistic Regression have been used on recent work \cite{Lazarov2007}, however most of them make use of user behaviour data at a single point in time, normally the most recent one when the dataset was created. 
+    Service providers, especially those that operates on the mobile market, have experienced a rapid increase in their user base in the last few years. However, the number of companies in each market increased in a similar fashion, and maintaining your current users within your service grew in importance since the process of acquiring new users is costly and difficult to execute properly. One of the important steps towards that goal is to predict accurately what is the chance of a user leaving the service provider at any given time with the intent of acting before it happens, a problem which is called \emph{churn prediction}. Several classical techniques for predicting churn like Decision Trees and Logistic Regression have been used on recent work \cite{Lazarov2007}, however most of them make use of user behaviour data at a single point in time, normally the most recent one when the dataset was created. 
     
     Intuitively one can think that latent factors hidden in the temporal axis of the user behaviour data could yield a better prediction accuracy when comparing to a model which leverages a single and static point in time. For instance, a user that is gradually reducing its consumption of the service over time can be easily thought of a prospect churner. While this intuition is trivial to come up with, we are also interested in learning strong correlations between temporal aspects of the data and the churn rate which are not as clear to the eye. Our hypothesis is that making use of the properties hidden on user behaviour data over time, a churn rate predictor could improve its accuracy greatly when compared to methods which are static on time.
+       
+	\subsection{Music as a service}
+	
+	TODO: paragraph / plots about the state the music industry is in today    
+        
     
-    A churn rate predictor which can identify possible churners accurately is just a trigger on the user retention process that can span several different stages. One of these stages is to identify what actions can be taken by the service provider as to avoid the user abandoning the service. An important problem to solve beforehand is to identify which features of the data have a strong statistical correlation with the churn rate. With that information, the providers could for example set up automated actions as to influence the value on these features. Learning which are the most important features is also of relevance for the task of choosing what data to use for training the predictor models, since commonly service providers have a vast amount of data about the user but only a fraction of that is of importance for predicting churn: training models with a full dataset will commonly introduce error on the system and take a large amount of computing resources to train.
+	\subsection{Spotify}
+	
+	TODO: paragraph introducing the company and its goals (activation problem, high rate of churn for new users)   
     
-    The goal of this project will be to research different models for churn prediction that can make use of the temporal aspect of user behaviour data at its fullest. Our hypothesis is that latent factors hidden on usage patterns may increase the accuracy of state-of-art predictors which considers only the state of the data at a single point in time. We shall experiment on different models that are known to perform well on time series data and compare the winning one against a baseline model which does not leverage the time property. Also in this project we shall research different algorithms for feature selection, and investigate which subset correlates strongly with the churn rate on a specific dataset.
+    The user data and the required computational resources shall be provided by Spotify AB, a well known music streaming service, which joined this project in a tutoring partnership with the student and the university. Creating a suitable dataset for training our proposed models is also part of the project, and shall be done by first exploring the data at our disposal and identifying the features that highly correlates with churn. An example of what this dataset may contain is the user listening habits, usage patterns, user profile, and so on.    
     
-    The user data and the required computational resources shall be provided by Spotify AB, a well known music streaming service, which joined this project in a tutoring partnership with the student and the university. Creating a suitable dataset for training our proposed models is also part of the project, and shall be done by first exploring the data at our disposal and identifying the features that highly correlates with churn. An example of what this dataset may contain is the user listening habits, usage patterns, user profile, and so on.
+	\subsection{Churn prediction}
 
-\section{Research Question}
+	TODO: add churn prediction focused on Spotify
+	
+	\subsection{User retention} 
+
+	TODO: add user retention info on Spotify	
+
+    A churn rate predictor which can identify possible churners accurately is just a trigger on the user retention process that can span several different stages. One of these stages is to identify what actions can be taken by the service provider as to avoid the user abandoning the service. An important problem to solve beforehand is to identify which features of the data have a strong statistical correlation with the churn rate. With that information, the providers could for example set up automated actions as to influence the value on these features. Learning which are the most important features is also of relevance for the task of choosing what data to use for training the predictor models, since commonly service providers have a vast amount of data about the user but only a fraction of that is of importance for predicting churn: training models with a full dataset will commonly introduce error on the system and take a large amount of computing resources to train.
+	
+	\subsection{Goals}	
+	
+	TODO: review with supervisor
+	
+The goal of this project will be to research different models for churn prediction that can make use of the temporal aspect of user behaviour data at its fullest. Our hypothesis is that latent factors hidden on usage patterns may increase the accuracy of state-of-art predictors which considers only the state of the data at a single point in time. We shall experiment on different models that are known to perform well on time series data and compare their accuracy using different evaluation methods. 
+
+Detecting possible churners, while important, does not improve user retention without an associated action performed by the service provider. To derive insights on what can done to improve this metric, a deep data exploration and feature analysis is also a goal of this project. Features shall be correlated to their influence on the churn rate, and feature selection techniques shall be researched and implemented in an attempt to reduce bias on the churn classifiers.
+	
+	\subsection{Ethical considerations}   
+    
+	TODO: Is user data anonymous? Is it relevant to add this section?
+
+\subsection{Research Question}
+        
+    TODO: rewrite    
         
 	Can latent factors hidden on user behaviour data improve the accuracy of a churn predictor model when compared to the ones which does not leverage this property? Can techniques proven to be successful for time series prediction on different domains be used interchangeably for prediction of churn rate? What feature selection methods can most successfully extract the correlations between the feature value and churn rate? Can we reasonably interpret what was learnt by our predictor models as to allow the service provider to create actions to keep user retention level high? Can we identify different types of users which exerts an influence on the churn rate of the service?
 
+
+\chapter{Background}
+
+\subsection{Definitions}
+
+TODO: define "churn", "session", etc
+
+\subsection{Feature Selection}
+
+TODO: add feature selection techniques (Information gain, L1-norm, Recursive Feature Elimination, Variance Threshold...)
+
+\subsection{Predictor Models}
+
+TODO: add models (Decision Trees, Logistic Regression, Random Forests, LSTMs, CNNs...)
+
+\subsection{Evaluation Metrics}
+
+\subsubsection{Confusion Matrix}
+
+A \emph{confusion matrix} (also called contingency table) is a table layout representing the performance of a classifier's output, judging by its predictions against the actual true values. In a binary classification problem, the confusion matrix is a 2 x 2 table where commonly the rows represent the true labels while the columns the predicted classes. Each cell contains a count of how many samples were classified on that category, and the values in the diagonal represent the correctly classified samples (if the features are ordered). Table (TODO: Add table) depicts a confusion matrix for a binary classifier.
+
+The confusion matrix is an excellent visualization tool to estimate the performance of a model. The values that should be maximized, the \emph{true positives} (TP) and \emph{true negatives} (TN), represent the samples that were correctly labelled as possessing the feature of interest or not, respectively. On the other hand, the \emph{false positives} (FP) and \emph{false negatives} (FN) are the misclassified samples where the algorithm predicted that the feature was present while in truth it was not and vice-versa. In this work, the positive class will always represent a churning user.
+
+\subsubsection{Classification Accuracy}
+
+Several different metrics can be derived from the confusion matrix table. The \emph{classification accuracy} (CA) of a model is a common metric that corresponds to the fraction of the correctly classified samples on the test set, and can be calculated as follows:
+
+\begin{equation}
+CA = \frac{TP + TN}{TP + TN + FP + FN} 
+\end{equation}
+
+While trivial to understand, this metric may lead to erroneous conclusions when class imbalance is present in the test set, which is a common occurrence on the churn prediction domain. For example, if 9 out of 10 users of a dataset are non-churners, any classifier that simply outputs a negative class for all samples will result in an accuracy of 90\%, however its ability of detecting churners is non-existent. For a service provider, detecting churn cases is always more important than detecting the loyal users, and this metric by itself cannot represent this goal. (TODO Add ref? Hassouna 2015)
+
+\subsubsection{Precision, Recall, Fall-out and False Alarm}
+
+To address the class imbalance problem of the classification accuracy, others metrics are also commonly used. The \emph{positive predictive value} (PPV, also known as precision) is the proportion of true positives over all samples labelled as positive, and represents the accuracy of the algorithm on detecting the sought feature. The \emph{true positive rate} (TPR, also called sensitivity and recall) of a model corresponds to the number of correctly predicted positive samples divided by all positive samples. \emph{True negative rate} (TNR, also called specificity and fall-out) is the number of correctly predicted negatives divided by all true negatives. The \emph{false positive rate} (FPR, also called false alarm ratio) is the probability of receiving a false positive as output of an experiment, and is calculated by dividing the number of false positives by the total number of positive samples.
+
+\begin{equation}
+PPV = \frac{TP}{TP + FP}
+\end{equation}
+
+\begin{equation}
+TPR = \frac{TP}{TP + FN}
+\end{equation}
+
+\begin{equation}
+TNR = \frac{TN}{TN + FP}
+\end{equation}
+
+\begin{equation}
+FPR = \frac{FP}{TN + FP} = 1 - TNR
+\end{equation}
+
+Depending on the distribution of classes of the dataset, it is often difficult (although desirable) to maximize both metrics at the same time. A compromise must be reached that achieves the best trade-off between the two, which is commonly a business decision. For a music streaming service like Spotify, maximizing sensitivity is preferred due to the costs associated with a churning user, however a reasonable specificity is also a metric that should be strived for. (TODO Check with Sahar)
+
+\subsubsection{Receiver Operating Characteristic}
+
+The \emph{receiver operating characteristic} (ROC) is a visualization tool that plots the relationship between the true positive rate (commonly the y-axis) and the false positive rate (the x-axis) of a binary classifier system. The curve is drawn by selecting different parameters of a models or levels of threshold for the decision boundary between the positive and negative classes. For example, when the output of a classifier is a probability value (like in logistic regression), different thresholds can be chosen to decide whether a user is a churner or not, depending if the goal is to minimize FPR or maximize TPR. An example of a ROC curve can be seen in Figure (TODO Add figure)
+
+A good classifier would score values close to the upper-left corner of the plot, where the point (0,1) represents a perfect classifier with 100\% TPR and 0\% FPR. On the other hand, an algorithm that outputs a curve alongside the diagonal where TPR and FPR are almost the same at different threshold levels can be considered close to a random guess, like the flip of a coin. A classifier would underperform if its scores are closer to the bottom-right corner of the plot, however this result can always be mirrored by updating the model to simply invert the positive and negative labels of the classified samples.
+
+ROC curves can be used to compare the performance of different models by measuring the \emph{area under the curve} (AUC) of its plotted scores, which ranges from 0.0 to 1.0. The greater this area, the better the algorithm is to find a specific feature. Moreover, models with an area close to 0.5 can be assumed to perform not much better than random guess, since this is the area under the diagonal line.
+
+TODO: Add eval methods (Accuracy, Precision, Recall, ROC curve, AUC, F-score, Lift chart...)
+
 \chapter{Related Work}
 
-\textbf{Pudipeddi, Akoglu and Tong} \citep{Pudipeddi2014} In "User Churn in Focused Question Answering Sites: Characterization and Prediction", Q\&A sites like Stack Overflow were the focus of a study on user behaviour characterization and churn rate prediction. An extensive data exploration was made as to correlate features to the chance of a user leaving a service, and with those insights classical modelling techniques were used, were the best performing one was a decision tree. The approach used for extracting and categorizing features (temporal, frequency, gratitude, etc) and the insights that follow the study (like the importance of temporal features for predicting churn) is of high value and can be mapped to concepts on a different domain like a music streaming service with minor modifications.
+\textbf{Pudipeddi, Akoglu and Tong} \citep{Pudipeddi2014} In "User Churn in Focused Question Answering Sites: Characterization and Prediction", Q\&A sites like Stack Overflow were the focus of a study on user behaviour characterization and churn rate prediction. An extensive data exploration was made as to correlate features to the chance of a user leaving a service, and with those insights classical modelling techniques were used, where the best performing one was a decision tree. The approach used for extracting and categorizing features (temporal, frequency, gratitude, etc) and the insights that follow the study (like the importance of temporal features for predicting churn) is of high value and can be mapped to concepts on a different domain like a music streaming service with minor modifications.
 
-\textbf{Wangperawong, Brun, Laudy and Pavasuthipaisit} \citep{Wangperawong2016} In "Churn analysis using deep convolutional neural networks and autoencoders" users were represented as 2-dimensional images where columns are tracked features and rows are days. The intuition behind this approach is that by using similar techniques successful on the Image Recognition domain, a similar positive result for the prediction of the churn rate could also be achieved. Two different Convolutional Neural Network models were used, and both outperformed a baseline Decision Tree model. An autoencoder was also used as to discover which features influences churn rate the most, and suggestions where made as to how improve the retention of users on the service.
+\textbf{Wangperawong, Brun, Laudy and Pavasuthipaisit} \citep{Wangperawong2016} In "Churn analysis using deep convolutional neural networks and autoencoders" users were represented as 2-dimensional images where columns are tracked features and rows are days. The intuition behind this approach is that by using similar techniques successfully applied on the Image Recognition domain, a similar positive result for the prediction of the churn rate could also be achieved. Two different Convolutional Neural Network models were used, and both outperformed a baseline Decision Tree model. An autoencoder was also used as to discover which features influenced churn rate the most, and suggestions where made as to how improve the retention of users on the service.
 
 \textbf{Tax and Verenich} \citep{Tax2016} In "Predictive Business Process Monitoring with LSTM Neural Networks" a technique was presented as to predict the next event and its timestamp on a running case of a business process (a help desk process, for example). The problem definition was formally explained, and three different LSTM architectures were experimented on. With these architectures, three problems were tackled: estimating the next activity and its timestamp, all the remaining activities in a use case and the remaining time of a process. This technique could be used for churn prediction by interpreting the user interaction with the service as actions, and "churn" could be an event that may or may not exist in the process chain.
 
-\textbf{Runge et al.} \citep{Runge2014} In "Churn prediction for high-value players in casual social games, high-value players on casual social games were the focus of a study on churn analysis and prediction. Formal definitions for active players and churning were made, and the problem was defined as a binary classification task where users were labelled as leaving the service or not in the following week of when the models were trained. Four different models were then trained, and a neural network classifier obtained the best area under the curve (AUC) score, with logistic regression as a close second. An attempt was made as to include temporal data in the neural net by enhancing it with features learned with a hidden Markov model (HMM), however the accuracy was decreased due to parameter overfitting. The formal definitions of "churn" and "activity" can be applied to a music streaming service in a similar way, as the evaluation of performance using a series of receiver operating characteristic (ROC) curves. A detailed A/B test with real users was also performed, but a similar approach falls out of the scope of this project.
+\textbf{Runge et al.} \citep{Runge2014} In "Churn prediction for high-value players in casual social games", players responsible for generating the most profit on two casual social games were the focus of a study on churn analysis and prediction. Formal definitions for active players and churning were made, and the problem was defined as a binary classification task where users were labelled as leaving the service or not in the following week of when the models were trained. Four different models were then trained, and a neural network classifier obtained the best area under the curve (AUC) score, with logistic regression as a close second. An attempt was made as to include temporal data in the neural net by enhancing it with features learned with a hidden Markov model (HMM), however the accuracy was decreased due to parameter overfitting. The formal definitions of "churn" and "activity" can be applied to a music streaming service in a similar way, as the evaluation of performance using a series of receiver operating characteristic (ROC) curves. A detailed A/B test with real users was also performed, but a similar approach falls out of the scope of this project.
 
 \textbf{Dror et al.} \citep{Dror2012} In "Churn prediction in new users of Yahoo! answers", an explorative study was made on the Yahoo! answers website as to discover an efficient churn predictor model and also the features that correlates with the user leaving the service, however differently from other works this paper focused on new users with less than a week of activity on the service. Features were grouped into Question, Answer and Gratification categories, and were used for training several different classifiers. For this dataset, random forests performed the best with logistic regression once again a close second. Features were also ordered by the amount of information gain that they provide, and the number of questions and answers are the top features on that regard (inversely correlating with churn), followed by the period of time the user is active and gratification features for answers given and questions made. Similarly to \citep{Pudipeddi2014}, the features exploration section could be mapped to a music streaming service in a similar way (eg. question/answers are sessions, gratitude is the user explicit feedback on recommended content), and the evaluation methods with ROC curves and information gain tables are also of interest. 
+
+\textbf{Hassouna et al.} \citep{Hassouna2015} In "Customer Churn in Mobile Markets: A Comparison of Techniques", two popular models for predicting user churn were empirically compared: decision trees and logistic regression. By making use of the dataset provided by a mobile operator, two models were created by independently training and selecting their best performing versions. Evaluation was executed by comparing the AUC of their ROC curves, as also their Lift score and overall accuracy. The conclusion is that decision trees consistently perform better when compared to logistic regression models, and thus should be a preferred choice.
 
 \chapter{Methods}
 

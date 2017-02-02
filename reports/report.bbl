@@ -1,4 +1,4 @@
-\begin{thebibliography}{5}
+\begin{thebibliography}{6}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -37,5 +37,13 @@ Gideon Dror, Dan Pelleg, Oleg Rokhlenko, and Idan Szpektor.
 \newblock {Churn prediction in new users of Yahoo! answers}.
 \newblock \emph{Proceedings of the 21st International Conference on World Wide
   Web}, pages 829--834, 2012.
+
+\bibitem[Hassouna et~al.(2015)Hassouna, Tarhini, Elyas, Aboutrab, Kingdom,
+  Kingdom, and Arabia]{Hassouna2015}
+Mohammed Hassouna, Ali Tarhini, Tariq Elyas, Mohammad~Saeed Aboutrab, United
+  Kingdom, United Kingdom, and Saudi Arabia.
+\newblock {Customer Churn in Mobile Markets: A Comparison of Techniques}.
+\newblock 8\penalty0 (6):\penalty0 224--237, 2015.
+\newblock \doi{10.5539/ibr.v8n6p224}.
 
 \end{thebibliography}
