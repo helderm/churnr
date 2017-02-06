@@ -1,4 +1,4 @@
-\begin{thebibliography}{6}
+\begin{thebibliography}{8}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -45,5 +45,22 @@ Mohammed Hassouna, Ali Tarhini, Tariq Elyas, Mohammad~Saeed Aboutrab, United
 \newblock {Customer Churn in Mobile Markets: A Comparison of Techniques}.
 \newblock 8\penalty0 (6):\penalty0 224--237, 2015.
 \newblock \doi{10.5539/ibr.v8n6p224}.
+
+\bibitem[Lu et~al.(2014)Lu, Lin, Lu, and Zhang]{Lu2014}
+Ning Lu, Hua Lin, Jie Lu, and Guangquan Zhang.
+\newblock {A customer churn prediction model in telecom industry using
+  boosting}.
+\newblock \emph{IEEE Transactions on Industrial Informatics}, 10\penalty0
+  (2):\penalty0 1659--1665, 2014.
+\newblock ISSN 15513203.
+\newblock \doi{10.1109/TII.2012.2224355}.
+
+\bibitem[Khan et~al.(2015)Khan, Manoj, Singh, and Blumenstock]{Khan2015}
+Muhammad~Raza Khan, Joshua Manoj, Anikate Singh, and Joshua Blumenstock.
+\newblock {Behavioral Modeling for Churn Prediction: Early Indicators and
+  Accurate Predictors of Custom Defection and Loyalty}.
+\newblock \emph{Proceedings - 2015 IEEE International Congress on Big Data,
+  BigData Congress 2015}, pages 677--680, 2015.
+\newblock \doi{10.1109/BigDataCongress.2015.107}.
 
 \end{thebibliography}
