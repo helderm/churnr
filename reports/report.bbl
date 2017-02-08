@@ -1,4 +1,4 @@
-\begin{thebibliography}{8}
+\begin{thebibliography}{10}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -62,5 +62,24 @@ Muhammad~Raza Khan, Joshua Manoj, Anikate Singh, and Joshua Blumenstock.
 \newblock \emph{Proceedings - 2015 IEEE International Congress on Big Data,
   BigData Congress 2015}, pages 677--680, 2015.
 \newblock \doi{10.1109/BigDataCongress.2015.107}.
+
+\bibitem[Burez and {Van den Poel}(2009)]{Burez2009}
+J.~Burez and D.~{Van den Poel}.
+\newblock {Handling class imbalance in customer churn prediction}.
+\newblock \emph{Expert Systems with Applications}, 36\penalty0 (3 PART
+  1):\penalty0 4626--4636, 2009.
+\newblock ISSN 09574174.
+\newblock \doi{10.1016/j.eswa.2008.05.027}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.eswa.2008.05.027}.
+
+\bibitem[Ballings and {Van Den Poel}(2012)]{Ballings2012}
+Michel Ballings and Dirk {Van Den Poel}.
+\newblock {Customer event history for churn prediction: How long is long
+  enough?}
+\newblock \emph{Expert Systems with Applications}, 39\penalty0 (18):\penalty0
+  13517--13522, 2012.
+\newblock ISSN 09574174.
+\newblock \doi{10.1016/j.eswa.2012.07.006}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.eswa.2012.07.006}.
 
 \end{thebibliography}
