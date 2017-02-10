@@ -1,4 +1,4 @@
-\begin{thebibliography}{10}
+\begin{thebibliography}{12}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -81,5 +81,25 @@ Michel Ballings and Dirk {Van Den Poel}.
 \newblock ISSN 09574174.
 \newblock \doi{10.1016/j.eswa.2012.07.006}.
 \newblock URL \url{http://dx.doi.org/10.1016/j.eswa.2012.07.006}.
+
+\bibitem[Borbora et~al.(2011)Borbora, Srivastava, Hsu, and Iams]{Borbora2011}
+Zoheb Borbora, Jaideep Srivastava, Kuo~Wei Hsu, and Dmitri~Wil Iams.
+\newblock {Churn prediction in MMORPGs using player motivation theories and an
+  ensemble approach}.
+\newblock \emph{Proceedings - 2011 IEEE International Conference on Privacy,
+  Security, Risk and Trust and IEEE International Conference on Social
+  Computing, PASSAT/SocialCom 2011}, pages 157--164, 2011.
+\newblock \doi{10.1109/PASSAT/SocialCom.2011.122}.
+
+\bibitem[Zhang et~al.(2013)Zhang, Kreitz, Isaksson, Ubillos, Urdaneta,
+  Pouwelse, and Epema]{Zhang2013}
+Boxun Zhang, Gunnar Kreitz, Marcus Isaksson, Javier Ubillos, Guido Urdaneta,
+  Johan~a. Pouwelse, and Dick Epema.
+\newblock {Understanding user behavior in Spotify}.
+\newblock \emph{2013 Proceedings IEEE INFOCOM}, pages 220--224, 2013.
+\newblock ISSN 0743-166X.
+\newblock \doi{10.1109/INFCOM.2013.6566767}.
+\newblock URL
+  \url{http://ieeexplore.ieee.org/lpdocs/epic03/wrapper.htm?arnumber=6566767}.
 
 \end{thebibliography}
