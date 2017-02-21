@@ -172,9 +172,15 @@ A good classifier would score values close to the upper-left corner of the plot,
 
 ROC curves can be used to compare the performance of different models by measuring the \emph{area under the curve} (AUC) of its plotted scores, which ranges from 0.0 to 1.0. The greater this area, the better the algorithm is to find a specific feature. Moreover, models with an area close to 0.5 can be assumed to perform not much better than random guess, since this is the total area under the diagonal line.
 
-TODO: Add eval methods (F-score, Lift chart...)
+TODO: Add eval methods (F-score, Lift chart, Top Decile Lift (TDL)...)
 
 \chapter{Related Work}
+
+\section{Churn Prediction}
+
+\section{Sequential Modeling}
+
+\section{Evaluation Metrics}
 
 \textbf{Pudipeddi, Akoglu and Tong} \citep{Pudipeddi2014} In "User Churn in Focused Question Answering Sites: Characterization and Prediction", Q\&A sites like Stack Overflow were the focus of a study on user behaviour characterization and churn rate prediction. An extensive data exploration was made as to correlate features to the chance of a user leaving a service, and with those insights classical modelling techniques were used, where the best performing one was a decision tree. The approach used for extracting and categorizing features (temporal, frequency, gratitude, etc) and the insights that follow the study (like the importance of temporal features for predicting churn) is of high value and can be mapped to concepts on a different domain like a music streaming service with minor modifications.
 
@@ -200,9 +206,23 @@ TODO: Add eval methods (F-score, Lift chart...)
 
 \textbf{Zhang et al.} \citep{Zhang2013} In "Understanding user behavior in Spotify", a deep study on user behaviour was performed on a massive dataset of both mobile and desktop versions of Spotify's application. Music streaming services are as of today a quite under-researched area, even though there is a prominent feature that makes it significantly different from other more researched and similar areas like video streaming, which would be the absence of the constant attention factor that video demands. This paper aims to fill that gap by analysing patterns of usage of Spotify's Premium subscribers on features like session and playback arrival patterns, user behaviour on single and multiple devices and favourite times of day for streaming. The main contributions of the study can be summarized as follows: First, daily patterns can be observed on features like session arrival, playback arrivals and session length. Second, there is a high probability of users to continue on the same device for consecutive sessions. Third, users have their unique times of day when they prefer to stream music on the platform. Fourth, a session length can be used as a good indicator of the next session length and also downtime.
 
+\textbf{Längkvist et al.} \citep{Langkvist2014} In "A review of unsupervised feature learning and deep learning for time-series modeling", an overview of the challenges on creating models that make use of the time component on data sets are presented to the reader. Also, since hand-crafted features are generally domain-specific and difficult to create, a review of the current research on unsupervised feature learning applied for time-series data is the focus of this paper. From the challenges, it is worth of mention the uncertainty that there is enough information to understand the underlying process, its non-stationary characteristics like mean, variance and frequency, and its common high dimensionality and noise. The right representation is deemed then crucial for any model to be successful in its goal. Several different techniques currently being used for unsupervised feature learning are then presented in details to the reader, where it is worth of quick mention the conditional Restricted Boltzmann Machine (cRBM), Recurrent Neural Networks (RNN, with is Long Short-Term Memory extension), the Gated RBM, the Time-Delay Neural Networks, and the Space-Time Deep Belief Network. A comparison between models regarding their memory capacity and usual input size is then made, and even though the RNN seems to be a superior choice by numbers only, the author later argues that the best model is highly dependent on the data being used. Finally, several classical time-series problems are reviewed alongside the best models currently being used for each domain.
+
+\textbf{Gur Ali and Ariturk} \citep{GurAli2014} In "Dynamic churn prediction framework with more effective use of rare event data: The case of private banking", the researchers propose a new data set generation framework that can better leverage the temporal aspect of user behaviour data for churn prediction models. It is typical on current research for the data sets used to train models to summarize the user features by taking a single point in time, normally the most recent one available. The hypothesis being tested is that by boosting the data with features on different time periods instead of only the last one, a significant performance gain can be achieved. The main framework of this study is called Multiple Period Training Data (MPTD), which basically consists of aggregating to each user their features at each predefined time step along the time range of the data set, alongside their churn labels at each point in time and also environment variables which varies through time but are common for all users. This framework was tested against the classical Single Period Training Data described above, demonstrating a significant improvement (by \emph{p-value} comparison) on AUC and TDL for both logistic regression and decision tree models for predicting if the user is going to churn on the next test period or nor. Another factor tested was whether the use of balanced data through an oversampling technique called SMOTE (Synthetic minority oversampling technique) could improve the performance of the models, however no significant change could be found. The last experiment was focused on predicting churn several periods on the future, and for that a common survival analysis method called Cox regression was used as a benchmark for comparison against logistic regression models trained on MPTD. It was empirically concluded that using several independently trained binary classifiers, each trained on a different parameter to the "churn within $\delta$ periods" (W$\delta$C) feature, a significant performance gain can be achieved when comparing their respective AUC and TDL.
+
+\textbf{Anand, Kazmi and Malhotra} \citep{Auon2015} In "Deep Temporal Features to Predict Repeat Buyers", a new method is presented for the task of predicting which buyers will return to the store after acquiring a product on sale. Current models commonly use aggregate level or window-based features, neglecting the wealth of information present on the basket-level transactions history. The proposed method involves training a Mixture of Experts (ME) between two types of models: Quantile Regression (QR) for the aggregated features and Long Short-term Memory classifier over the temporal features of the user. Aggregate level features are computed over the entire transaction history of each customer. Some of these features are grouped into non-overlapping windows which are used as independent attributes for the aggregate level model and as a time-series in the temporal model. Both QR and LSTM models are then independently trained with a subset of these features, while also fine tuning the parameters of each through a grid-search tested on a validation set. It was empirically shown that a ME between these two models can reach a significant mean-square error improvement when comparing to any of the independent models.
+
 \chapter{Methods}
 
 \lipsum
+
+\chapter{Results}
+
+\lipsum
+
+\chapter{Conclusions and Future Work}
+
+\lipsum[5]
 
 \bibliography{references}
 

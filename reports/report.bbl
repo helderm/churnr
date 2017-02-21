@@ -1,4 +1,4 @@
-\begin{thebibliography}{12}
+\begin{thebibliography}{15}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -101,5 +101,31 @@ Boxun Zhang, Gunnar Kreitz, Marcus Isaksson, Javier Ubillos, Guido Urdaneta,
 \newblock \doi{10.1109/INFCOM.2013.6566767}.
 \newblock URL
   \url{http://ieeexplore.ieee.org/lpdocs/epic03/wrapper.htm?arnumber=6566767}.
+
+\bibitem[Längkvist et~al.(2014)Längkvist, Karlsson, and
+  Loutfi]{Langkvist2014}
+Martin Längkvist, Lars Karlsson, and Amy Loutfi.
+\newblock {A review of unsupervised feature learning and deep learning for
+  time-series modeling}.
+\newblock \emph{Pattern Recognition Letters}, 42\penalty0 (1):\penalty0 11--24,
+  2014.
+\newblock ISSN 01678655.
+\newblock \doi{10.1016/j.patrec.2014.01.008}.
+
+\bibitem[{G{\"{u}}r Ali} and Arit{\"{u}}rk(2014)]{GurAli2014}
+{\"{O}}zden {G{\"{u}}r Ali} and Umut Arit{\"{u}}rk.
+\newblock {Dynamic churn prediction framework with more effective use of rare
+  event data: The case of private banking}.
+\newblock \emph{Expert Systems with Applications}, 41\penalty0 (17):\penalty0
+  7889--7903, 2014.
+\newblock ISSN 09574174.
+\newblock \doi{10.1016/j.eswa.2014.06.018}.
+
+\bibitem[Auon et~al.(2015)Auon, Kazmi, Malhotra, Vig, Agarwal, and
+  Shroff]{Auon2015}
+Gaurangi~Anand Auon, Haidar Kazmi, Pankaj Malhotra, Lovekesh Vig, Puneet
+  Agarwal, and Gautam Shroff.
+\newblock {Deep Temporal Features to Predict Repeat Buyers}.
+\newblock \penalty0 (February 2016), 2015.
 
 \end{thebibliography}
