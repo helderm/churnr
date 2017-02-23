@@ -176,11 +176,64 @@ TODO: Add eval methods (F-score, Lift chart, Top Decile Lift (TDL)...)
 
 \chapter{Related Work}
 
-\section{Churn Prediction}
+\section{Churn Prediction Models}
 
-\section{Sequential Modeling}
+Identifying which users are most likely to churn is an important step in any customer relationship management (CRM) framework interested in improving user retention. It has been shown that several economical values are directly correlated with the customer lifetime metric that can be crucial in a competitive market, like how the costs of acquiring new customers surpass those of retaining existing ones and how loyal users usually spend more and can bring in new customers \citep{GurAli2014}. Thus, churn rate prediction is an established topic in the literature and has seen studies being performed on a wide range of domains like the telecommunication industry \citep{Lu2014}\citep{Khan2015}\citep{Hassouna2015}, social multiplayer games \citep{Borbora2011}\citep{Runge2014} and community-based question answering services (CQA) \citep{Pudipeddi2014}\citep{Dror2012}. 
 
-\section{Evaluation Metrics}
+The very first aspect of the study that any researcher has to take into consideration is the formal definition of what churn is, which depends on the domain that the data set belongs to. \citep{lazarov2007churn} divides the definition into three types: \emph{active} where the contract is officially terminated, \emph{hidden} when the customer is inactive (not using the service) for a significant amount of time, or \emph{partial} when the customer is not using the service at its fullest, opting for a competitor instead. Subscription-based services like mobile companies \citep{Lu2014}\citep{Hassouna2015} and massive multiplayer games \citep{Borbora2011} commonly utilizes the active churning definition caused by the explicit termination of the agreement. Social games \citep{Runge2014}\citep{Drachen2016RapidPO} and CQA services \citep{Pudipeddi2014}\citep{Dror2012} however usually model the user interest by measuring its level of activity and engagement since no contract is formally established, opting for the hidden churn definition instead. 
+
+Delving into the hidden churn definition, one could ask what is considered a "significant amount of time" as to judge a user to have churned or not, which is closely related to the kind of market this model is intended to be used on. For example, for a mobile network like the one studied in \citep{Khan2015} this definition can span months of inactivity since customers on that market are commonly more loyal, even though this paper focus on pre-paid accounts with "soft" contracts. On the other hand, rapid-changing markets like free-to-use services as social games and CQA sites prefer to define the churn period as small as possible (commonly days or weeks), since the absence of an agreement makes it easy for costumers to switch for the competition, having the service the obligation to act faster if any sign of loss of costumers is identified \citep{Khan2015}\citep{Drachen2016RapidPO}. On \citep{Dror2012} the focus is set on new users so the the churn period is explicitly set to be their first week of activity. \citep{Pudipeddi2014} however focus on both new and experienced users by considering the first days and posts (questions and answers) as parameters on the models trained, evaluating each independently.
+
+* What models are used?
+
+
+"User Churn in Focused Question Answering Sites: Characterization and Prediction"
+
+"Churn analysis using deep convolutional neural networks and autoencoders"
+
+"Churn Prediction for High-Value Players in Casual Social Games"
+
+"Customer Churn in Mobile Markets: A Comparison of Techniques"
+
+"A Customer Churn Prediction Model in Telecom Industry Using Boosting"
+
+"Behavioral Modeling for Churn Prediction"
+
+"Churn Prediction in MMORPGs using Player Motivation Theories and an Ensemble Approach"
+
+
+\section{Sequential Modelling for User Behaviour Data}
+
+Even though there is currently a wealth of research on churn prediction techniques, most of them treat the user behavioural features as static points in time by aggregating or summarizing their values over a time window \citep{Auon2015}. It is a simplification that eases the hassle of training models with a data set which is commonly high-dimensional and difficult to work with, however information that could be used to improve the predictors' performance is lost in this process  \citep{GurAli2014}. For example, there is no information as to when over the time window being analysed a user decides to churn, it could be that all defectors are grouped into a period where an external event (like the end of an offer) has taken place. Environmental variables, that is those that varies through time but are common to all users, are also omitted on static models, leaving it to the experts the task of manually integrating these features on their analyses. Newer models like \citep{Pudipeddi2014} attempt to integrate some temporal data by manually engineering features related to time (like the duration of an event, for example), however since each user is represented as a sample in a single point in time the sequence of data transformations is inherently lost in this process.
+
+It is natural to think that the human behaviour evolves through time. Our opinions and desires changes in accordance to the stimuli that we receive from the world around us, and summarizing our persona by looking at a single point in our life is an oversimplification that does not make justice to the path that leaded us to where we are. Dealing with temporal data is by no means trivial however, and to leverage fully its properties some careful considerations about this type of data must be done. On \citep{Langkvist2014}, an overview of the challenges on creating models that make use of the time component on data sets are presented to the reader. Also, since hand-crafted features are generally domain-specific and difficult to create, a review of the current research on unsupervised feature learning applied for time-series data is the focus of this paper. From the challenges, it is worth of mention the uncertainty that there is enough information to understand the underlying process, its non-stationary characteristics like mean, variance and frequency, and its common high dimensionality and noise. The right representation is deemed then crucial for any model to be successful in its goal. Several different techniques currently being used for unsupervised feature learning are then presented in details to the reader, where it is worth of quick mention the conditional Restricted Boltzmann Machine (cRBM), Recurrent Neural Networks (RNN, with is Long Short-Term Memory extension), the Gated RBM, the Time-Delay Neural Networks, and the Space-Time Deep Belief Network. Finally, several classical time-series problems are reviewed alongside the best models currently being used for each domain. 
+
+The hypothesis that sequential patterns hidden on temporal data can improve the accuracy of predictor models is not an uncharted territory however, and has being recently explored by researchers on similar domains as churn prediction that could be mapped to with minor modifications. Sparked by positive results of recurrent neural networks on domains like speech recognition \citep{graves2013speech} and video classification \citep{yue2015beyond}, some papers attempt to recreate similar deep architectures on their own prediction problems. On \citep{Tax2016}, a technique was presented as to predict the next event and its timestamp on a running case of a business process (a help desk process, for example). Three different LSTM architectures were experimented on, one for each of the problems being tackled: estimating the next activity and its timestamp, all the remaining activities in a use case and the remaining time of a process. This technique could be used for churn prediction by interpreting the user interaction with the service as actions, and "churn" could be an event that may or may not exist in the process chain. The LSTM architecture was also present on \citep{Auon2015} alongside a quantile regression (QR) model as to predict which of the past buyers of a store chain will return after acquiring a product on sale. The hypothesis is that a performance gain can be achieved by combining models that are know to perform well on both temporal and aggregate features, respectively. It was empirically shown that a mixture of experts approach between these two techniques can reach a significant mean-square error improvement when comparing to any of the models when evaluated independently. 
+
+Deep architectures like LSTMs could theoretically be applied in a similar way for the task of predicting which users are more likely to abandon a service, however the lack of research using techniques like these suggests that this mapping may not be as easy as it seems, nevertheless some examples can still be found in the literature. Inspired by results obtained on image recognition \citep{krizhevsky2012imagenet}, a convolutional neural network (CNN) model was used as a churn predictor on the work by \citep{Wangperawong2016}. On it, users were represented as 2-dimensional images where columns are the tracked features and rows are days organized in sequences. Two different CNN models were used, and both outperformed a baseline decision tree model. On the work by \citep{Ballings2012}, the researchers strives to answer how far in the user history models must be trained on as to achieve the best trade-off between accuracy and computational burden. The experiment consisted on training three different models (logistic regression, decision trees with and without bagging) on a newspaper data set consisting of 16 years of user history. It has been concluded that after year 5 no gain in performance (measured by AUC) is statistically relevant enough to warrant the increase in computational power needed for the training. However, the researchers also question whether this result can be extended for other domains or not, leaving that for future work. On \citep{GurAli2014} the researchers propose a new data set generation framework that can better leverage the temporal aspect of user behaviour data for churn prediction models. The hypothesis being tested is that by boosting the data with features on different time periods instead of only the last one, a significant performance gain can be achieved. The main framework of this study is called Multiple Period Training Data (MPTD), which basically consists of aggregating to each user their features at each predefined time step along the time range of the data set, alongside their churn labels at each point in time and also environment variables which varies through time but are common for all users. This framework was tested against a classical static data set, demonstrating a significant improvement (by \emph{p-value} comparison) on AUC and TDL for both logistic regression and decision tree models for predicting if the user is going to churn on the next test period or nor. Another experiment was focused on predicting churn several periods on the future, and for that a common survival analysis method called Cox regression was used as a benchmark for comparison against logistic regression models trained on MPTD. It was empirically concluded that using several independently trained binary classifiers, each trained on a different parameter to the "churn within $\delta$ periods" (W$\delta$C) feature, a significant performance gain can be achieved when comparing their respective AUC and TDL.
+
+
+\section{Evaluating and Training Churn Prediction Models}
+
+* Some evaluation metrics
+
+* Feature selection (check Lu2014) 
+
+* How are the experiments performed? (cross validation, grid search, time window)
+
+* How is the unbalanced class problem tackled?
+
+* How is the user behaviour on Spotify?
+
+"Handling class imbalance in customer churn prediction"
+
+"Customer event history for churn prediction: How long is long enough?"
+
+"Understanding User Behavior in Spotify"
+
+"Evaluation: From Precision, Recall and F-Measure To Roc, Informedness, Markedness {\&} Correlation"
+
+\section{Summaries (TODO Remove!)}
 
 \textbf{Pudipeddi, Akoglu and Tong} \citep{Pudipeddi2014} In "User Churn in Focused Question Answering Sites: Characterization and Prediction", Q\&A sites like Stack Overflow were the focus of a study on user behaviour characterization and churn rate prediction. An extensive data exploration was made as to correlate features to the chance of a user leaving a service, and with those insights classical modelling techniques were used, where the best performing one was a decision tree. The approach used for extracting and categorizing features (temporal, frequency, gratitude, etc) and the insights that follow the study (like the importance of temporal features for predicting churn) is of high value and can be mapped to concepts on a different domain like a music streaming service with minor modifications.
 

@@ -1,50 +1,18 @@
-\begin{thebibliography}{15}
+\begin{thebibliography}{20}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
   \providecommand{\doi}[1]{doi: #1}\else
   \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
 
-\bibitem[Pudipeddi et~al.(2014)Pudipeddi, Akoglu, and Tong]{Pudipeddi2014}
-Jagat Pudipeddi, Leman Akoglu, and Hanghang Tong.
-\newblock {User Churn in Focused Question Answering Sites: Characterizations
-  and Prediction}.
-\newblock pages 469--474, 2014.
-
-\bibitem[Wangperawong et~al.(2016)Wangperawong, Brun, Laudy, and
-  Pavasuthipaisit]{Wangperawong2016}
-Artit Wangperawong, Cyrille Brun, Dr.~Olav Laudy, and Rujikorn Pavasuthipaisit.
-\newblock {Churn analysis using deep convolutional neural networks and
-  autoencoders}.
-\newblock pages 1--6, 2016.
-
-\bibitem[Tax et~al.(2016)Tax, Verenich, {La Rosa}, and Dumas]{Tax2016}
-Niek Tax, Ilya Verenich, Marcello {La Rosa}, and Marlon Dumas.
-\newblock {Predictive Business Process Monitoring with LSTM Neural Networks}.
-\newblock 2016.
-\newblock URL \url{http://arxiv.org/abs/1612.02130}.
-
-\bibitem[Runge et~al.(2014)Runge, Gao, Garcin, and Faltings]{Runge2014}
-Julian Runge, Peng Gao, Florent Garcin, and Boi Faltings.
-\newblock {Churn prediction for high-value players in casual social games}.
-\newblock \emph{IEEE Conference on Computatonal Intelligence and Games, CIG},
-  2014.
-\newblock ISSN 23254289.
-\newblock \doi{10.1109/CIG.2014.6932875}.
-
-\bibitem[Dror et~al.(2012)Dror, Pelleg, Rokhlenko, and Szpektor]{Dror2012}
-Gideon Dror, Dan Pelleg, Oleg Rokhlenko, and Idan Szpektor.
-\newblock {Churn prediction in new users of Yahoo! answers}.
-\newblock \emph{Proceedings of the 21st International Conference on World Wide
-  Web}, pages 829--834, 2012.
-
-\bibitem[Hassouna et~al.(2015)Hassouna, Tarhini, Elyas, Aboutrab, Kingdom,
-  Kingdom, and Arabia]{Hassouna2015}
-Mohammed Hassouna, Ali Tarhini, Tariq Elyas, Mohammad~Saeed Aboutrab, United
-  Kingdom, United Kingdom, and Saudi Arabia.
-\newblock {Customer Churn in Mobile Markets: A Comparison of Techniques}.
-\newblock 8\penalty0 (6):\penalty0 224--237, 2015.
-\newblock \doi{10.5539/ibr.v8n6p224}.
+\bibitem[{G{\"{u}}r Ali} and Arit{\"{u}}rk(2014)]{GurAli2014}
+{\"{O}}zden {G{\"{u}}r Ali} and Umut Arit{\"{u}}rk.
+\newblock {Dynamic churn prediction framework with more effective use of rare
+  event data: The case of private banking}.
+\newblock \emph{Expert Systems with Applications}, 41\penalty0 (17):\penalty0
+  7889--7903, 2014.
+\newblock ISSN 09574174.
+\newblock \doi{10.1016/j.eswa.2014.06.018}.
 
 \bibitem[Lu et~al.(2014)Lu, Lin, Lu, and Zhang]{Lu2014}
 Ning Lu, Hua Lin, Jie Lu, and Guangquan Zhang.
@@ -63,24 +31,13 @@ Muhammad~Raza Khan, Joshua Manoj, Anikate Singh, and Joshua Blumenstock.
   BigData Congress 2015}, pages 677--680, 2015.
 \newblock \doi{10.1109/BigDataCongress.2015.107}.
 
-\bibitem[Burez and {Van den Poel}(2009)]{Burez2009}
-J.~Burez and D.~{Van den Poel}.
-\newblock {Handling class imbalance in customer churn prediction}.
-\newblock \emph{Expert Systems with Applications}, 36\penalty0 (3 PART
-  1):\penalty0 4626--4636, 2009.
-\newblock ISSN 09574174.
-\newblock \doi{10.1016/j.eswa.2008.05.027}.
-\newblock URL \url{http://dx.doi.org/10.1016/j.eswa.2008.05.027}.
-
-\bibitem[Ballings and {Van Den Poel}(2012)]{Ballings2012}
-Michel Ballings and Dirk {Van Den Poel}.
-\newblock {Customer event history for churn prediction: How long is long
-  enough?}
-\newblock \emph{Expert Systems with Applications}, 39\penalty0 (18):\penalty0
-  13517--13522, 2012.
-\newblock ISSN 09574174.
-\newblock \doi{10.1016/j.eswa.2012.07.006}.
-\newblock URL \url{http://dx.doi.org/10.1016/j.eswa.2012.07.006}.
+\bibitem[Hassouna et~al.(2015)Hassouna, Tarhini, Elyas, Aboutrab, Kingdom,
+  Kingdom, and Arabia]{Hassouna2015}
+Mohammed Hassouna, Ali Tarhini, Tariq Elyas, Mohammad~Saeed Aboutrab, United
+  Kingdom, United Kingdom, and Saudi Arabia.
+\newblock {Customer Churn in Mobile Markets: A Comparison of Techniques}.
+\newblock 8\penalty0 (6):\penalty0 224--237, 2015.
+\newblock \doi{10.5539/ibr.v8n6p224}.
 
 \bibitem[Borbora et~al.(2011)Borbora, Srivastava, Hsu, and Iams]{Borbora2011}
 Zoheb Borbora, Jaideep Srivastava, Kuo~Wei Hsu, and Dmitri~Wil Iams.
@@ -91,16 +48,44 @@ Zoheb Borbora, Jaideep Srivastava, Kuo~Wei Hsu, and Dmitri~Wil Iams.
   Computing, PASSAT/SocialCom 2011}, pages 157--164, 2011.
 \newblock \doi{10.1109/PASSAT/SocialCom.2011.122}.
 
-\bibitem[Zhang et~al.(2013)Zhang, Kreitz, Isaksson, Ubillos, Urdaneta,
-  Pouwelse, and Epema]{Zhang2013}
-Boxun Zhang, Gunnar Kreitz, Marcus Isaksson, Javier Ubillos, Guido Urdaneta,
-  Johan~a. Pouwelse, and Dick Epema.
-\newblock {Understanding user behavior in Spotify}.
-\newblock \emph{2013 Proceedings IEEE INFOCOM}, pages 220--224, 2013.
-\newblock ISSN 0743-166X.
-\newblock \doi{10.1109/INFCOM.2013.6566767}.
-\newblock URL
-  \url{http://ieeexplore.ieee.org/lpdocs/epic03/wrapper.htm?arnumber=6566767}.
+\bibitem[Runge et~al.(2014)Runge, Gao, Garcin, and Faltings]{Runge2014}
+Julian Runge, Peng Gao, Florent Garcin, and Boi Faltings.
+\newblock {Churn prediction for high-value players in casual social games}.
+\newblock \emph{IEEE Conference on Computatonal Intelligence and Games, CIG},
+  2014.
+\newblock ISSN 23254289.
+\newblock \doi{10.1109/CIG.2014.6932875}.
+
+\bibitem[Pudipeddi et~al.(2014)Pudipeddi, Akoglu, and Tong]{Pudipeddi2014}
+Jagat Pudipeddi, Leman Akoglu, and Hanghang Tong.
+\newblock {User Churn in Focused Question Answering Sites: Characterizations
+  and Prediction}.
+\newblock pages 469--474, 2014.
+
+\bibitem[Dror et~al.(2012)Dror, Pelleg, Rokhlenko, and Szpektor]{Dror2012}
+Gideon Dror, Dan Pelleg, Oleg Rokhlenko, and Idan Szpektor.
+\newblock {Churn prediction in new users of Yahoo! answers}.
+\newblock \emph{Proceedings of the 21st International Conference on World Wide
+  Web}, pages 829--834, 2012.
+
+\bibitem[Lazarov and Capota(2007)]{lazarov2007churn}
+Vladislav Lazarov and Marius Capota.
+\newblock Churn prediction.
+\newblock \emph{Bus. Anal. Course. TUM Comput. Sci}, 2007.
+
+\bibitem[Drachen et~al.(2016)Drachen, Lundquist, Kung, Rao, Klabjan, Sifa, and
+  Runge]{Drachen2016RapidPO}
+Anders Drachen, Eric~Thurston Lundquist, Yungjen Kung, Pranav~Simha Rao, Diego
+  Klabjan, Rafet Sifa, and Julian Runge.
+\newblock Rapid prediction of player retention in free-to-play mobile games.
+\newblock \emph{CoRR}, abs/1607.03202, 2016.
+
+\bibitem[Auon et~al.(2015)Auon, Kazmi, Malhotra, Vig, Agarwal, and
+  Shroff]{Auon2015}
+Gaurangi~Anand Auon, Haidar Kazmi, Pankaj Malhotra, Lovekesh Vig, Puneet
+  Agarwal, and Gautam Shroff.
+\newblock {Deep Temporal Features to Predict Repeat Buyers}.
+\newblock \penalty0 (February 2016), 2015.
 
 \bibitem[Längkvist et~al.(2014)Längkvist, Karlsson, and
   Loutfi]{Langkvist2014}
@@ -112,20 +97,68 @@ Martin Längkvist, Lars Karlsson, and Amy Loutfi.
 \newblock ISSN 01678655.
 \newblock \doi{10.1016/j.patrec.2014.01.008}.
 
-\bibitem[{G{\"{u}}r Ali} and Arit{\"{u}}rk(2014)]{GurAli2014}
-{\"{O}}zden {G{\"{u}}r Ali} and Umut Arit{\"{u}}rk.
-\newblock {Dynamic churn prediction framework with more effective use of rare
-  event data: The case of private banking}.
-\newblock \emph{Expert Systems with Applications}, 41\penalty0 (17):\penalty0
-  7889--7903, 2014.
-\newblock ISSN 09574174.
-\newblock \doi{10.1016/j.eswa.2014.06.018}.
+\bibitem[Graves et~al.(2013)Graves, Mohamed, and Hinton]{graves2013speech}
+Alex Graves, Abdel-rahman Mohamed, and Geoffrey Hinton.
+\newblock Speech recognition with deep recurrent neural networks.
+\newblock In \emph{Acoustics, speech and signal processing (icassp), 2013 ieee
+  international conference on}, pages 6645--6649. IEEE, 2013.
 
-\bibitem[Auon et~al.(2015)Auon, Kazmi, Malhotra, Vig, Agarwal, and
-  Shroff]{Auon2015}
-Gaurangi~Anand Auon, Haidar Kazmi, Pankaj Malhotra, Lovekesh Vig, Puneet
-  Agarwal, and Gautam Shroff.
-\newblock {Deep Temporal Features to Predict Repeat Buyers}.
-\newblock \penalty0 (February 2016), 2015.
+\bibitem[Yue-Hei~Ng et~al.(2015)Yue-Hei~Ng, Hausknecht, Vijayanarasimhan,
+  Vinyals, Monga, and Toderici]{yue2015beyond}
+Joe Yue-Hei~Ng, Matthew Hausknecht, Sudheendra Vijayanarasimhan, Oriol Vinyals,
+  Rajat Monga, and George Toderici.
+\newblock Beyond short snippets: Deep networks for video classification.
+\newblock In \emph{Proceedings of the IEEE conference on computer vision and
+  pattern recognition}, pages 4694--4702, 2015.
+
+\bibitem[Tax et~al.(2016)Tax, Verenich, {La Rosa}, and Dumas]{Tax2016}
+Niek Tax, Ilya Verenich, Marcello {La Rosa}, and Marlon Dumas.
+\newblock {Predictive Business Process Monitoring with LSTM Neural Networks}.
+\newblock 2016.
+\newblock URL \url{http://arxiv.org/abs/1612.02130}.
+
+\bibitem[Krizhevsky et~al.(2012)Krizhevsky, Sutskever, and
+  Hinton]{krizhevsky2012imagenet}
+Alex Krizhevsky, Ilya Sutskever, and Geoffrey~E Hinton.
+\newblock Imagenet classification with deep convolutional neural networks.
+\newblock In \emph{Advances in neural information processing systems}, pages
+  1097--1105, 2012.
+
+\bibitem[Wangperawong et~al.(2016)Wangperawong, Brun, Laudy, and
+  Pavasuthipaisit]{Wangperawong2016}
+Artit Wangperawong, Cyrille Brun, Dr.~Olav Laudy, and Rujikorn Pavasuthipaisit.
+\newblock {Churn analysis using deep convolutional neural networks and
+  autoencoders}.
+\newblock pages 1--6, 2016.
+
+\bibitem[Ballings and {Van Den Poel}(2012)]{Ballings2012}
+Michel Ballings and Dirk {Van Den Poel}.
+\newblock {Customer event history for churn prediction: How long is long
+  enough?}
+\newblock \emph{Expert Systems with Applications}, 39\penalty0 (18):\penalty0
+  13517--13522, 2012.
+\newblock ISSN 09574174.
+\newblock \doi{10.1016/j.eswa.2012.07.006}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.eswa.2012.07.006}.
+
+\bibitem[Burez and {Van den Poel}(2009)]{Burez2009}
+J.~Burez and D.~{Van den Poel}.
+\newblock {Handling class imbalance in customer churn prediction}.
+\newblock \emph{Expert Systems with Applications}, 36\penalty0 (3 PART
+  1):\penalty0 4626--4636, 2009.
+\newblock ISSN 09574174.
+\newblock \doi{10.1016/j.eswa.2008.05.027}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.eswa.2008.05.027}.
+
+\bibitem[Zhang et~al.(2013)Zhang, Kreitz, Isaksson, Ubillos, Urdaneta,
+  Pouwelse, and Epema]{Zhang2013}
+Boxun Zhang, Gunnar Kreitz, Marcus Isaksson, Javier Ubillos, Guido Urdaneta,
+  Johan~a. Pouwelse, and Dick Epema.
+\newblock {Understanding user behavior in Spotify}.
+\newblock \emph{2013 Proceedings IEEE INFOCOM}, pages 220--224, 2013.
+\newblock ISSN 0743-166X.
+\newblock \doi{10.1109/INFCOM.2013.6566767}.
+\newblock URL
+  \url{http://ieeexplore.ieee.org/lpdocs/epic03/wrapper.htm?arnumber=6566767}.
 
 \end{thebibliography}
