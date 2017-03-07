@@ -1,9 +1,24 @@
-\begin{thebibliography}{20}
+\begin{thebibliography}{27}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
   \providecommand{\doi}[1]{doi: #1}\else
   \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[net()]{netflixsh}
+{Netflix Quarterly Earnings}.
+\newblock https://ir.netflix.com/results.cfm.
+\newblock Acessed: 2017-03-01.
+
+\bibitem[spo()]{spotifypress}
+{Spotify Press}.
+\newblock https://press.spotify.com/us/about/.
+\newblock Accessed: 2017-03-01.
+
+\bibitem[ifp()]{ifpi}
+{IFPI Global Music Report 2016}.
+\newblock http://www.ifpi.org/downloads/GMR2016.pdf.
+\newblock Accessed: 2017-03-01.
 
 \bibitem[{G{\"{u}}r Ali} and Arit{\"{u}}rk(2014)]{GurAli2014}
 {\"{O}}zden {G{\"{u}}r Ali} and Umut Arit{\"{u}}rk.
@@ -80,6 +95,45 @@ Anders Drachen, Eric~Thurston Lundquist, Yungjen Kung, Pranav~Simha Rao, Diego
 \newblock Rapid prediction of player retention in free-to-play mobile games.
 \newblock \emph{CoRR}, abs/1607.03202, 2016.
 
+\bibitem[Ballings and {Van Den Poel}(2012)]{Ballings2012}
+Michel Ballings and Dirk {Van Den Poel}.
+\newblock {Customer event history for churn prediction: How long is long
+  enough?}
+\newblock \emph{Expert Systems with Applications}, 39\penalty0 (18):\penalty0
+  13517--13522, 2012.
+\newblock ISSN 09574174.
+\newblock \doi{10.1016/j.eswa.2012.07.006}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.eswa.2012.07.006}.
+
+\bibitem[Wangperawong et~al.(2016)Wangperawong, Brun, Laudy, and
+  Pavasuthipaisit]{Wangperawong2016}
+Artit Wangperawong, Cyrille Brun, Dr.~Olav Laudy, and Rujikorn Pavasuthipaisit.
+\newblock {Churn analysis using deep convolutional neural networks and
+  autoencoders}.
+\newblock pages 1--6, 2016.
+
+\bibitem[Coussement and Van~den Poel(2008)]{coussement2008churn}
+Kristof Coussement and Dirk Van~den Poel.
+\newblock Churn prediction in subscription services: An application of support
+  vector machines while comparing two parameter-selection techniques.
+\newblock \emph{Expert systems with applications}, 34\penalty0 (1):\penalty0
+  313--327, 2008.
+
+\bibitem[Burez and {Van den Poel}(2009)]{Burez2009}
+J.~Burez and D.~{Van den Poel}.
+\newblock {Handling class imbalance in customer churn prediction}.
+\newblock \emph{Expert Systems with Applications}, 36\penalty0 (3 PART
+  1):\penalty0 4626--4636, 2009.
+\newblock ISSN 09574174.
+\newblock \doi{10.1016/j.eswa.2008.05.027}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.eswa.2008.05.027}.
+
+\bibitem[Mahajan et~al.(2015)Mahajan, Misra, and Mahajan]{mahajan2015review}
+Vishal Mahajan, Richa Misra, and Renuka Mahajan.
+\newblock Review of data mining techniques for churn prediction in telecom.
+\newblock \emph{Journal of Information and Organizational Sciences},
+  39\penalty0 (2):\penalty0 183--197, 2015.
+
 \bibitem[Auon et~al.(2015)Auon, Kazmi, Malhotra, Vig, Agarwal, and
   Shroff]{Auon2015}
 Gaurangi~Anand Auon, Haidar Kazmi, Pankaj Malhotra, Lovekesh Vig, Puneet
@@ -124,31 +178,17 @@ Alex Krizhevsky, Ilya Sutskever, and Geoffrey~E Hinton.
 \newblock In \emph{Advances in neural information processing systems}, pages
   1097--1105, 2012.
 
-\bibitem[Wangperawong et~al.(2016)Wangperawong, Brun, Laudy, and
-  Pavasuthipaisit]{Wangperawong2016}
-Artit Wangperawong, Cyrille Brun, Dr.~Olav Laudy, and Rujikorn Pavasuthipaisit.
-\newblock {Churn analysis using deep convolutional neural networks and
-  autoencoders}.
-\newblock pages 1--6, 2016.
+\bibitem[Powers(2011)]{powers2011evaluation}
+David~Martin Powers.
+\newblock Evaluation: from precision, recall and f-measure to roc,
+  informedness, markedness and correlation.
+\newblock 2011.
 
-\bibitem[Ballings and {Van Den Poel}(2012)]{Ballings2012}
-Michel Ballings and Dirk {Van Den Poel}.
-\newblock {Customer event history for churn prediction: How long is long
-  enough?}
-\newblock \emph{Expert Systems with Applications}, 39\penalty0 (18):\penalty0
-  13517--13522, 2012.
-\newblock ISSN 09574174.
-\newblock \doi{10.1016/j.eswa.2012.07.006}.
-\newblock URL \url{http://dx.doi.org/10.1016/j.eswa.2012.07.006}.
-
-\bibitem[Burez and {Van den Poel}(2009)]{Burez2009}
-J.~Burez and D.~{Van den Poel}.
-\newblock {Handling class imbalance in customer churn prediction}.
-\newblock \emph{Expert Systems with Applications}, 36\penalty0 (3 PART
-  1):\penalty0 4626--4636, 2009.
-\newblock ISSN 09574174.
-\newblock \doi{10.1016/j.eswa.2008.05.027}.
-\newblock URL \url{http://dx.doi.org/10.1016/j.eswa.2008.05.027}.
+\bibitem[Guyon and Elisseeff(2003)]{guyon2003introduction}
+Isabelle Guyon and Andr{\'e} Elisseeff.
+\newblock An introduction to variable and feature selection.
+\newblock \emph{Journal of machine learning research}, 3\penalty0
+  (Mar):\penalty0 1157--1182, 2003.
 
 \bibitem[Zhang et~al.(2013)Zhang, Kreitz, Isaksson, Ubillos, Urdaneta,
   Pouwelse, and Epema]{Zhang2013}
