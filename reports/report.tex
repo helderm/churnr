@@ -1,5 +1,7 @@
 \documentclass{kththesis}
 
+\usepackage{bm}
+
 % remove this if you are using XeLaTeX or LuaLaTeX
 \usepackage[utf8]{inputenc}
 
@@ -53,11 +55,13 @@
 
 \chapter{Introduction}
 
-	The last decade has witnessed an overwhelming increase in popularity in all kinds of streaming services around the globe. Applications like Netflix and Spotify have changed the industry by offering a legal and affordable way of accessing content by through a subscription-like contract instead of the classical pay-by-content commonly used by traditional media providers. This change in business model has proven to be successful by the sheer amount of customers that the most popular service providers have nowadays. Netflix for instance has reported to its shareholders a user base of 93 million worldwide at the end of 2016 \citep{netflixsh}, while Spotify recently reached the amazing feat of 50 million paying subscribers, 20 million of that only in one year \citep{spotifypress}. Even though bureaucratic challenges like the dispute between the service providers and the labels regarding the value of licenses are still on debate, the adoption of this new model by consumers indicates no interest of going back to the old ways of getting access to digital content.
+	The last decade has witnessed an overwhelming increase in popularity in all kinds of streaming services around the globe. Applications like Netflix and Spotify have changed the industry by offering a legal and affordable way of accessing content through a subscription-like contract instead of the classical pay-by-content commonly used by traditional media providers. This change in business model has proven to be successful by the sheer amount of customers that the most popular service providers have nowadays. Netflix for instance has reported to its shareholders a user base of 93 million worldwide at the end of 2016 \citep{netflixsh}, while Spotify recently reached the amazing feat of 50 million paying subscribers, 20 million of that only in one year \citep{spotifypress}. Even though bureaucratic challenges like the dispute between the service providers and the labels regarding the value of licenses are still on debate, the adoption of this new model by consumers indicates no interest of going back to the old ways of getting access to digital content, like through physical or downloadable pay-by-content media.
 
 	Music streaming follows this trend of growth on the latest economical reports. Over the five year period to 2015, the observed revenue from the industry grew four times to US \$2.89 billion as can be seen in Figure (TODO: add figure IFPI p17) from the IFPI organisation \citep{ifpi}. The increase in the number of paying subscribers is also of notice, seeing an increase from 8 to 68 million people over the same period. This new model also helped bring some countries where licensed music market was losing ground to piracy like China and Mexico, and it corresponds to around 20\% of the industry's revenue in the top five markets in the world. 
 	
-	Spotify is for some time the top music streaming service globally, both in terms of revenue and number of subscribers.	However the promise of growth in the area has attracted well known brands to the dispute like Apple and Google, and maintaining your current users within your service grew in importance since the process of acquiring new users is costly and difficult to execute properly. One of the important steps towards that goal is to predict accurately what is the chance of a user leaving the service provider at any given time with the intent of acting before it happens, a problem which is called \emph{churn prediction}. Several classical techniques for predicting churn like Decision Trees and Logistic Regression have been used on recent work, however most of them make use of user behaviour data at a single point in time, normally the most recent one when the dataset was created. 
+	Spotify is the top music streaming service globally in terms of number of users, totalling 100 million of which 50 million are Premium paid subscriptions \citep{spotifypress}. However the promise of growth in the area has attracted well known brands to the dispute like Apple and Google, and their growth, while still not up to par with the top players, has been steady and may be significant in the following years \citep{ifpi}. The market is becoming saturated with competition, and any contender to the top position in the music streaming area must strive to keep its current user base at all costs. The loss of a customer, be it for the competition or not, is called in the industry as \emph{churn} and is commonly seen as a metric that should be minimized in a customer relations framework (CRM) of a service provider. For that goal, an important step is to identify prematurely the candidate churning customers and to leverage actions that may avoid them from leaving, and this is commonly achieved by making use of the wealth of historical information that digital providers have about their users. 
+	
+	\emph{Churn prediction}, the task of identifying the most probable churning customers of a service provider, is an established topic in the literature and has seen a considerable amount of research specially on the mobile telecom industry \citep{Hassouna2015} \citep{Lu2014} \citep{Khan2015}.  Several classical techniques for predicting churn like decision trees and logistic regression have been used on recent work \citep{mahajan2015review}, however most of them make use of user behaviour data at a single point in time, normally the most recent one when the dataset was created. The user is commonly represented by summarizing or aggregating his behavioural feature values over a fixed time window, thus losing any latent sequential information that might be contained in the data set. This is a simplification that eases the burden of training a predictor model since the customer data is commonly high-dimensional and difficult to work with, nonetheless latent attributes, when used properly, have been shown to improve significantly a predictor's performance for industries like mobile telecom \citep{GurAli2014}.
     
     Intuitively one can think that latent factors hidden in the temporal axis of the user behaviour data could yield a better prediction accuracy when comparing to a model which leverage a single and static point in time. For instance, a user that is gradually reducing its consumption of the service over time can be easily thought of a prospect churner. While this intuition is trivial to come up with, we are also interested in learning strong correlations between temporal aspects of the data and the churn rate which are not as clear to the eye. Our hypothesis is that making use of the properties hidden on user behaviour data over time, a churn rate predictor could improve its accuracy greatly when compared to methods which are static on time.
     
@@ -66,6 +70,8 @@ A churn rate predictor which can identify possible churners accurately is just a
 The goal of this project will be to research different models for churn prediction that can make use of the temporal aspect of user behaviour data at its fullest. Our hypothesis is that latent factors hidden on usage patterns may increase the accuracy of state-of-art predictors which considers only the state of the data at a single point in time. We shall experiment on different models that are known to perform well on time series data and compare their accuracy using different evaluation methods. Detecting possible churners, while important, does not improve user retention without an associated action performed by the service provider. To derive insights on what can done to improve this metric, a deep data exploration and feature analysis is also a goal of this project. Features shall be correlated to their influence on the churn rate, and feature selection techniques shall be researched and implemented in an attempt to reduce bias on the churn classifiers.    
 
 \chapter{Background}
+
+TODO: write intro paragraph
 
 \subsection{Definitions}
 
@@ -88,6 +94,26 @@ Note that this definition is not concerned whether the user is a paying customer
 TODO: add feature selection techniques (Information gain, L1-norm, Recursive Feature Elimination, Variance Threshold...)
 
 \subsection{Predictor Models}
+
+\subsubsection{Logistic Regression}
+
+Logistic regression is a linear regression model used to predict the probability of occurrence of a categorical variable, like the churning and non-churning labels. First developed by mathematician David Cox \citep{cox1958regression}, this technique has been used in wide range of domains like medical fields, marketing and economics (TODO: add refs?), and is as of today one of the most used models for predicting the churn rate of customers on the telecom industry \citep{mahajan2015review}. Despite its name, logistic regression is used mostly as a classification algorithm, since its output is a probability score that together with a threshold can map the input to one of the supplied labels (churn and no-churn, for example).
+
+The premise of logistic regression is that the output variable $y$ can be modelled as a linear probability function dependant on a set of input feature values  $\bm{x} = [x_1, x_2, ..., x_n]$ through a set of equations that follows:
+
+\begin{equation}
+p(y = 1|\bm{x}) = f(t)
+\end{equation}
+
+\begin{equation}
+f(t) = \frac{1}{(1+e^{-t})}
+\end{equation}
+
+\begin{equation}
+t = w_0 + w_1x_1 + ... + w_nx_n = \bm{w}^T\bm{x}
+\end{equation}
+
+where $y$ is the true output variable that can take the values 0 or 1 in a binary classification problem. $t$ is a linear combination of the input $\bm{x}$ with a trainable weight vector $\bm{w}$. $f(t)$ is the logistic function that gives name to the model. This function has the property of "squashing" any real input to a value between 0 and 1, and thus it can be interpreted as a probability. 
 
 TODO: add models (Decision Trees, Logistic Regression, Random Forests, LSTMs, CNNs...)
 
@@ -142,6 +168,8 @@ ROC curves can be used to compare the performance of different models by measuri
 TODO: Add eval methods (F-score, Lift chart, Top Decile Lift (TDL)...)
 
 \chapter{Related Work}
+
+TODO: write intro paragraph
 
 \section{Churn Prediction}
 
