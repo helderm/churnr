@@ -14,7 +14,7 @@ IS_ANACONDA=$(shell python -c "import sys;t=str('anaconda' in sys.version.lower(
 #################################################################################
 
 ## Install Python Dependencies
-requirements: test_environment
+reqs: test_environment
 	pip install -r requirements.txt
 
 ## Make Dataset
@@ -38,7 +38,7 @@ sync_data_from_s3:
 	aws s3 sync s3://$(BUCKET)/data/ data/
 
 ## Set up python interpreter environment
-create_environment:
+env:
 ifeq (True,$(IS_ANACONDA))
 		@echo ">>> Detected Anaconda, creating conda environment."
 ifeq (3,$(findstring 3,$(PYTHON_INTERPRETER)))
