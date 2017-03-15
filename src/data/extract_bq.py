@@ -48,7 +48,7 @@ def main(project, dataset, enddate, numdays, shareusers, timesplits):
         datestr = currdate.strftime('%Y%m%d')
 
         query = """\
-           SELECT user_id FROM [user-attributes-bq:user_sessions_aggregated.user_sessions_aggregated_{date}]\
+           SELECT user_id FROM [activation-insights:sessions.features_{date}]\
                WHERE ABS(HASH(user_id )) % {share} == 0
         """.format(date=datestr, share=int(1 / shareusers))
 
@@ -79,11 +79,6 @@ def main(project, dataset, enddate, numdays, shareusers, timesplits):
 
         logger.info('Fetching features for day {}'.format(datestr))
 
-        # dump the features table
-        sl_table = ds.table(name='user_sessions_length_s{sampledate}_{currdate}'.format(sampledate=enddate, currdate=datestr))
-        if sl_table.exists():
-            sl_table.delete()
-
         for j in range(timesplits):
             if j+1 != timesplits:
                 # calculate the timeslot range
@@ -92,20 +87,25 @@ def main(project, dataset, enddate, numdays, shareusers, timesplits):
                 # get the remaining secs lost due to rounding on the last slot. Will it be biased?
                 currtimeslot_end = currdate.timestamp() + SECS_IN_DAY + 0.999
 
+            # dump the features table
+            ft_table = ds.table(name='user_sessions_length_s{sampledate}_{currdate}_{split}'.format(sampledate=enddate, currdate=datestr, split=j))
+            if ft_table.exists():
+                ft_table.delete()
+
             # query avg session length
             query = """\
-                SELECT  user_id, avg(session_length) as avg_session_length, {startslot} as slot_start, {endslot} as slot_end FROM\
-                        (SELECT user_id , (sessions.end_time - sessions.start_time) as session_length\
-                            FROM [user-attributes-bq:user_sessions_aggregated.user_sessions_aggregated_{date}]\
+                SELECT  user_id, avg(session_length) as session_length, avg(skip_ratio) as skip_ratio, avg(unique_pages) as unique_pages FROM\
+                        (SELECT user_id , session_length, skip_ratio, unique_pages\
+                            FROM [activation-insights:sessions.features_{date}]\
                             WHERE user_id IN (SELECT user_id FROM [{project}:{dataset}.{table}])\
-                                AND sessions.start_time >= {startslot} AND sessions.start_time < {endslot})
+                                AND TIMESTAMP_TO_MSEC(TIMESTAMP(start_time)) >= {startslot} AND TIMESTAMP_TO_MSEC(TIMESTAMP(start_time)) < {endslot})
                 GROUP BY user_id\
             """.format(date=datestr, project=project, dataset=dataset, table=user_table.name,
                         startslot=int(currtimeslot_start*1000), endslot=int(currtimeslot_end*1000))
 
             jobname = 'user_sessions_length_job_' + str(uuid.uuid4())
             job = client.run_async_query(jobname, query)
-            job.destination = sl_table
+            job.destination = ft_table
             job.allow_large_results = True
             job.write_disposition = 'WRITE_APPEND'
             job.begin()
@@ -123,7 +123,7 @@ def main(project, dataset, enddate, numdays, shareusers, timesplits):
 def wait_for_jobs(jobs):
     import time
     for job in jobs:
-        numtries = 20
+        numtries = 30
         job.reload()
         while job.state != 'DONE':
             time.sleep(3)
