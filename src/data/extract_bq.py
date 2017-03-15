@@ -12,6 +12,8 @@ SECS_IN_DAY = 86399
 #yesterday = (dt.datetime.today() - dt.timedelta(days=1)).strftime('%Y%m%d')
 yesterday = '20170313'
 
+logger = logging.getLogger(__name__)
+
 @click.command()
 @click.option('--project', default='user-lifecycle')
 @click.option('--dataset', default='helder')
@@ -19,11 +21,11 @@ yesterday = '20170313'
 @click.option('--numdays', default=7)
 @click.option('--shareusers', default=0.01)
 @click.option('--timesplits', default=3)
-def main(project, dataset, enddate, numdays, shareusers, timesplits):
+@click.option('--output', default='gs://helder/data/raw')
+def main(project, dataset, enddate, numdays, shareusers, timesplits, output):
     """ Extract data from several sources on BigQuery using intermediary tables
         and dump the final output as a file into ../data/raw
     """
-    logger = logging.getLogger(__name__)
     logger.info('Starting BigQuery data extraction...')
 
     # assert args
@@ -38,12 +40,27 @@ def main(project, dataset, enddate, numdays, shareusers, timesplits):
         ds.create()
 
     # randomly sample users who are active on the last week
-    jobs = []
+    user_table, jobs = fetch_user_samples(enddate, shareusers, ds, client)
+    wait_for_jobs(jobs)
+
+    # build feature set
+    ft_tables, jobs = fetch_features(user_table, numdays, enddate, timesplits, project, ds, client)
+    wait_for_jobs(jobs)
+
+    # serialize features
+    jobs = dump_features_to_gcs(ft_tables, output, client)
+    wait_for_jobs(jobs)
+
+    logger.info('Finished! Data dumped to {}'.format(output))
+
+def fetch_user_samples(enddate, shareusers, ds, client):
+
     user_table = ds.table(name='user_ids_sampled_{date}'.format(date=enddate))
     if user_table.exists():
         user_table.delete()
 
     currdate = dt.datetime.strptime(enddate, '%Y%m%d')
+    jobs = []
     for i in range(7):
         datestr = currdate.strftime('%Y%m%d')
 
@@ -65,12 +82,16 @@ def main(project, dataset, enddate, numdays, shareusers, timesplits):
 
         currdate = currdate - dt.timedelta(days=1)
 
-    logger.info('Waiting for jobs to finish...')
-    wait_for_jobs(jobs)
+    return user_table, jobs
 
-    # dispatch jobs for each day
+
+def fetch_features(user_table, numdays, enddate, timesplits, project, ds, client):
+
     jobs = []
     currdate = dt.datetime.strptime(enddate+'000000', '%Y%m%d%H%M%S')
+
+    ft_tables = []
+    ft_table_name = 'user_features_s{sampledate}_'.format(sampledate=enddate)
     for i in range(numdays):
 
         # calculate the time splits
@@ -88,7 +109,7 @@ def main(project, dataset, enddate, numdays, shareusers, timesplits):
                 currtimeslot_end = currdate.timestamp() + SECS_IN_DAY + 0.999
 
             # dump the features table
-            ft_table = ds.table(name='user_sessions_length_s{sampledate}_{currdate}_{split}'.format(sampledate=enddate, currdate=datestr, split=j))
+            ft_table = ds.table(name=ft_table_name+'{split}_{currdate}'.format(currdate=datestr, split=j))
             if ft_table.exists():
                 ft_table.delete()
 
@@ -100,10 +121,10 @@ def main(project, dataset, enddate, numdays, shareusers, timesplits):
                             WHERE user_id IN (SELECT user_id FROM [{project}:{dataset}.{table}])\
                                 AND TIMESTAMP_TO_MSEC(TIMESTAMP(start_time)) >= {startslot} AND TIMESTAMP_TO_MSEC(TIMESTAMP(start_time)) < {endslot})
                 GROUP BY user_id\
-            """.format(date=datestr, project=project, dataset=dataset, table=user_table.name,
+            """.format(date=datestr, project=project, dataset=ds.name, table=user_table.name,
                         startslot=int(currtimeslot_start*1000), endslot=int(currtimeslot_end*1000))
 
-            jobname = 'user_sessions_length_job_' + str(uuid.uuid4())
+            jobname = 'user_features_job_' + str(uuid.uuid4())
             job = client.run_async_query(jobname, query)
             job.destination = ft_table
             job.allow_large_results = True
@@ -111,16 +132,34 @@ def main(project, dataset, enddate, numdays, shareusers, timesplits):
             job.begin()
 
             jobs.append(job)
+            ft_tables.append(ft_table)
 
             currtimeslot_start += math.ceil(SECS_IN_DAY / timesplits)
 
         currdate = currdate - dt.timedelta(days=1)
 
-    logger.info('Waiting for jobs to finish...')
-    wait_for_jobs(jobs)
+    return ft_tables, jobs
 
+
+def dump_features_to_gcs(ft_tables, dest, client):
+
+    logger.info('Dumping {} tables to {}...'.format(len(ft_tables), dest))
+
+    jobs = []
+    for ft_table in ft_tables:
+        path = dest + '/' + ft_table.name
+        jobname = 'features_dump_job_' + str(uuid.uuid4())
+        job = client.extract_table_to_storage(jobname, ft_table, path)
+        job.begin()
+
+        jobs.append(job)
+
+    return jobs
 
 def wait_for_jobs(jobs):
+
+    logger.info("Waiting for {} jobs to finish...".format(len(jobs)))
+
     import time
     for job in jobs:
         numtries = 30
