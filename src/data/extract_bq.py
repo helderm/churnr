@@ -9,8 +9,8 @@ import datetime as dt
 import math
 
 SECS_IN_DAY = 86399
-#yesterday = (dt.datetime.today() - dt.timedelta(days=1)).strftime('%Y%m%d')
-yesterday = '20170313'
+yesterday = (dt.datetime.today() - dt.timedelta(days=1)).strftime('%Y%m%d')
+#yesterday = '20170313'
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 @click.option('--dataset', default='helder')
 @click.option('--enddate', default=yesterday)
 @click.option('--numdays', default=7)
-@click.option('--shareusers', default=0.01)
+@click.option('--shareusers', default=0.0001)
 @click.option('--timesplits', default=3)
 @click.option('--output', default='gs://helder/data/raw')
 def main(project, dataset, enddate, numdays, shareusers, timesplits, output):
@@ -43,8 +43,16 @@ def main(project, dataset, enddate, numdays, shareusers, timesplits, output):
     user_table, jobs = fetch_user_samples(enddate, shareusers, ds, client)
     wait_for_jobs(jobs)
 
+    # make samples distinct
+    jobs = distinct_users(user_table, project, ds, client)
+    wait_for_jobs(jobs)
+
     # build feature set
     ft_tables, jobs = fetch_features(user_table, numdays, enddate, timesplits, project, ds, client)
+    wait_for_jobs(jobs)
+
+    # backfill missing users on feature tables
+    jobs = backfill_missing_users(numdays, enddate, timesplits, project, ds, client)
     wait_for_jobs(jobs)
 
     # serialize features
@@ -52,6 +60,7 @@ def main(project, dataset, enddate, numdays, shareusers, timesplits, output):
     wait_for_jobs(jobs)
 
     logger.info('Finished! Data dumped to {}'.format(output))
+
 
 def fetch_user_samples(enddate, shareusers, ds, client):
 
@@ -83,6 +92,24 @@ def fetch_user_samples(enddate, shareusers, ds, client):
         currdate = currdate - dt.timedelta(days=1)
 
     return user_table, jobs
+
+
+def distinct_users(user_table, project, ds, client):
+
+    query = """\
+       SELECT user_id FROM [{project}:{dataset}.{table}] GROUP BY user_id\
+    """.format(project=project, dataset=ds.name, table=user_table.name)
+
+    logger.info('Fetching distict user ids from samples...')
+
+    jobname = 'user_distinct_samples_job_' + str(uuid.uuid4())
+    job = client.run_async_query(jobname, query)
+    job.destination = user_table
+    job.allow_large_results = True
+    job.write_disposition = 'WRITE_TRUNCATE'
+    job.begin()
+
+    return [job]
 
 
 def fetch_features(user_table, numdays, enddate, timesplits, project, ds, client):
@@ -141,6 +168,44 @@ def fetch_features(user_table, numdays, enddate, timesplits, project, ds, client
     return ft_tables, jobs
 
 
+def backfill_missing_users(numdays, enddate, timesplits, project, ds, client):
+
+    jobs = []
+    currdate = dt.datetime.strptime(enddate+'000000', '%Y%m%d%H%M%S')
+
+    ft_table_name = 'user_features_s{sampledate}_'.format(sampledate=enddate)
+    for i in range(numdays):
+
+        # calculate the time splits
+        datestr = currdate.strftime('%Y%m%d')
+
+        logger.info('Backfilling features for day {}'.format(datestr))
+
+        for j in range(timesplits):
+
+            ft_table = ds.table(name=ft_table_name+'{split}_{currdate}'.format(currdate=datestr, split=j))
+
+            # append missing values to feature table
+            query = """\
+                SELECT  user_id, 0.0 as session_length, 0.0 as skip_ratio, 0.0 as unique_pages\
+                            FROM[{project}:{dataset}.user_ids_sampled_{enddate}]\
+                            WHERE user_id NOT IN (SELECT user_id FROM [{project}:{dataset}.{table}])\
+            """.format(enddate=enddate, project=project, dataset=ds.name, table=ft_table.name)
+
+            jobname = 'backfill_missing_user_features_job_' + str(uuid.uuid4())
+            job = client.run_async_query(jobname, query)
+            job.destination = ft_table
+            job.allow_large_results = True
+            job.write_disposition = 'WRITE_APPEND'
+            job.begin()
+
+            jobs.append(job)
+
+        currdate = currdate - dt.timedelta(days=1)
+
+    return jobs
+
+
 def dump_features_to_gcs(ft_tables, dest, client):
 
     logger.info('Dumping {} tables to {}...'.format(len(ft_tables), dest))
@@ -155,6 +220,7 @@ def dump_features_to_gcs(ft_tables, dest, client):
         jobs.append(job)
 
     return jobs
+
 
 def wait_for_jobs(jobs):
 
