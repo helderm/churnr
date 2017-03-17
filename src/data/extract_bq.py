@@ -9,8 +9,8 @@ import datetime as dt
 import math
 
 SECS_IN_DAY = 86399
-yesterday = (dt.datetime.today() - dt.timedelta(days=1)).strftime('%Y%m%d')
-#yesterday = '20170313'
+#yesterday = (dt.datetime.today() - dt.timedelta(days=1)).strftime('%Y%m%d')
+yesterday = '20170316'
 
 logger = logging.getLogger(__name__)
 
@@ -19,11 +19,12 @@ logger = logging.getLogger(__name__)
 @click.option('--dataset', default='helder')
 @click.option('--enddate', default=yesterday)
 @click.option('--numdays', default=3)
-@click.option('--shareusers', default=0.0001)
+@click.option('--shareusers', default=0.001)
 @click.option('--timesplits', default=3)
 @click.option('--churndays', default=4)
-@click.option('--output', default='gs://helder/data/raw')
-def main(project, dataset, enddate, numdays, shareusers, timesplits, output, churndays):
+@click.option('--gsoutput', default='gs://helder/data/raw')
+@click.option('--hdoutput', default='../../data/raw')
+def main(project, dataset, enddate, numdays, shareusers, timesplits, churndays, gsoutput, hdoutput):
     """ Extract data from several sources on BigQuery using intermediary tables
         and dump the final output as a file into ../data/raw
     """
@@ -57,14 +58,18 @@ def main(project, dataset, enddate, numdays, shareusers, timesplits, output, chu
     wait_for_jobs(jobs)
 
     # backfill missing users on feature tables
-    jobs = backfill_missing_users(numdays, enddate, timesplits, project, ds, client)
+    jobs = backfill_missing_users(numdays, churndays, enddate, timesplits, project, ds, client)
     wait_for_jobs(jobs)
 
     # serialize features
-    jobs = dump_features_to_gcs(ft_tables, output, client)
-    wait_for_jobs(jobs)
+    jobs = dump_features_to_gcs(ft_tables, gsoutput, client)
 
-    logger.info('Finished! Data dumped to {}'.format(output))
+    # dump to disk
+    if yes_or_no('Dump files to disk?'):
+        wait_for_jobs(jobs)
+        extract_dataset_to_disk(hdoutput, gsoutput, ft_tables[:numdays])
+
+    logger.info('Finished! Data dumped to {}'.format(gsoutput))
 
 
 def fetch_user_samples(enddate, shareusers, ds, client):
@@ -78,9 +83,14 @@ def fetch_user_samples(enddate, shareusers, ds, client):
     for i in range(7):
         datestr = currdate.strftime('%Y%m%d')
 
+        # select a random sample of users based on a user_id hash and some wanted features
         query = """\
-           SELECT user_id FROM [activation-insights:sessions.features_{date}]\
-               WHERE session_length > 0.0 AND platform = "android" AND ABS(HASH(user_id )) % {share} == 0
+            SELECT uss.user_id as user_id, usn.reporting_country as reporting_country, usn.registration_date as registration_date
+                FROM [activation-insights:sessions.features_{date}] as uss
+                JOIN [business-critical-data:user_snapshot.user_snapshot_{date}] as usn
+                ON uss.user_id = usn.user_id
+                WHERE uss.consumption_time > 0.0 AND uss.platform IN ("android","android-tablet")
+                    AND ABS(HASH(uss.user_id)) % {share} == 0 AND usn.reporting_country IN ("BR", "US", "MX")
         """.format(date=datestr, share=int(1 / shareusers))
 
         logger.info('Selecting a random sample of users ({} of users on {})'.format(shareusers, datestr))
@@ -102,7 +112,7 @@ def fetch_user_samples(enddate, shareusers, ds, client):
 def distinct_users(user_table, project, ds, client):
 
     query = """\
-       SELECT user_id FROM [{project}:{dataset}.{table}] GROUP BY user_id\
+       SELECT user_id, reporting_country, registration_date FROM [{project}:{dataset}.{table}] GROUP BY user_id, reporting_country, registration_date\
     """.format(project=project, dataset=ds.name, table=user_table.name)
 
     logger.info('Fetching distict user ids from samples...')
@@ -145,10 +155,10 @@ def fetch_features(user_table, numdays, enddate, timesplits, project, ds, client
             if ft_table.exists():
                 ft_table.delete()
 
-            # query avg session length
+            # query user features
             query = """\
-                SELECT  user_id, avg(session_length) as session_length, avg(skip_ratio) as skip_ratio, avg(unique_pages) as unique_pages, 0 as churn FROM\
-                        (SELECT user_id , session_length, skip_ratio, unique_pages\
+                SELECT  user_id, avg(consumption_time) as consumption_time, avg(session_length) as session_length, avg(skip_ratio) as skip_ratio, avg(unique_pages) as unique_pages, 0 as churn FROM\
+                        (SELECT user_id, consumption_time/1000 as consumption_time, session_length, skip_ratio, unique_pages\
                             FROM [activation-insights:sessions.features_{date}]\
                             WHERE user_id IN (SELECT user_id FROM [{project}:{dataset}.{table}])\
                                 AND TIMESTAMP_TO_MSEC(TIMESTAMP(start_time)) >= {startslot} AND TIMESTAMP_TO_MSEC(TIMESTAMP(start_time)) < {endslot})
@@ -173,10 +183,10 @@ def fetch_features(user_table, numdays, enddate, timesplits, project, ds, client
     return ft_tables, jobs
 
 
-def backfill_missing_users(numdays, enddate, timesplits, project, ds, client):
+def backfill_missing_users(numdays, churndays, enddate, timesplits, project, ds, client):
 
     jobs = []
-    currdate = dt.datetime.strptime(enddate+'000000', '%Y%m%d%H%M%S')
+    currdate = dt.datetime.strptime(enddate+'000000', '%Y%m%d%H%M%S') - dt.timedelta(days=numdays + churndays - 1)
 
     ft_table_name = 'user_features_s{sampledate}_'.format(sampledate=enddate)
     for i in range(numdays):
@@ -192,7 +202,7 @@ def backfill_missing_users(numdays, enddate, timesplits, project, ds, client):
 
             # append missing values to feature table
             query = """\
-                SELECT  user_id, 0.0 as session_length, 0.0 as skip_ratio, 0.0 as unique_pages, 1 as churn \
+                SELECT  user_id, 0.0 as consumption_time, 0.0 as session_length, 0.0 as skip_ratio, 0.0 as unique_pages, 1 as churn \
                             FROM[{project}:{dataset}.user_ids_sampled_{enddate}]\
                             WHERE user_id NOT IN (SELECT user_id FROM [{project}:{dataset}.{table}])\
             """.format(enddate=enddate, project=project, dataset=ds.name, table=ft_table.name)
@@ -206,7 +216,7 @@ def backfill_missing_users(numdays, enddate, timesplits, project, ds, client):
 
             jobs.append(job)
 
-        currdate = currdate - dt.timedelta(days=1)
+        currdate = currdate + dt.timedelta(days=1)
 
     return jobs
 
@@ -214,7 +224,7 @@ def backfill_missing_users(numdays, enddate, timesplits, project, ds, client):
 def calculate_churn(numdays, churndays, enddate, timesplits, project, ds, client):
 
     jobs = []
-    currdate = dt.datetime.strptime(enddate+'000000', '%Y%m%d%H%M%S')
+    currdate = dt.datetime.strptime(enddate+'000000', '%Y%m%d%H%M%S') - dt.timedelta(days=numdays + churndays - 1)
 
     ft_table_name = 'user_features_s{sampledate}_'.format(sampledate=enddate)
     for i in range(numdays):
@@ -228,26 +238,27 @@ def calculate_churn(numdays, churndays, enddate, timesplits, project, ds, client
 
             ft_table = ds.table(name=ft_table_name+'{split}_{currdate}'.format(currdate=datestr, split=j))
 
-            # build the union query
+            # build the query part that will join all users who had streams in the churn window
             union_query = ''
             for k in range(churndays+1):
-                datestr_2 = (currdate - dt.timedelta(days=k)).strftime('%Y%m%d')
+                datestr_2 = (currdate + dt.timedelta(days=k)).strftime('%Y%m%d')
 
                 if k > 0:
+                    # check all timesplit of other days
                     for l in range(timesplits):
                         union_query += """select user_id from `{project}.{dataset}.user_features_s{enddate}_{split}_{currdate}`
-                                    where session_length > 0.0 union distinct """.format(enddate=enddate, split=l, currdate=datestr_2, project=project, dataset=ds.name)
+                                    where consumption_time > 0.0 union distinct """.format(enddate=enddate, split=l, currdate=datestr_2, project=project, dataset=ds.name)
                 else:
-                    # check the previous timesplits for the same day
-                    for l in range(j):
+                    # check the future timesplits for the same day
+                    for l in range(j+1, timesplits-j):
                         union_query += """select user_id from `{project}.{dataset}.user_features_s{enddate}_{split}_{currdate}`
-                                    where session_length > 0.0 union distinct """.format(enddate=enddate, split=l, currdate=datestr_2, project=project, dataset=ds.name)
+                                    where consumption_time > 0.0 union distinct """.format(enddate=enddate, split=l, currdate=datestr_2, project=project, dataset=ds.name)
 
             union_query = union_query[:-16]
 
-            # append missing values to feature table
+            # append sessions from users that did not stream in this timesplit but who are also not churners
             query = """\
-                select us.user_id, 0.0 as session_length, 0.0 as skip_ratio, 0.0 as unique_pages, 0 as churn FROM (SELECT user_id FROM `{project}.{dataset}.user_ids_sampled_{enddate}`
+                select us.user_id, 0.0 as consumption_time, 0.0 as session_length, 0.0 as skip_ratio, 0.0 as unique_pages, 0 as churn FROM (SELECT user_id FROM `{project}.{dataset}.user_ids_sampled_{enddate}`
                     where user_id not in (select user_id from `{project}.{dataset}.{table}` where session_length > 0.0)) as us
                 join ({union}) as su1
                 on us.user_id = su1.user_id
@@ -263,7 +274,7 @@ def calculate_churn(numdays, churndays, enddate, timesplits, project, ds, client
 
             jobs.append(job)
 
-        currdate = currdate - dt.timedelta(days=1)
+        currdate = currdate + dt.timedelta(days=1)
 
     return jobs
 
@@ -284,6 +295,11 @@ def dump_features_to_gcs(ft_tables, dest, client):
     return jobs
 
 
+def extract_dataset_to_disk(hdoutput, gsoutput, tables):
+    # TODO
+    pass
+
+
 def wait_for_jobs(jobs):
 
     logger.info("Waiting for {} jobs to finish...".format(len(jobs)))
@@ -297,6 +313,16 @@ def wait_for_jobs(jobs):
             job.reload()
             numtries -= 1
             assert numtries >= 0
+
+
+def yes_or_no(question):
+    reply = str(input(question+' (Y/n): ')).lower().strip()
+    if not len(reply) or reply[0] == 'y':
+        return True
+    elif reply[0] == 'n':
+        return False
+    else:
+        return yes_or_no("Uhhhh... " + question)
 
 
 if __name__ == '__main__':
