@@ -62,14 +62,16 @@ def main(project, dataset, enddate, numdays, shareusers, timesplits, churndays, 
     wait_for_jobs(jobs)
 
     # serialize features
-    jobs = dump_features_to_gcs(ft_tables, gsoutput, client)
+    asw = yes_or_no('Dump files to GCS?')
+    if asw:
+        jobs = dump_features_to_gcs(ft_tables, gsoutput, client)
 
     # dump to disk
-    if yes_or_no('Dump files to disk?'):
-        wait_for_jobs(jobs)
-        extract_dataset_to_disk(hdoutput, gsoutput, ft_tables[:numdays])
+    #if yes_or_no('Dump files to disk?'):
+    #    wait_for_jobs(jobs)
+    #    extract_dataset_to_disk(hdoutput, gsoutput, ft_tables[:numdays])
 
-    logger.info('Finished! Data dumped to {}'.format(gsoutput))
+    logger.info('Finished! Data dumped to BigQuery{}'.format(' and to GCS@'+gsoutput if asw else ''))
 
 
 def fetch_user_samples(enddate, shareusers, ds, client):
@@ -161,7 +163,8 @@ def fetch_features(user_table, numdays, enddate, timesplits, project, ds, client
                         (SELECT user_id, consumption_time/1000 as consumption_time, session_length, skip_ratio, unique_pages\
                             FROM [activation-insights:sessions.features_{date}]\
                             WHERE user_id IN (SELECT user_id FROM [{project}:{dataset}.{table}])\
-                                AND TIMESTAMP_TO_MSEC(TIMESTAMP(start_time)) >= {startslot} AND TIMESTAMP_TO_MSEC(TIMESTAMP(start_time)) < {endslot})
+                                AND TIMESTAMP_TO_MSEC(TIMESTAMP(start_time)) >= {startslot} AND TIMESTAMP_TO_MSEC(TIMESTAMP(start_time)) < {endslot}
+                                AND session_length > 0.0)
                 GROUP BY user_id\
             """.format(date=datestr, project=project, dataset=ds.name, table=user_table.name,
                         startslot=int(currtimeslot_start*1000), endslot=int(currtimeslot_end*1000))
@@ -259,7 +262,7 @@ def calculate_churn(numdays, churndays, enddate, timesplits, project, ds, client
             # append sessions from users that did not stream in this timesplit but who are also not churners
             query = """\
                 select us.user_id, 0.0 as consumption_time, 0.0 as session_length, 0.0 as skip_ratio, 0.0 as unique_pages, 0 as churn FROM (SELECT user_id FROM `{project}.{dataset}.user_ids_sampled_{enddate}`
-                    where user_id not in (select user_id from `{project}.{dataset}.{table}` where session_length > 0.0)) as us
+                    where user_id not in (select user_id from `{project}.{dataset}.{table}` where session > 0.0)) as us
                 join ({union}) as su1
                 on us.user_id = su1.user_id
             """.format(enddate=enddate, project=project, dataset=ds.name, table=ft_table.name, union=union_query)
@@ -316,10 +319,10 @@ def wait_for_jobs(jobs):
 
 
 def yes_or_no(question):
-    reply = str(input(question+' (Y/n): ')).lower().strip()
-    if not len(reply) or reply[0] == 'y':
+    reply = str(input(question+' (y/N): ')).lower().strip()
+    if len(reply) and reply[0] == 'y':
         return True
-    elif reply[0] == 'n':
+    elif not len(reply) or reply[0] == 'n':
         return False
     else:
         return yes_or_no("Uhhhh... " + question)
