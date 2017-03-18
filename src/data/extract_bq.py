@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import os
 import click
@@ -5,8 +6,10 @@ import logging
 import uuid
 from dotenv import find_dotenv, load_dotenv
 from google.cloud import bigquery as bq
+import google.cloud.storage as gcs
 import datetime as dt
 import math
+import json
 
 SECS_IN_DAY = 86399
 #yesterday = (dt.datetime.today() - dt.timedelta(days=1)).strftime('%Y%m%d')
@@ -62,19 +65,27 @@ def main(project, dataset, enddate, numdays, shareusers, timesplits, churndays, 
     wait_for_jobs(jobs)
 
     # serialize features
+    tables = ft_tables[-numdays*timesplits:] + [user_table]
     asw = yes_or_no('Dump files to GCS?')
     if asw:
-        jobs = dump_features_to_gcs(ft_tables, gsoutput, client)
+        jobs = dump_features_to_gcs(tables, gsoutput, client)
 
     # dump to disk
-    #if yes_or_no('Dump files to disk?'):
-    #    wait_for_jobs(jobs)
-    #    extract_dataset_to_disk(hdoutput, gsoutput, ft_tables[:numdays])
+    if asw and yes_or_no('Dump files to disk?'):
+        wait_for_jobs(jobs)
+        extract_dataset_to_disk(hdoutput, gsoutput, tables, project)
 
-    logger.info('Finished! Data dumped to BigQuery{}'.format(' and to GCS@'+gsoutput if asw else ''))
+    # save metadata file with args that generated this dataset
+    meta = { 'enddate': enddate, 'timesplits': timesplits, 'project': project, 'dataset': dataset,
+            'numdays': numdays, 'churndays': churndays, 'shareusers': shareusers, 'gsoutput': gsoutput }
+    with open(os.path.join(hdoutput, 'meta.json'), 'w') as f:
+        json.dump(meta, f)
+
+    logger.info('Finished! Data dumped to BigQuery{}'.format(' and to '+gsoutput if asw else ''))
 
 
 def fetch_user_samples(enddate, shareusers, ds, client):
+    """ Fetch a random sample of users based on a user_id hash """
 
     user_table = ds.table(name='user_ids_sampled_{date}'.format(date=enddate))
     if user_table.exists():
@@ -87,7 +98,8 @@ def fetch_user_samples(enddate, shareusers, ds, client):
 
         # select a random sample of users based on a user_id hash and some wanted features
         query = """\
-            SELECT uss.user_id as user_id, usn.reporting_country as reporting_country, usn.registration_date as registration_date
+            SELECT uss.user_id as user_id, usn.reporting_country as reporting_country, usn.registration_date as registration_date,
+                    uss.platform as platform, usn.product as product
                 FROM [activation-insights:sessions.features_{date}] as uss
                 JOIN [business-critical-data:user_snapshot.user_snapshot_{date}] as usn
                 ON uss.user_id = usn.user_id
@@ -112,9 +124,11 @@ def fetch_user_samples(enddate, shareusers, ds, client):
 
 
 def distinct_users(user_table, project, ds, client):
+    """ Distinct the user table """
 
     query = """\
-       SELECT user_id, reporting_country, registration_date FROM [{project}:{dataset}.{table}] GROUP BY user_id, reporting_country, registration_date\
+       SELECT user_id, reporting_country, registration_date, platform, product FROM [{project}:{dataset}.{table}]
+        GROUP BY user_id, reporting_country, registration_date, platform, product\
     """.format(project=project, dataset=ds.name, table=user_table.name)
 
     logger.info('Fetching distict user ids from samples...')
@@ -130,6 +144,7 @@ def distinct_users(user_table, project, ds, client):
 
 
 def fetch_features(user_table, numdays, enddate, timesplits, project, ds, client):
+    """ Fetch the features for each user session, splitting into timesplits """
 
     jobs = []
     currdate = dt.datetime.strptime(enddate+'000000', '%Y%m%d%H%M%S')
@@ -187,6 +202,7 @@ def fetch_features(user_table, numdays, enddate, timesplits, project, ds, client
 
 
 def backfill_missing_users(numdays, churndays, enddate, timesplits, project, ds, client):
+    """ add the remaining missing users to the feature tables who did in fact churn """
 
     jobs = []
     currdate = dt.datetime.strptime(enddate+'000000', '%Y%m%d%H%M%S') - dt.timedelta(days=numdays + churndays - 1)
@@ -225,6 +241,7 @@ def backfill_missing_users(numdays, churndays, enddate, timesplits, project, ds,
 
 
 def calculate_churn(numdays, churndays, enddate, timesplits, project, ds, client):
+    """ add to the feature tables missing users who are not considered churners yet """
 
     jobs = []
     currdate = dt.datetime.strptime(enddate+'000000', '%Y%m%d%H%M%S') - dt.timedelta(days=numdays + churndays - 1)
@@ -247,7 +264,7 @@ def calculate_churn(numdays, churndays, enddate, timesplits, project, ds, client
                 datestr_2 = (currdate + dt.timedelta(days=k)).strftime('%Y%m%d')
 
                 if k > 0:
-                    # check all timesplit of other days
+                    # check all timesplit of future days
                     for l in range(timesplits):
                         union_query += """select user_id from `{project}.{dataset}.user_features_s{enddate}_{split}_{currdate}`
                                     where consumption_time > 0.0 union distinct """.format(enddate=enddate, split=l, currdate=datestr_2, project=project, dataset=ds.name)
@@ -262,7 +279,7 @@ def calculate_churn(numdays, churndays, enddate, timesplits, project, ds, client
             # append sessions from users that did not stream in this timesplit but who are also not churners
             query = """\
                 select us.user_id, 0.0 as consumption_time, 0.0 as session_length, 0.0 as skip_ratio, 0.0 as unique_pages, 0 as churn FROM (SELECT user_id FROM `{project}.{dataset}.user_ids_sampled_{enddate}`
-                    where user_id not in (select user_id from `{project}.{dataset}.{table}` where session > 0.0)) as us
+                    where user_id not in (select user_id from `{project}.{dataset}.{table}` where session_length > 0.0)) as us
                 join ({union}) as su1
                 on us.user_id = su1.user_id
             """.format(enddate=enddate, project=project, dataset=ds.name, table=ft_table.name, union=union_query)
@@ -283,6 +300,7 @@ def calculate_churn(numdays, churndays, enddate, timesplits, project, ds, client
 
 
 def dump_features_to_gcs(ft_tables, dest, client):
+    """ Dump generated tables as files on Google Cloud Storage"""
 
     logger.info('Dumping {} tables to {}...'.format(len(ft_tables), dest))
 
@@ -298,27 +316,53 @@ def dump_features_to_gcs(ft_tables, dest, client):
     return jobs
 
 
-def extract_dataset_to_disk(hdoutput, gsoutput, tables):
-    # TODO
-    pass
+def extract_dataset_to_disk(hdoutput, gsoutput, tables, project):
+    """ Extract dataset to local files on disk"""
+
+    logger.info('Dumping {} tables to disk at {}...'.format(len(tables), hdoutput))
+
+    client = gcs.Client(project)
+
+    split_uri = gsoutput.split('/')
+    bucket_name = split_uri[2]
+
+    bucket = gcs.Bucket(client, bucket_name)
+
+    filepath = '/'.join(split_uri[3:])
+    for table in tables:
+        filename = table.name
+
+        blob = gcs.Blob(name=os.path.join(filepath, filename), bucket=bucket)
+
+        local_file = os.path.join(hdoutput, filename)
+        with open(local_file, 'wb') as f:
+            blob.download_to_file(f)
 
 
 def wait_for_jobs(jobs):
-
+    """ wait for async GCP jobs to finish """
     logger.info("Waiting for {} jobs to finish...".format(len(jobs)))
 
     import time
     for job in jobs:
-        numtries = 30
+        numtries = 35
         job.reload()
         while job.state != 'DONE':
             time.sleep(3)
             job.reload()
             numtries -= 1
-            assert numtries >= 0
+
+            if numtries == 0:
+                logger.error('Job {} timed out! Aborting!'.format(job.name))
+                raise Exception('Async job timed out')
+
+        if job.errors:
+            logger.error('Job {} failed! Aborting!'.format(job.name))
+            raise Exception('Async job failed')
 
 
 def yes_or_no(question):
+    """ Simple yes or no user prompt """
     reply = str(input(question+' (y/N): ')).lower().strip()
     if len(reply) and reply[0] == 'y':
         return True
