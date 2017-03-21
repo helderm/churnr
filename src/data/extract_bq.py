@@ -12,8 +12,8 @@ import math
 import json
 
 SECS_IN_DAY = 86399
-#yesterday = (dt.datetime.today() - dt.timedelta(days=1)).strftime('%Y%m%d')
-yesterday = '20170316'
+yesterday = (dt.datetime.today() - dt.timedelta(days=1)).strftime('%Y%m%d')
+#yesterday = '20170316'
 
 logger = logging.getLogger(__name__)
 
@@ -21,10 +21,10 @@ logger = logging.getLogger(__name__)
 @click.option('--project', default='user-lifecycle')
 @click.option('--dataset', default='helder')
 @click.option('--enddate', default=yesterday)
-@click.option('--numdays', default=3)
+@click.option('--numdays', default=7)
 @click.option('--shareusers', default=0.001)
 @click.option('--timesplits', default=3)
-@click.option('--churndays', default=4)
+@click.option('--churndays', default=7)
 @click.option('--gsoutput', default='gs://helder/data/raw')
 @click.option('--hdoutput', default='../../data/raw')
 def main(project, dataset, enddate, numdays, shareusers, timesplits, churndays, gsoutput, hdoutput):
@@ -45,7 +45,7 @@ def main(project, dataset, enddate, numdays, shareusers, timesplits, churndays, 
         ds.create()
 
     # randomly sample users who are active on the last week
-    user_table, jobs = fetch_user_samples(enddate, shareusers, ds, client)
+    user_table, jobs = fetch_user_samples(enddate, numdays + churndays, shareusers, ds, client)
     wait_for_jobs(jobs)
 
     # make samples distinct
@@ -84,14 +84,16 @@ def main(project, dataset, enddate, numdays, shareusers, timesplits, churndays, 
     logger.info('Finished! Data dumped to BigQuery{}'.format(' and to '+gsoutput if asw else ''))
 
 
-def fetch_user_samples(enddate, shareusers, ds, client):
+def fetch_user_samples(enddate, totaldays, shareusers, ds, client):
     """ Fetch a random sample of users based on a user_id hash """
 
     user_table = ds.table(name='user_ids_sampled_{date}'.format(date=enddate))
     if user_table.exists():
         user_table.delete()
 
-    currdate = dt.datetime.strptime(enddate, '%Y%m%d')
+    #currdate = dt.datetime.strptime(enddate, '%Y%m%d')
+    currdate = dt.datetime.strptime(enddate, '%Y%m%d') - dt.timedelta(days=totaldays - 1)
+
     jobs = []
     for i in range(7):
         datestr = currdate.strftime('%Y%m%d')
@@ -118,7 +120,7 @@ def fetch_user_samples(enddate, shareusers, ds, client):
 
         jobs.append(job)
 
-        currdate = currdate - dt.timedelta(days=1)
+        currdate = currdate + dt.timedelta(days=1)
 
     return user_table, jobs
 
@@ -245,8 +247,10 @@ def calculate_churn(numdays, churndays, enddate, timesplits, project, ds, client
 
     jobs = []
     currdate = dt.datetime.strptime(enddate+'000000', '%Y%m%d%H%M%S') - dt.timedelta(days=numdays + churndays - 1)
+    churnstart = dt.datetime.strptime(enddate+'000000', '%Y%m%d%H%M%S') - dt.timedelta(days=churndays - 1)
 
     ft_table_name = 'user_features_s{sampledate}_'.format(sampledate=enddate)
+
     for i in range(numdays):
 
         # calculate the time splits
@@ -260,19 +264,12 @@ def calculate_churn(numdays, churndays, enddate, timesplits, project, ds, client
 
             # build the query part that will join all users who had streams in the churn window
             union_query = ''
-            for k in range(churndays+1):
-                datestr_2 = (currdate + dt.timedelta(days=k)).strftime('%Y%m%d')
+            for k in range(churndays):
+                datestr_2 = (churnstart + dt.timedelta(days=k)).strftime('%Y%m%d')
 
-                if k > 0:
-                    # check all timesplit of future days
-                    for l in range(timesplits):
-                        union_query += """select user_id from `{project}.{dataset}.user_features_s{enddate}_{split}_{currdate}`
-                                    where consumption_time > 0.0 union distinct """.format(enddate=enddate, split=l, currdate=datestr_2, project=project, dataset=ds.name)
-                else:
-                    # check the future timesplits for the same day
-                    for l in range(j+1, timesplits-j):
-                        union_query += """select user_id from `{project}.{dataset}.user_features_s{enddate}_{split}_{currdate}`
-                                    where consumption_time > 0.0 union distinct """.format(enddate=enddate, split=l, currdate=datestr_2, project=project, dataset=ds.name)
+                for l in range(timesplits):
+                    union_query += """select user_id from `{project}.{dataset}.user_features_s{enddate}_{split}_{currdate}`
+                                where consumption_time > 0.0 union distinct """.format(enddate=enddate, split=l, currdate=datestr_2, project=project, dataset=ds.name)
 
             union_query = union_query[:-16]
 
@@ -345,7 +342,7 @@ def wait_for_jobs(jobs):
 
     import time
     for job in jobs:
-        numtries = 35
+        numtries = 90
         job.reload()
         while job.state != 'DONE':
             time.sleep(3)
