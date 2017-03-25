@@ -7,7 +7,7 @@ from dotenv import find_dotenv, load_dotenv
 
 from keras.models import Sequential
 from keras.layers import LSTM, Dense
-from keras.callbacks import ModelCheckpoint
+from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau, TensorBoard
 import numpy as np
 import json
 from keras.utils.np_utils import to_categorical
@@ -58,12 +58,16 @@ def main(inpath, outpath):
 
     # get the model instance
     model = get_model(X.shape[1], X.shape[2])
-    model_basename = 'lstm_s{}_t{}'.format(meta['enddate'], int(dt.datetime.now().timestamp()))
+    modeldir = os.path.join(outpath, 'lstm_s{}_t{}'.format(meta['enddate'], int(dt.datetime.now().timestamp())))
+    if not os.path.exists(modeldir):
+        os.makedirs(modeldir)
 
     # set model callbacks
-    chkp_path = os.path.join(outpath, model_basename + '_model_e{epoch:02d}-va{val_acc:.2f}-vl{val_loss:.2f}.hdf5')
+    chkp_path = os.path.join(modeldir, 'model_e{epoch:02d}-va{val_acc:.2f}-vl{val_loss:.2f}.hdf5')
     chkp = ModelCheckpoint(chkp_path, monitor='val_acc', save_best_only=True, period=5)
-    callbacks = [chkp]
+    reducelr = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=3, min_lr=0.001, verbose=1)
+    tensorboard = TensorBoard(log_dir=os.path.join(modeldir, 'logs'), write_images=True)
+    callbacks = [chkp, reducelr, tensorboard]
 
     # split data into train and val sets
     tscv = TimeSeriesSplit(n_splits=3)
@@ -79,7 +83,7 @@ def main(inpath, outpath):
                   validation_data=(X_test, y_test),
                   callbacks=callbacks)
 
-    with open(os.path.join(outpath, model_basename + '_config.json'), 'w') as f:
+    with open(os.path.join(modeldir, 'config.json'), 'w') as f:
         json.dump(model.get_config(), f)
 
 
