@@ -45,19 +45,19 @@ def main(project, dataset, enddate, numdays, shareusers, timesplits, churndays, 
         ds.create()
 
     # randomly sample users who are active on the last week
-    user_table, jobs = fetch_user_samples(enddate, numdays + churndays, shareusers, ds, client)
+    user_table_tmp, jobs = fetch_user_samples(enddate, numdays + churndays, shareusers, ds, client)
     wait_for_jobs(jobs)
 
     # make samples distinct
-    jobs = distinct_users(user_table, project, ds, client)
+    jobs = distinct_users(user_table_tmp, project, ds, client)
     wait_for_jobs(jobs)
 
     # build feature set
-    ft_tables, jobs = fetch_features(user_table, numdays + churndays, enddate, timesplits, project, ds, client)
+    ft_tables, jobs = fetch_features(user_table_tmp, numdays + churndays, enddate, timesplits, project, ds, client)
     wait_for_jobs(jobs)
 
     # calculate the churn label for each user and each timestep
-    jobs = calculate_churn(numdays, churndays, enddate, timesplits, project, ds, client)
+    user_table, jobs = calculate_churn(user_table_tmp, churndays, enddate, timesplits, project, ds, client)
     wait_for_jobs(jobs)
 
     # backfill missing users on feature tables
@@ -87,7 +87,7 @@ def main(project, dataset, enddate, numdays, shareusers, timesplits, churndays, 
 def fetch_user_samples(enddate, totaldays, shareusers, ds, client):
     """ Fetch a random sample of users based on a user_id hash """
 
-    user_table = ds.table(name='user_ids_sampled_{date}'.format(date=enddate))
+    user_table = ds.table(name='user_ids_sampled_{date}_tmp'.format(date=enddate))
     if user_table.exists():
         user_table.delete()
 
@@ -100,8 +100,7 @@ def fetch_user_samples(enddate, totaldays, shareusers, ds, client):
 
         # select a random sample of users based on a user_id hash and some wanted features
         query = """\
-            SELECT uss.user_id as user_id, usn.reporting_country as reporting_country, usn.registration_date as registration_date,
-                    uss.platform as platform, usn.product as product
+            SELECT uss.user_id as user_id
                 FROM [activation-insights:sessions.features_{date}] as uss
                 JOIN [business-critical-data:user_snapshot.user_snapshot_{date}] as usn
                 ON uss.user_id = usn.user_id
@@ -129,8 +128,8 @@ def distinct_users(user_table, project, ds, client):
     """ Distinct the user table """
 
     query = """\
-       SELECT user_id, reporting_country, registration_date, platform, product FROM [{project}:{dataset}.{table}]
-        GROUP BY user_id, reporting_country, registration_date, platform, product\
+       SELECT user_id FROM [{project}:{dataset}.{table}]
+        GROUP BY user_id\
     """.format(project=project, dataset=ds.name, table=user_table.name)
 
     logger.info('Fetching distict user ids from samples...')
@@ -176,7 +175,7 @@ def fetch_features(user_table, numdays, enddate, timesplits, project, ds, client
 
             # query user features
             query = """\
-                SELECT  user_id, avg(consumption_time) as consumption_time, avg(session_length) as session_length, avg(skip_ratio) as skip_ratio, avg(unique_pages) as unique_pages, 0 as churn FROM\
+                SELECT  user_id, {timesplit} as time, avg(consumption_time) as consumption_time, avg(session_length) as session_length, avg(skip_ratio) as skip_ratio, avg(unique_pages) as unique_pages FROM\
                         (SELECT user_id, consumption_time/1000 as consumption_time, session_length, skip_ratio, unique_pages\
                             FROM [activation-insights:sessions.features_{date}]\
                             WHERE user_id IN (SELECT user_id FROM [{project}:{dataset}.{table}])\
@@ -184,7 +183,8 @@ def fetch_features(user_table, numdays, enddate, timesplits, project, ds, client
                                 AND session_length > 0.0)
                 GROUP BY user_id\
             """.format(date=datestr, project=project, dataset=ds.name, table=user_table.name,
-                        startslot=int(currtimeslot_start*1000), endslot=int(currtimeslot_end*1000))
+                    startslot=int(currtimeslot_start*1000), endslot=int(currtimeslot_end*1000),
+                    timesplit=currtimeslot_start)
 
             jobname = 'user_features_job_' + str(uuid.uuid4())
             job = client.run_async_query(jobname, query)
@@ -214,6 +214,7 @@ def backfill_missing_users(numdays, churndays, enddate, timesplits, project, ds,
 
         # calculate the time splits
         datestr = currdate.strftime('%Y%m%d')
+        currtimeslot_start = currdate.timestamp()
 
         logger.info('Backfilling features for day {}'.format(datestr))
 
@@ -223,10 +224,10 @@ def backfill_missing_users(numdays, churndays, enddate, timesplits, project, ds,
 
             # append missing values to feature table
             query = """\
-                SELECT  user_id, 0.0 as consumption_time, 0.0 as session_length, 0.0 as skip_ratio, 0.0 as unique_pages, 1 as churn \
+                SELECT  user_id, {timesplit} as time, 0.0 as consumption_time, 0.0 as session_length, 0.0 as skip_ratio, 0.0 as unique_pages\
                             FROM[{project}:{dataset}.user_ids_sampled_{enddate}]\
                             WHERE user_id NOT IN (SELECT user_id FROM [{project}:{dataset}.{table}])\
-            """.format(enddate=enddate, project=project, dataset=ds.name, table=ft_table.name)
+            """.format(enddate=enddate, project=project, dataset=ds.name, table=ft_table.name, timesplit=currtimeslot_start)
 
             jobname = 'backfill_missing_user_features_job_' + str(uuid.uuid4())
             job = client.run_async_query(jobname, query)
@@ -237,63 +238,70 @@ def backfill_missing_users(numdays, churndays, enddate, timesplits, project, ds,
 
             jobs.append(job)
 
+            currtimeslot_start += math.ceil(SECS_IN_DAY / timesplits)
+
         currdate = currdate + dt.timedelta(days=1)
 
     return jobs
 
 
-def calculate_churn(numdays, churndays, enddate, timesplits, project, ds, client):
-    """ add to the feature tables missing users who are not considered churners yet """
-
+def calculate_churn(user_table_tmp, churndays, enddate, timesplits, project, ds, client):
+    """ Calculate the users that will churn by checking the churn window """
     jobs = []
-    currdate = dt.datetime.strptime(enddate+'000000', '%Y%m%d%H%M%S') - dt.timedelta(days=numdays + churndays - 1)
     churnstart = dt.datetime.strptime(enddate+'000000', '%Y%m%d%H%M%S') - dt.timedelta(days=churndays - 1)
 
-    ft_table_name = 'user_features_s{sampledate}_'.format(sampledate=enddate)
+    user_table = ds.table(name='user_ids_sampled_{date}'.format(date=enddate))
+    if user_table.exists():
+        user_table.delete()
 
-    for i in range(numdays):
+    # build the query part that will join all users who had streams in the churn window
+    union_query = ''
+    for k in range(churndays):
+        datestr_2 = (churnstart + dt.timedelta(days=k)).strftime('%Y%m%d')
 
-        # calculate the time splits
-        datestr = currdate.strftime('%Y%m%d')
+        for l in range(timesplits):
+            union_query += """select user_id from `{project}.{dataset}.user_features_s{enddate}_{split}_{currdate}`
+                        where consumption_time > 0.0 union distinct """.format(enddate=enddate, split=l, currdate=datestr_2, project=project, dataset=ds.name)
 
-        logger.info('Checking retention of users on day {}'.format(datestr))
+    union_query = union_query[:-16]
 
-        for j in range(timesplits):
+    # append sessions from users that did not stream in this timesplit but who are also not churners
+    query = """\
+        select user_id, 0 as churn
+            from `{project}.{dataset}.{table}`
+            where user_id in ({union})
+    """.format(project=project, dataset=ds.name, table=user_table_tmp.name, union=union_query)
 
-            ft_table = ds.table(name=ft_table_name+'{split}_{currdate}'.format(currdate=datestr, split=j))
+    jobname = 'retained_user_features_job_' + str(uuid.uuid4())
+    job = client.run_async_query(jobname, query)
+    job.destination = user_table
+    job.allow_large_results = True
+    job.write_disposition = 'WRITE_APPEND'
+    job.use_legacy_sql = False
+    job.begin()
 
-            # build the query part that will join all users who had streams in the churn window
-            union_query = ''
-            for k in range(churndays):
-                datestr_2 = (churnstart + dt.timedelta(days=k)).strftime('%Y%m%d')
+    jobs.append(job)
 
-                for l in range(timesplits):
-                    union_query += """select user_id from `{project}.{dataset}.user_features_s{enddate}_{split}_{currdate}`
-                                where consumption_time > 0.0 union distinct """.format(enddate=enddate, split=l, currdate=datestr_2, project=project, dataset=ds.name)
+    # append sessions from users that did not stream in this timesplit but who are also not churners
+    query = """\
+        select user_id, 1 as churn
+            from `{project}.{dataset}.{table}`
+            where user_id not in ({union})
+    """.format(project=project, dataset=ds.name, table=user_table_tmp.name, union=union_query)
 
-            union_query = union_query[:-16]
+    jobname = 'retained_user_features_job_' + str(uuid.uuid4())
+    job = client.run_async_query(jobname, query)
+    job.destination = user_table
+    job.allow_large_results = True
+    job.write_disposition = 'WRITE_APPEND'
+    job.use_legacy_sql = False
+    job.begin()
 
-            # append sessions from users that did not stream in this timesplit but who are also not churners
-            query = """\
-                select us.user_id, 0.0 as consumption_time, 0.0 as session_length, 0.0 as skip_ratio, 0.0 as unique_pages, 0 as churn FROM (SELECT user_id FROM `{project}.{dataset}.user_ids_sampled_{enddate}`
-                    where user_id not in (select user_id from `{project}.{dataset}.{table}` where session_length > 0.0)) as us
-                join ({union}) as su1
-                on us.user_id = su1.user_id
-            """.format(enddate=enddate, project=project, dataset=ds.name, table=ft_table.name, union=union_query)
+    jobs.append(job)
 
-            jobname = 'retained_user_features_job_' + str(uuid.uuid4())
-            job = client.run_async_query(jobname, query)
-            job.destination = ft_table
-            job.allow_large_results = True
-            job.write_disposition = 'WRITE_APPEND'
-            job.use_legacy_sql = False
-            job.begin()
+    user_table_tmp.delete()
 
-            jobs.append(job)
-
-        currdate = currdate + dt.timedelta(days=1)
-
-    return jobs
+    return user_table, jobs
 
 
 def dump_features_to_gcs(ft_tables, dest, client):
