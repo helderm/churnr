@@ -7,12 +7,14 @@ from dotenv import find_dotenv, load_dotenv
 
 from keras.models import Sequential
 from keras.layers import LSTM, Dense
+from keras.callbacks import ModelCheckpoint
 import numpy as np
 import json
 from keras.utils.np_utils import to_categorical
 from imblearn.under_sampling import RandomUnderSampler
 from sklearn.model_selection import TimeSeriesSplit
 from sklearn.utils import shuffle
+import datetime as dt
 
 def get_model(timesteps, dim):
     model = Sequential()
@@ -28,11 +30,9 @@ def get_model(timesteps, dim):
     return model
 
 
-def get_data(inpath):
-    with open(os.path.join(inpath, 'meta.json')) as f:
-        meta = json.load(f)
-    X = np.load(meta['x'])
-    y = np.load(meta['y'])
+def get_data(xpath, ypath):
+    X = np.load(xpath)
+    y = np.load(ypath)
 
     # balance classes
     rus = RandomUnderSampler(return_indices=True)
@@ -49,14 +49,21 @@ def get_data(inpath):
 
 @click.command()
 @click.option('--inpath', default='../../data/processed')
-def main(inpath):
+@click.option('--outpath', default='../../models')
+def main(inpath, outpath):
+    with open(os.path.join(inpath, 'meta.json')) as f:
+        meta = json.load(f)
 
-    X, y = get_data(inpath)
+    X, y = get_data(meta['x'], meta['y'])
 
-    timesteps = X.shape[1]
-    dim = X.shape[2]
+    # get the model instance
+    model = get_model(X.shape[1], X.shape[2])
+    model_basename = 'lstm_s{}_t{}'.format(meta['enddate'], int(dt.datetime.now().timestamp()))
 
-    model = get_model(timesteps, dim)
+    # set model callbacks
+    chkp_path = os.path.join(outpath, model_basename + '_model_e{epoch:02d}-va{val_acc:.2f}-vl{val_loss:.2f}.hdf5')
+    chkp = ModelCheckpoint(chkp_path, monitor='val_acc', save_best_only=True, period=5)
+    callbacks = [chkp]
 
     # split data into train and val sets
     tscv = TimeSeriesSplit(n_splits=3)
@@ -68,8 +75,13 @@ def main(inpath):
         y_test = y[test_idx,:]
 
         model.fit(X_train, y_train,
-                  batch_size=64, epochs=10,
-                  validation_data=(X_test, y_test))
+                  batch_size=64, epochs=20,
+                  validation_data=(X_test, y_test),
+                  callbacks=callbacks)
+
+    with open(os.path.join(outpath, model_basename + '_config.json'), 'w') as f:
+        json.dump(model.get_config(), f)
+
 
 if __name__ == '__main__':
     log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
