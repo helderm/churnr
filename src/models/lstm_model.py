@@ -6,9 +6,10 @@ import logging
 from dotenv import find_dotenv, load_dotenv
 import glob
 
-from keras.models import Sequential
+from keras.models import Sequential, load_model
 from keras.layers import LSTM, Dense
 from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau, TensorBoard
+
 import numpy as np
 import json
 from keras.utils.np_utils import to_categorical
@@ -62,7 +63,7 @@ def plot_roc_auc(fpr, tpr, roc_auc, outpath):
 
     plt.figure()
     plt.plot(fpr, tpr, color='darkorange',
-	     lw=1, label='ROC curve (area = %0.2f)' % roc_auc)
+	     lw=1, label='ROC curve (area = %0.3f)' % roc_auc)
     plt.plot([0, 1], [0, 1], color='navy', lw=1, linestyle='--')
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.05])
@@ -80,9 +81,11 @@ def main(inpath, outpath):
     with open(os.path.join(inpath, 'meta.json')) as f:
         meta = json.load(f)
 
+    logger.info('Loading features at [{}] and targets at [{}]'.format(meta['x'], meta['y']))
     X, y, X_te, y_te = get_data(meta['x'], meta['y'])
 
     # get the model instance
+    logger.info('Compiling LSTM model...')
     model = get_model(X.shape[1], X.shape[2])
     modeldir = os.path.join(outpath, 'lstm_s{}_t{}'.format(meta['enddate'], int(dt.datetime.now().timestamp())))
     if not os.path.exists(modeldir):
@@ -92,8 +95,9 @@ def main(inpath, outpath):
     weightsdir = os.path.join(modeldir, 'weights')
     if not os.path.exists(weightsdir):
         os.makedirs(weightsdir)
-    chkp_path = os.path.join(weightsdir, 'model_e{epoch:02d}-va{val_binary_accuracy:.2f}-vl{val_loss:.2f}.hdf5')
-    chkp = ModelCheckpoint(chkp_path, monitor='val_binary_accuracy', save_best_only=True, period=5)
+    #chkp_path = os.path.join(weightsdir, 'model_e{epoch:02d}-va{val_binary_accuracy:.3f}-vl{val_loss:.2f}.hdf5')
+    chkp_path = os.path.join(weightsdir, 'model_best.hdf5')
+    chkp = ModelCheckpoint(chkp_path, monitor='val_binary_accuracy', save_best_only=True, period=1, verbose=1)
     reducelr = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=3, min_lr=0.001, verbose=1)
     tensorboard = TensorBoard(log_dir=os.path.join(modeldir, 'logs'), write_images=True)
     callbacks = [chkp, reducelr, tensorboard]
@@ -102,6 +106,7 @@ def main(inpath, outpath):
     tscv = TimeSeriesSplit(n_splits=3)
 
     # train the model for each train / val folds
+    logger.info('Training model...')
     for train_idx, val_idx in tscv.split(X):
         X_train = X[train_idx,:,:]
         X_val = X[val_idx,:,:]
@@ -114,7 +119,12 @@ def main(inpath, outpath):
                   validation_data=(X_val, y_val),
                   callbacks=callbacks)
 
+    # reload the best model checkpoint
+    logger.info('Reloading checkpoint from best model found...')
+    model = load_model(chkp_path)
+
     # print the model test metrics
+    logger.info('Evaluating model on the test set...')
     metrics_values = model.evaluate(X_te, y_te, verbose=0)
     metrics_names = model.metrics_names if type(model.metrics_names) == list else [model.metrics_names]
     metrics = {}
