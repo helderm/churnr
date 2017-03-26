@@ -4,6 +4,7 @@ import os
 import click
 import logging
 from dotenv import find_dotenv, load_dotenv
+import glob
 
 from keras.models import Sequential
 from keras.layers import LSTM, Dense
@@ -88,7 +89,10 @@ def main(inpath, outpath):
         os.makedirs(modeldir)
 
     # set model callbacks
-    chkp_path = os.path.join(modeldir, 'model_e{epoch:02d}-va{val_binary_accuracy:.2f}-vl{val_loss:.2f}.hdf5')
+    weightsdir = os.path.join(modeldir, 'weights')
+    if not os.path.exists(weightsdir):
+        os.makedirs(weightsdir)
+    chkp_path = os.path.join(weightsdir, 'model_e{epoch:02d}-va{val_binary_accuracy:.2f}-vl{val_loss:.2f}.hdf5')
     chkp = ModelCheckpoint(chkp_path, monitor='val_binary_accuracy', save_best_only=True, period=5)
     reducelr = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=3, min_lr=0.001, verbose=1)
     tensorboard = TensorBoard(log_dir=os.path.join(modeldir, 'logs'), write_images=True)
@@ -106,30 +110,46 @@ def main(inpath, outpath):
         y_val = y[val_idx,:]
 
         model.fit(X_train, y_train,
-                  batch_size=64, epochs=10,
+                  batch_size=64, epochs=20,
                   validation_data=(X_val, y_val),
                   callbacks=callbacks)
 
     # print the model test metrics
-    metrics = model.evaluate(X_te, y_te, verbose=0)
+    metrics_values = model.evaluate(X_te, y_te, verbose=0)
     metrics_names = model.metrics_names if type(model.metrics_names) == list else [model.metrics_names]
-    if type(metrics) != list:
-        metrics = [metrics]
+    metrics = {}
     logger.info('** Test metrics **')
-    for metric, metric_name in zip(metrics, metrics_names):
+    for metric, metric_name in zip(metrics_values, metrics_names):
         logger.info('-- {0}: {1:.3f}'.format(metric_name, metric))
+        metrics[metric_name] = metric
 
-    # calculate roc and auc
+    # calculate roc and auc and plot it
     y_pred = model.predict(X_te)
     fpr, tpr, _ = roc_curve(y_te[:,1], y_pred[:,1])
     roc_auc = auc(fpr, tpr)
     logger.info('-- auc: {0:.3f}'.format(roc_auc))
-
+    metrics['auc'] = roc_auc
     plot_roc_auc(fpr, tpr, roc_auc, modeldir)
 
+    # save the metrics and config
+    with open(os.path.join(modeldir, 'metrics.json'), 'w') as f:
+        json.dump(metrics, f)
     with open(os.path.join(modeldir, 'config.json'), 'w') as f:
         json.dump(model.get_config(), f)
 
+    # check if this is the new best model
+    bestmetric = None
+    bestmodel = None
+    for modelname in glob.glob(os.path.join(outpath, 'lstm*')):
+        with open(os.path.join(modelname, 'metrics.json')) as f:
+            metric = json.load(f)
+        if not bestmetric or bestmetric['auc'] < metric['auc']:
+            bestmetric = metric
+            bestmodel = modelname
+    bestpath = os.path.join(outpath, 'best_lstm')
+    if os.path.exists(bestpath):
+        os.unlink(bestpath)
+    os.symlink(os.path.abspath(bestmodel), bestpath)
 
 if __name__ == '__main__':
     log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
