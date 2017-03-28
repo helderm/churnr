@@ -8,7 +8,8 @@ import glob
 
 from keras.models import Sequential, load_model
 from keras.layers import LSTM, Dense
-from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau, TensorBoard
+from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau, TensorBoard, EarlyStopping
+from keras.wrappers.scikit_learn import KerasClassifier
 
 import numpy as np
 import json
@@ -22,11 +23,11 @@ import datetime as dt
 
 logger = logging.getLogger('churnr.lstm')
 
-def get_model(timesteps, dim):
+def get_model(data_shape):
     model = Sequential()
-    model.add(LSTM(32, return_sequences=True,
-                   input_shape=(timesteps, dim)))  # returns a sequence of vectors of dimension 32
-    model.add(LSTM(32, return_sequences=True))  # returns a sequence of vectors of dimension 32
+    model.add(LSTM(128, return_sequences=True,
+                   input_shape=data_shape))  # returns a sequence of vectors of dimension 32
+    model.add(LSTM(64, return_sequences=True))  # returns a sequence of vectors of dimension 32
     model.add(LSTM(32))  # return a single vector of dimension 32
     model.add(Dense(2, activation='softmax')) # 2 classes, churn or non-churned
 
@@ -86,7 +87,9 @@ def main(inpath, outpath):
 
     # get the model instance
     logger.info('Compiling LSTM model...')
-    model = get_model(X.shape[1], X.shape[2])
+    model = get_model(data_shape=(X.shape[1], X.shape[2]))
+    #model = KerasClassifier(build_fn=get_model, data_shape=(X.shape[1], X.shape[2]))
+
     modeldir = os.path.join(outpath, 'lstm_s{}_t{}'.format(meta['enddate'], int(dt.datetime.now().timestamp())))
     if not os.path.exists(modeldir):
         os.makedirs(modeldir)
@@ -95,15 +98,24 @@ def main(inpath, outpath):
     weightsdir = os.path.join(modeldir, 'weights')
     if not os.path.exists(weightsdir):
         os.makedirs(weightsdir)
-    #chkp_path = os.path.join(weightsdir, 'model_e{epoch:02d}-va{val_binary_accuracy:.3f}-vl{val_loss:.2f}.hdf5')
     chkp_path = os.path.join(weightsdir, 'model_best.hdf5')
     chkp = ModelCheckpoint(chkp_path, monitor='val_binary_accuracy', save_best_only=True, period=1, verbose=1)
-    reducelr = ReduceLROnPlateau(monitor='val_loss', factor=0.2, patience=3, min_lr=0.001, verbose=1)
+    reducelr = ReduceLROnPlateau(monitor='val_binary_accuracy', factor=0.2, patience=3, min_lr=0.001, verbose=1, cooldown=10, epsilon=0.1)
     tensorboard = TensorBoard(log_dir=os.path.join(modeldir, 'logs'), write_images=True)
-    callbacks = [chkp, reducelr, tensorboard]
+    earlystop = EarlyStopping(monitor='val_binary_accuracy', min_delta=0.001, patience=15, verbose=1)
+    callbacks = [chkp, reducelr, tensorboard, earlystop]
 
     # split data into train and val sets
-    tscv = TimeSeriesSplit(n_splits=3)
+    tscv = TimeSeriesSplit(n_splits=2)
+
+    # set the hyperparameters search algorithm
+    #units = [32, 64, 128]
+    #epochs = [50, 100, 150]
+    #batches = [5, 10, 20]
+    #from sklearn.model_selection import GridSearchCV
+    #param_grid = dict(units=units)
+    #grid = GridSearchCV(estimator=model, param_grid=param_grid, cv=tscv, iid=False, fit_params={'callbacks':callbacks, 'batch_size': 128, 'epochs': 20})
+    #grid.fit(X, y)
 
     # train the model for each train / val folds
     logger.info('Training model...')
@@ -115,7 +127,7 @@ def main(inpath, outpath):
         y_val = y[val_idx,:]
 
         model.fit(X_train, y_train,
-                  batch_size=64, epochs=20,
+                  batch_size=128, epochs=100,
                   validation_data=(X_val, y_val),
                   callbacks=callbacks)
 
@@ -151,7 +163,10 @@ def main(inpath, outpath):
     bestmetric = None
     bestmodel = None
     for modelname in glob.glob(os.path.join(outpath, 'lstm*')):
-        with open(os.path.join(modelname, 'metrics.json')) as f:
+        metrics_path = os.path.join(modelname, 'metrics.json')
+        if not os.path.exists(metrics_path):
+            continue
+        with open(metrics_path) as f:
             metric = json.load(f)
         if not bestmetric or bestmetric['auc'] < metric['auc']:
             bestmetric = metric
