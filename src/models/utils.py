@@ -12,6 +12,18 @@ import matplotlib.pyplot as plt
 import seaborn
 
 
+def yes_or_no(question):
+    """ Simple yes or no user prompt """
+    reply = str(input(question+' (y/N): ')).lower().strip()
+    if len(reply) and reply[0] == 'y':
+        return True
+    elif not len(reply) or reply[0] == 'n':
+        return False
+    else:
+        return yes_or_no("Uhhhh... " + question)
+
+
+
 def get_data(xpath, ypath, threesplit=False):
     X = np.load(xpath)
     y = np.load(ypath)

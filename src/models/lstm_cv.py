@@ -5,17 +5,33 @@ import click
 import logging
 from dotenv import find_dotenv, load_dotenv
 import glob
-
-from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau, TensorBoard, EarlyStopping
-
 import json
-from keras.models import load_model
 import datetime as dt
 
-from lstm_models import light_model
+from keras.callbacks import TensorBoard
+from keras.wrappers.scikit_learn import KerasClassifier
+from sklearn.model_selection import TimeSeriesSplit
+from scipy.stats import randint as sp_randint
+import numpy as np
+
+import lstm_models
 from utils import get_data, plot_roc_auc, yes_or_no
 
+
 logger = logging.getLogger('churnr.lstm')
+
+
+# Utility function to report best scores
+def report(results, n_top=3):
+    for i in range(1, n_top + 1):
+        candidates = np.flatnonzero(results['rank_test_score'] == i)
+        for candidate in candidates:
+            logger.info("Model with rank: {0}".format(i))
+            logger.info("Mean validation score: {0:.3f} (std: {1:.3f})".format(
+                  results['mean_test_score'][candidate],
+                  results['std_test_score'][candidate]))
+            logger.info("Parameters: {0}".format(results['params'][candidate]))
+            logger.info("")
 
 
 @click.command()
@@ -26,16 +42,14 @@ def main(inpath, outpath):
         meta = json.load(f)
 
     logger.info('Loading features at [{}] and targets at [{}]'.format(meta['x'], meta['y']))
-    X, y, X_te, y_te, X_val, y_val = get_data(meta['x'], meta['y'], threesplit=True)
+    X, y, X_te, y_te = get_data(meta['x'], meta['y'])
 
     # get the model instance
     logger.info('Compiling LSTM model...')
-    import pudb
-    pu.db
+    #model = get_model(data_shape=(X.shape[1], X.shape[2]))
+    estimator = KerasClassifier(build_fn=lstm_models.custom_model, data_shape=(X.shape[1], X.shape[2]))
 
-    model = light_model(data_shape=(X.shape[1], X.shape[2]))
-
-    modeldir = os.path.join(outpath, 'lstm_s{}_t{}'.format(meta['enddate'], int(dt.datetime.now().timestamp())))
+    modeldir = os.path.join(outpath, 'lstm_s{}_t{}_cv'.format(meta['enddate'], int(dt.datetime.now().timestamp())))
     if not os.path.exists(modeldir):
         os.makedirs(modeldir)
 
@@ -45,27 +59,42 @@ def main(inpath, outpath):
         if not os.path.exists(weightsdir):
             os.makedirs(weightsdir)
         chkp_path = os.path.join(weightsdir, 'model_best.hdf5')
-        chkp = ModelCheckpoint(chkp_path, monitor='val_acc', save_best_only=True, period=1, verbose=1)
-        reducelr = ReduceLROnPlateau(monitor='val_acc', factor=0.2, patience=3, min_lr=0.001, verbose=1, cooldown=10, epsilon=0.1)
         tensorboard = TensorBoard(log_dir=os.path.join(modeldir, 'logs'), write_images=True)
-        earlystop = EarlyStopping(monitor='val_acc', min_delta=0.001, patience=15, verbose=1)
-        callbacks = [chkp, reducelr, tensorboard, earlystop]
+        callbacks = [tensorboard]
 
-        # train the model for each train / val folds
-        logger.info('Training model...')
+        # split data into train and val sets
+        tscv = TimeSeriesSplit(n_splits=2)
 
-        model.fit(X, y,
-                    batch_size=128, epochs=100,
-                    validation_data=(X_val, y_val),
-                    callbacks=callbacks)
+        import pudb
+        pu.db
 
-        # reload the best model checkpoint
-        logger.info('Reloading checkpoint from best model found...')
-        model = load_model(chkp_path)
+        # set the hyperparameters search algorithm
+        units1 = sp_randint(32, 128)
+        units2 = sp_randint(32, 128)
+        units3 = sp_randint(32, 128)
+        units4 = sp_randint(32, 128)
+        units5 = sp_randint(32, 128)
+
+        layers = sp_randint(1, 5)
+        optim = ['rmsprop', 'adagrad', 'sgd']
+        #epochs = [50, 100, 150]
+        #batches = [5, 10, 20]
+        from sklearn.model_selection import RandomizedSearchCV
+        param_dist = dict(units1=units1, units2=units2, units3=units3, units4=units4, units5=units5, layers=layers, optim=optim)
+        cv = RandomizedSearchCV(estimator=estimator, param_distributions=param_dist, n_iter=5, cv=tscv, iid=False, fit_params={'callbacks': callbacks, 'batch_size': 128, 'epochs': 20})
+        cv.fit(X, y)
+
+        # report the results
+        report(cv.cv_results_)
+
+        model = cv.best_estimator_.model
+
+        # save the best model
+        model.save(chkp_path)
 
         # print the model test metrics
         logger.info('Evaluating model on the test set...')
-        metrics_values = model.evaluate(X_te, y_te)
+        metrics_values = model.evaluate(X_te, y_te, verbose=0)
         metrics_names = model.metrics_names if type(model.metrics_names) == list else [model.metrics_names]
         metrics = {}
         logger.info('** Test metrics **')
@@ -84,6 +113,8 @@ def main(inpath, outpath):
             json.dump(metrics, f)
         with open(os.path.join(modeldir, 'config.json'), 'w') as f:
             json.dump(model.get_config(), f)
+        with open(os.path.join(modeldir, 'params.json'), 'w') as f:
+            json.dump(cv.best_params_, f)
 
         # check if this is the new best model
         bestmetric = None
@@ -101,7 +132,6 @@ def main(inpath, outpath):
         if os.path.exists(bestpath):
             os.unlink(bestpath)
         os.symlink(os.path.abspath(bestmodel), bestpath)
-
     except Exception as e:
         logger.exception(e)
         ans = yes_or_no('Delete folder at {}?'.format(modeldir))
