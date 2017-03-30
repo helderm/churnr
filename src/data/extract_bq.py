@@ -59,6 +59,7 @@ def main(project, dataset, enddate, numdays, shareusers, timesplits, churndays, 
     # calculate the churn label for each user and each timestep
     user_table, jobs = calculate_churn(user_table_tmp, churndays, enddate, timesplits, project, ds, client)
     wait_for_jobs(jobs)
+    user_table_tmp.delete()
 
     # backfill missing users on feature tables
     jobs = backfill_missing_users(numdays, churndays, enddate, timesplits, project, ds, client)
@@ -279,7 +280,6 @@ def calculate_churn(user_table_tmp, churndays, enddate, timesplits, project, ds,
     job.write_disposition = 'WRITE_APPEND'
     job.use_legacy_sql = False
     job.begin()
-
     jobs.append(job)
 
     # append sessions from users that did not stream in this timesplit but who are also not churners
@@ -296,10 +296,8 @@ def calculate_churn(user_table_tmp, churndays, enddate, timesplits, project, ds,
     job.write_disposition = 'WRITE_APPEND'
     job.use_legacy_sql = False
     job.begin()
-
     jobs.append(job)
 
-    user_table_tmp.delete()
 
     return user_table, jobs
 
@@ -350,7 +348,7 @@ def wait_for_jobs(jobs):
 
     import time
     for job in jobs:
-        numtries = 90
+        numtries = 9000
         job.reload()
         while job.state != 'DONE':
             time.sleep(3)
