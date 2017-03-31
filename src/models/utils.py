@@ -28,6 +28,12 @@ def get_data(xpath, ypath, threesplit=False):
     X = np.load(xpath)
     y = np.load(ypath)
 
+    # load array from compressed file
+    if X.__class__.__name__ == 'NpzFile':
+        X = X[X.keys()[0]]
+    if y.__class__.__name__ == 'NpzFile':
+        y = y[y.keys()[0]]
+
     # balance classes
     rus = RandomUnderSampler(return_indices=True)
     X_rs, y, idxs = rus.fit_sample(X[:,0,:], y)

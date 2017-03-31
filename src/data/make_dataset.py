@@ -22,8 +22,8 @@ def main(inpath, outpath):
     logger.info('Processing raw data...')
 
     # load all the csv files
-    with open(os.path.join(inpath, 'meta.json')) as f:
-        meta = json.load(f)
+    with open(os.path.join(inpath, 'meta.json')) as fi:
+        meta = json.load(fi)
 
     tablenames = 'user_features_s{}_*'.format(meta['enddate'])
     usertablename = 'user_ids_sampled_{}'.format(meta['enddate'])
@@ -34,7 +34,9 @@ def main(inpath, outpath):
     logger.info('Loading {} tables from users sampled from {}..'.format(len(allfiles), meta['enddate']))
 
     # read all feature tables
-    featdf = pd.concat((pd.read_csv(f) for f in allfiles))
+    dtype = {'consumption_time': float, 'session_length': float, 'skip_ratio': float,
+                'unique_pageviews': float, 'user_id': str, 'time': int}
+    featdf = pd.concat((pd.read_csv(f, dtype=dtype) for f in allfiles))
     #df = df.sort_values(by=['time','user_id'])
     userdf = pd.read_csv(upath)
 
@@ -45,9 +47,12 @@ def main(inpath, outpath):
 
     # normalize
     features = [f for f in df.columns if f != 'churn' and f != 'time' and f != 'user_id']
-    scaled = preprocessing.scale(df[features])
+    scaled = preprocessing.scale(df[features], copy=False)
     scaled = np.c_[ scaled, df['user_id'], df['time'], df['churn'] ]
-    df = pd.DataFrame(scaled, columns=features + ['user_id', 'time', 'churn'])
+    df = pd.DataFrame(scaled, columns=features + ['user_id', 'time', 'churn'], )
+    for f in features:
+        df[f] = df[f].astype(np.float)
+    df['time'] = df['time'].astype (np.int)
 
     # for lstms, reshape X into timesteps
     timepoints = df['time'].unique()
@@ -58,21 +63,34 @@ def main(inpath, outpath):
     for i, ts in enumerate(timepoints):
         X[:,i,:] = df[df['time'] == ts][features]
 
+    # for aggregated models, get the mean of features
+    X_agg = np.empty(shape=(num_samples, len(features)))
+    X_agg[:,:] = df.groupby('user_id')[features].mean()
+
     # extract labels
     y = df[ df['time'] == df['time'].unique()[0] ]
     y = y['churn'].values.astype(int)
 
-    # pickle
-    logger.info('Storing normalized dataframe on {}...'.format(outpath))
-    df.to_pickle(os.path.join(outpath, 'user_features_s{}.pkl'.format(meta['enddate'])))
+    # create output data dir
+    outdir = os.path.join(outpath, 's'+meta['enddate'])
+    if os.path.exists(outdir):
+        import shutil
+        shutil.rmtree(outdir)
+    os.makedirs(outdir)
 
-    xpath = os.path.join(outpath, 'user_features_lstm_s{}.npy'.format(meta['enddate']))
-    X.dump(xpath)
-    ypath = os.path.join(outpath, 'user_labels_lstm_s{}.npy'.format(meta['enddate']))
-    y.dump(ypath)
+    # pickle
+    logger.info('Storing normalized dataframe and matrices on {}...'.format(outdir))
+    df.to_csv(os.path.join(outdir, 'user_features_full.gz'), compression='gzip')
+
+    xpath = os.path.join(outdir, 'user_features_lstm.npz')
+    np.savez_compressed(xpath, X)
+    xaggpath = os.path.join(outdir,  'user_features_agg.npz')
+    np.savez_compressed(xaggpath, X_agg)
+    ypath = os.path.join(outdir,  'user_labels.npz')
+    np.savez_compressed(ypath, y)
 
     # write meta file
-    meta = { 'enddate': meta['enddate'], 'x': xpath, 'y': ypath }
+    meta = { 'enddate': meta['enddate'], 'x': os.path.abspath(xpath), 'y': os.path.abspath(ypath), 'xagg': os.path.abspath(xaggpath) }
     with open(os.path.join(outpath, 'meta.json'), 'w') as f:
         json.dump(meta, f)
 
