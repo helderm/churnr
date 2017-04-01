@@ -3,20 +3,20 @@
 import os
 import click
 import logging
-from dotenv import find_dotenv, load_dotenv
 import glob
-import joblib
+from dotenv import find_dotenv, load_dotenv
 import json
 import datetime as dt
+import joblib
 
-from keras.callbacks import ModelCheckpoint, ReduceLROnPlateau, TensorBoard, EarlyStopping
-from keras.models import load_model
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import KFold
+from sklearn.model_selection import GridSearchCV
 import numpy as np
 
-from lstm_models import light_model
 from utils import get_data, plot_roc_auc, yes_or_no
 
-logger = logging.getLogger('churnr.lstm')
+logger = logging.getLogger('churnr.lr')
 
 
 @click.command()
@@ -27,58 +27,50 @@ def main(inpath, outpath):
         meta = json.load(f)
 
     logger.info('Loading features at [{}] and targets at [{}]'.format(meta['x'], meta['y']))
-
-    X, y, X_te, y_te, X_val, y_val = get_data(meta['x'], meta['y'], threesplit=True)
+    X, y, X_te, y_te = get_data(meta['xagg'], meta['y'], onehot=False)
 
     # get the model instance
-    logger.info('Compiling LSTM model...')
+    logger.info('Compiling LR model...')
 
-    model = light_model(data_shape=(X.shape[1], X.shape[2]))
+    model = LogisticRegression()
 
-    modeldir = os.path.join(outpath, 'lstm_s{}_t{}'.format(meta['enddate'], int(dt.datetime.now().timestamp())))
+    modeldir = os.path.join(outpath, 'lr_s{}_t{}'.format(meta['enddate'], int(dt.datetime.now().timestamp())))
     if not os.path.exists(modeldir):
         os.makedirs(modeldir)
 
     try:
-        # set model callbacks
-        chkp_path = os.path.join(modeldir, 'model_weights.hdf5')
-        chkp = ModelCheckpoint(chkp_path, monitor='val_acc', save_best_only=True, period=1, verbose=1)
-        reducelr = ReduceLROnPlateau(monitor='val_acc', factor=0.2, patience=3, min_lr=0.001, verbose=1, cooldown=10, epsilon=0.1)
-        tensorboard = TensorBoard(log_dir=os.path.join(modeldir, 'logs'), write_images=True)
-        earlystop = EarlyStopping(monitor='val_acc', min_delta=0.001, patience=20, verbose=1)
-        callbacks = [chkp, reducelr, tensorboard, earlystop]
+        # cross validate model params, using 5x2 CV
+        logger.info('Cross validating model hyperparams...')
+        kf = KFold(n_splits=2, shuffle=True)
 
-        # train the model for each train / val folds
-        logger.info('Training model...')
+        params = { 'C': [0.001, 0.01, 1, 10, 100],
+                        'penalty': ['l1', 'l2'],
+                        }
+        cv = GridSearchCV(estimator=model, param_grid=params, cv=kf, verbose=1)
+        cv.fit(X,y)
 
-        model.fit(X, y,
-                    batch_size=512, epochs=150,
-                    validation_data=(X_val, y_val),
-                    callbacks=callbacks)
+        model = cv.best_estimator_
 
-        # reload the best model checkpoint
-        logger.info('Reloading checkpoint from best model found...')
-        model = load_model(chkp_path)
+        logger.info('Training finished, saving model...')
+        joblib.dump(model, os.path.join(modeldir, 'lr_model.pkl'))
 
         # print the model test metrics
         logger.info('Evaluating model on the test set...')
-        metrics_values = model.evaluate(X_te, y_te)
-        metrics_names = model.metrics_names if type(model.metrics_names) == list else [model.metrics_names]
-        metrics = {}
-        logger.info('** Test metrics **')
-        for metric, metric_name in zip(metrics_values, metrics_names):
-            logger.info('-- {0}: {1:.3f}'.format(metric_name, metric))
-            metrics[metric_name] = metric
+        acc = model.score(X_te, y_te)
+        metrics = {'acc': acc}
 
         # calculate roc and auc and plot it
-        y_pred = model.predict(X_te)
-        roc_auc = plot_roc_auc(y_te[:,1], y_pred[:,1], modeldir)
-        logger.info('-- auc: {0:.3f}'.format(roc_auc))
+        y_pred = model.predict_proba(X_te)
+        roc_auc = plot_roc_auc(y_te, y_pred[:,1], modeldir)
         metrics['auc'] = roc_auc
+
+        logger.info('** Test metrics **')
+        for key, val in metrics.items():
+            logger.info('-- {0}: {1:.3f}'.format(key, val))
 
         # serialize y_true and y_pred for later roc visualization
         y_trpred = np.empty(shape=(y_te.shape[0], 2))
-        y_trpred[:,0] = y_te[:,1]
+        y_trpred[:,0] = y_te
         y_trpred[:,1] = y_pred[:,1]
         joblib.dump(y_trpred, os.path.join(modeldir, 'y_test_true_pred.gz'))
 
@@ -86,12 +78,12 @@ def main(inpath, outpath):
         with open(os.path.join(modeldir, 'metrics.json'), 'w') as f:
             json.dump(metrics, f)
         with open(os.path.join(modeldir, 'config.json'), 'w') as f:
-            json.dump(model.get_config(), f)
+            json.dump(cv.best_params_, f)
 
         # check if this is the new best model
         bestmetric = None
         bestmodel = None
-        for modelname in glob.glob(os.path.join(outpath, 'lstm*')):
+        for modelname in glob.glob(os.path.join(outpath, 'lr*')):
             metrics_path = os.path.join(modelname, 'metrics.json')
             if not os.path.exists(metrics_path):
                 continue
@@ -100,11 +92,10 @@ def main(inpath, outpath):
             if not bestmetric or bestmetric['auc'] < metric['auc']:
                 bestmetric = metric
                 bestmodel = modelname
-        bestpath = os.path.join(outpath, 'best_lstm')
+        bestpath = os.path.join(outpath, 'best_lr')
         if os.path.exists(bestpath):
             os.unlink(bestpath)
         os.symlink(os.path.abspath(bestmodel), bestpath)
-
     except Exception as e:
         logger.exception(e)
         ans = yes_or_no('Delete folder at {}?'.format(modeldir))

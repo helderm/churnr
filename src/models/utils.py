@@ -23,8 +23,7 @@ def yes_or_no(question):
         return yes_or_no("Uhhhh... " + question)
 
 
-
-def get_data(xpath, ypath, threesplit=False):
+def get_data(xpath, ypath, threesplit=False, onehot=True):
     X = np.load(xpath)
     y = np.load(ypath)
 
@@ -36,17 +35,21 @@ def get_data(xpath, ypath, threesplit=False):
 
     # balance classes
     rus = RandomUnderSampler(return_indices=True)
-    X_rs, y, idxs = rus.fit_sample(X[:,0,:], y)
-    X = X[idxs, :, :]
+    if len(X.shape) == 3:
+        X_rs, y, idxs = rus.fit_sample(X[:,0,:], y)
+        X = X[idxs, :, :]
+    else:
+        X, y, _ = rus.fit_sample(X, y)
 
     # shuffle on the samples dimension
     Xs, ys = shuffle(X, y)
 
     # turn labels into one-hot vectors
-    ysc = to_categorical(ys)
+    if onehot:
+        ys = to_categorical(ys)
 
     # split into train/val and test sets
-    X_tr, X_te, y_tr, y_te = train_test_split(Xs, ysc, test_size=0.15, random_state=42)
+    X_tr, X_te, y_tr, y_te = train_test_split(Xs, ys, test_size=0.15, random_state=42)
     if not threesplit:
         return X_tr, y_tr, X_te, y_te
 

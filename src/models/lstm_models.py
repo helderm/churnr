@@ -32,7 +32,7 @@ def custom_model(data_shape, layers=1, units1=128, units2=128, units3=128, units
     return model
 
 
-def light_model(data_shape, units1=64, optim='rmsprop'):
+def light_model(data_shape, units1=81, optim='adam'):
     model = Sequential()
     model.add(LSTM(units1, input_shape=data_shape))
     model.add(Dense(2, activation='softmax'))
