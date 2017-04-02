@@ -35,9 +35,9 @@ def main(inpath, outpath):
 
     # read all feature tables
     dtype = {'consumption_time': float, 'session_length': float, 'skip_ratio': float,
-                'unique_pageviews': float, 'user_id': str, 'time': int}
+                'unique_pages': float, 'user_id': str, 'time': int}
+
     featdf = pd.concat((pd.read_csv(f, dtype=dtype) for f in allfiles))
-    #df = df.sort_values(by=['time','user_id'])
     userdf = pd.read_csv(upath)
 
     df = pd.merge(featdf, userdf, on='user_id', sort=True)

@@ -12,8 +12,8 @@ import math
 import json
 
 SECS_IN_DAY = 86399
-yesterday = (dt.datetime.today() - dt.timedelta(days=1)).strftime('%Y%m%d')
-#yesterday = '20170316'
+#yesterday = (dt.datetime.today() - dt.timedelta(days=1)).strftime('%Y%m%d')
+yesterday = '20170329'
 
 logger = logging.getLogger(__name__)
 
@@ -21,13 +21,14 @@ logger = logging.getLogger(__name__)
 @click.option('--project', default='user-lifecycle')
 @click.option('--dataset', default='helder')
 @click.option('--enddate', default=yesterday)
-@click.option('--numdays', default=7)
-@click.option('--shareusers', default=0.001)
+@click.option('--numdays', default=60)
+@click.option('--shareusers', default=0.005)
 @click.option('--timesplits', default=3)
-@click.option('--churndays', default=7)
+@click.option('--churndays', default=30)
 @click.option('--gsoutput', default='gs://helder/data/raw')
 @click.option('--hdoutput', default='../../data/raw')
-def main(project, dataset, enddate, numdays, shareusers, timesplits, churndays, gsoutput, hdoutput):
+@click.option('--hddump', default=True)
+def main(project, dataset, enddate, numdays, shareusers, timesplits, churndays, gsoutput, hdoutput, hddump):
     """ Extract data from several sources on BigQuery using intermediary tables
         and dump the final output as a file into ../data/raw
     """
@@ -43,6 +44,19 @@ def main(project, dataset, enddate, numdays, shareusers, timesplits, churndays, 
     if not ds.exists():
         ds.location = 'EU'
         ds.create()
+
+    # if hddump, skip the db queries and dump the files already stored at GCS
+    if hddump:
+        tablenames = get_table_names(numdays, churndays, enddate, timesplits)
+        #extract_dataset_to_disk(hdoutput, gsoutput, tablenames, project)
+        # save metadata file with args that generated this dataset
+        meta = { 'enddate': enddate, 'timesplits': timesplits, 'project': project, 'dataset': dataset,
+                'numdays': numdays, 'churndays': churndays, 'shareusers': shareusers, 'gsoutput': gsoutput }
+        with open(os.path.join(hdoutput, 'meta.json'), 'w') as f:
+            json.dump(meta, f)
+
+        logger.info('Finished! Data dumped to disk at {}!'.format(hdoutput))
+        return
 
     # randomly sample users who are active on the last week
     user_table_tmp, jobs = fetch_user_samples(enddate, numdays + churndays, shareusers, ds, client)
@@ -74,7 +88,8 @@ def main(project, dataset, enddate, numdays, shareusers, timesplits, churndays, 
     # dump to disk
     if asw and yes_or_no('Dump files to disk?'):
         wait_for_jobs(jobs)
-        extract_dataset_to_disk(hdoutput, gsoutput, tables, project)
+        tablenames = [t.name for t in tables]
+        extract_dataset_to_disk(hdoutput, gsoutput, tablenames, project)
 
     # save metadata file with args that generated this dataset
     meta = { 'enddate': enddate, 'timesplits': timesplits, 'project': project, 'dataset': dataset,
@@ -319,10 +334,10 @@ def dump_features_to_gcs(ft_tables, dest, client):
     return jobs
 
 
-def extract_dataset_to_disk(hdoutput, gsoutput, tables, project):
+def extract_dataset_to_disk(hdoutput, gsoutput, tablenames, project):
     """ Extract dataset to local files on disk"""
 
-    logger.info('Dumping {} tables to disk at {}...'.format(len(tables), hdoutput))
+    logger.info('Dumping {} tables to disk at {}...'.format(len(tablenames), hdoutput))
 
     client = gcs.Client(project)
 
@@ -332,14 +347,32 @@ def extract_dataset_to_disk(hdoutput, gsoutput, tables, project):
     bucket = gcs.Bucket(client, bucket_name)
 
     filepath = '/'.join(split_uri[3:])
-    for table in tables:
-        filename = table.name
-
+    for filename in tablenames:
         blob = gcs.Blob(name=os.path.join(filepath, filename), bucket=bucket)
 
         local_file = os.path.join(hdoutput, filename)
         with open(local_file, 'wb') as f:
             blob.download_to_file(f)
+
+
+def get_table_names(numdays, churndays, enddate, timesplits):
+
+    currdate = dt.datetime.strptime(enddate+'000000', '%Y%m%d%H%M%S') - dt.timedelta(days=numdays + churndays - 1)
+
+    tablenames = []
+    ft_table_name = 'user_features_s{sampledate}_'.format(sampledate=enddate)
+    for i in range(numdays):
+        datestr = currdate.strftime('%Y%m%d')
+
+        for j in range(timesplits):
+            ft_table = ft_table_name + '{split}_{currdate}'.format(currdate=datestr, split=j)
+            tablenames.append(ft_table)
+
+        currdate = currdate + dt.timedelta(days=1)
+
+    tablenames.append('user_ids_sampled_{date}'.format(date=enddate))
+
+    return tablenames
 
 
 def wait_for_jobs(jobs):
