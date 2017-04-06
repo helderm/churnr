@@ -34,12 +34,12 @@ def get_data(xpath, ypath, threesplit=False, onehot=True):
         y = y[y.keys()[0]]
 
     # balance classes
-    rus = RandomUnderSampler(return_indices=True)
-    if len(X.shape) == 3:
-        X_rs, y, idxs = rus.fit_sample(X[:,0,:], y)
-        X = X[idxs, :, :]
-    else:
-        X, y, _ = rus.fit_sample(X, y)
+    #rus = RandomUnderSampler(ratio=0.27, return_indices=True)
+    #if len(X.shape) == 3:
+    #    X_rs, y, idxs = rus.fit_sample(X[:,0,:], y)
+    #    X = X[idxs, :, :]
+    #else:
+    #    X, y, _ = rus.fit_sample(X, y)
 
     # shuffle on the samples dimension
     Xs, ys = shuffle(X, y)

@@ -1,40 +1,58 @@
-#!/usr/bin/env python
+#!/usr/bin/env pythonw
 # -*- coding: utf-8 -*-
 import os
-import click
 import logging
-import glob
-from dotenv import find_dotenv, load_dotenv
 import json
-import datetime as dt
 import joblib
+import argparse
 
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.model_selection import KFold
 from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import train_test_split
 import numpy as np
 
-from utils import get_data, plot_roc_auc, yes_or_no
+from churnr.utils import plot_roc_auc, yes_or_no
 
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('churnr.abdt')
 
 
-@click.command()
-@click.option('--inpath', default='../../data/processed')
-@click.option('--outpath', default='../../models')
-def main(inpath, outpath):
-    with open(os.path.join(inpath, 'meta.json')) as f:
-        meta = json.load(f)
+def main(exppath, experiment, dsname, modelname):
+    with open(exppath) as fi:
+        expconf = json.load(fi)[experiment]
 
-    logger.info('Loading features at [{}] and targets at [{}]'.format(meta['x'], meta['y']))
-    X, y, X_te, y_te = get_data(meta['xagg'], meta['y'], onehot=False)
+    # load experiment configuration
+    keys = ['procpath']
+    conf = {}
+    for key in keys:
+        conf[key] = expconf['datasets'][dsname][key] if key in expconf['datasets'][dsname] else expconf['datasets']['global'][key]
+    keys = ['modelpath']
+    for key in keys:
+        conf[key] = expconf['models'][modelname][key] if key in expconf['models'][modelname] else expconf['models']['global'][key]
+
+    procpath = conf['procpath']
+    modelpath = conf['modelpath']
+    Xpath_tr = os.path.join(procpath, experiment, dsname, 'features_agg_train.gz')
+    ypath_tr = os.path.join(procpath, experiment, dsname, 'labels_train.gz')
+    Xpath_te = os.path.join(procpath, experiment, dsname, 'features_agg_test.gz')
+    ypath_te = os.path.join(procpath, experiment, dsname, 'labels_test.gz')
+
+    logger.info('Loading features from [{}] and targets from [{}]'.format(Xpath_tr, ypath_tr))
+
+    X = joblib.load(Xpath_tr)
+    y = joblib.load(ypath_tr)
+    X_te = joblib.load(Xpath_te)
+    y_te = joblib.load(ypath_te)
+    X, X_val, y, y_val = train_test_split(X, y, test_size=0.15, random_state=42)
 
     # get the model instance
     logger.info('Compiling AdaBoost DT model...')
 
     model = AdaBoostClassifier()
 
-    modeldir = os.path.join(outpath, 'abdt_s{}_t{}'.format(meta['enddate'], int(dt.datetime.now().timestamp())))
+    modeldir = os.path.join(modelpath, experiment, dsname, modelname)
     if not os.path.exists(modeldir):
         os.makedirs(modeldir)
 
@@ -80,22 +98,6 @@ def main(inpath, outpath):
         with open(os.path.join(modeldir, 'config.json'), 'w') as f:
             json.dump(cv.best_params_, f)
 
-        # check if this is the new best model
-        bestmetric = None
-        bestmodel = None
-        for modelname in glob.glob(os.path.join(outpath, 'abdt*')):
-            metrics_path = os.path.join(modelname, 'metrics.json')
-            if not os.path.exists(metrics_path):
-                continue
-            with open(metrics_path) as f:
-                metric = json.load(f)
-            if not bestmetric or bestmetric['auc'] < metric['auc']:
-                bestmetric = metric
-                bestmodel = modelname
-        bestpath = os.path.join(outpath, 'best_abdt')
-        if os.path.exists(bestpath):
-            os.unlink(bestpath)
-        os.symlink(os.path.abspath(bestmodel), bestpath)
     except Exception as e:
         logger.exception(e)
         ans = yes_or_no('Delete folder at {}?'.format(modeldir))
@@ -105,14 +107,14 @@ def main(inpath, outpath):
 
 
 if __name__ == '__main__':
-    log_fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    logging.basicConfig(level=logging.INFO, format=log_fmt)
+    parser = argparse.ArgumentParser(description='AdaBoost DT trainer')
+    parser.add_argument('--exppath', default='../../experiments.json', help='Path to the experiments json file')
+    parser.add_argument('--experiment', default='temporal_static', help='Name of the experiment being performed')
+    parser.add_argument('--dsname', default='session_6030d', help='Name of the dataset used for training')
+    parser.add_argument('--modelname', default='adbt', help='Name of the model being trained')
 
-    # not used in this stub but often useful for finding various files
-    project_dir = os.path.join(os.path.dirname(__file__), os.pardir, os.pardir)
+    args = parser.parse_args()
 
-    # find .env automagically by walking up directories until it's found, then
-    # load up the .env entries as environment variables
-    load_dotenv(find_dotenv())
+    main(exppath=args.exppath, experiment=args.experiment, dsname=args.dsname, modelname=args.modelname)
 
-    main()
+
