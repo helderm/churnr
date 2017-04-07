@@ -6,17 +6,13 @@ import logging
 import json
 
 from churnr.data import extract, process
-from churnr.models import lstm_train, lr_train, abdt_train
-from churnr.plots import roc
-
-model2pkg = {
-    'lstm': lstm_train,
-    'lr': lr_train,
-    'abdt': abdt_train
-}
+from churnr.models import train
+from churnr.plots import roc, precrec, confusion
 
 plot2pkg = {
     'roc': roc,
+    'precrec': precrec,
+    'confusion': confusion,
 }
 
 
@@ -33,19 +29,16 @@ def main(exppath, experiment, stage):
     plots = expconf['plots']
     expabspath = os.path.abspath(exppath)
 
-    import pudb
-    pu.db
-
     # extract each dataset of the experiment
     if stage in ['extract']:
-        for dsname, dsconf in datasets.items():
+        for dsname in datasets.keys():
             if dsname == 'global':
                 continue
 
-        extract.main(exppath=expabspath, experiment=experiment, dsname=dsname, hddump=False)
+            extract.main(exppath=expabspath, experiment=experiment, dsname=dsname, hddump=False)
 
     if stage in ['extract', 'process']:
-        for dsname, dsconf in datasets.items():
+        for dsname in datasets.keys():
             if dsname == 'global':
                 continue
 
@@ -53,20 +46,19 @@ def main(exppath, experiment, stage):
 
     # train each model using each dataset
     if stage in ['extract', 'process', 'train']:
-        for dsname, dsconf in datasets.items():
+        for dsname in datasets.keys():
             if dsname == 'global':
                 continue
 
-            for modelname, modelconf in models.items():
+            for modelname in models.keys():
                 if modelname == 'global':
                     continue
 
-                train_fn = model2pkg[modelname].main
-                train_fn(exppath=expabspath, experiment=experiment, dsname=dsname, modelname=modelname)
+                train.main(exppath=expabspath, experiment=experiment, dsname=dsname, modelname=modelname)
 
 
     if stage in ['extract', 'process', 'train', 'plot']:
-        for plotname, plotconf in plots.items():
+        for plotname in plots.keys():
             if plotname == 'global':
                 continue
 

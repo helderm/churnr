@@ -41,8 +41,8 @@ def main(exppath, experiment, dsname):
 
     inpath = os.path.join(rawpath, experiment, dsname)
 
-    tablenames = 'user_features_*'
-    usertablename = 'user_ids_*'
+    tablenames = 'features_*'
+    usertablename = 'users_*'
     fpath = os.path.join(inpath, tablenames)
     upath = os.path.join(inpath, usertablename)
     allfiles = glob.glob(fpath)

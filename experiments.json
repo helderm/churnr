@@ -79,7 +79,7 @@
                 "project": "user-lifecycle", 
                 "rawpath": "/Users/helderm/Documents/churnr/data/raw", 
                 "procpath":"/Users/helderm/Documents/churnr/data/processed", 
-                "testsize": 0.15,
+                "testsize": 0.1,
                 "classbalance": 1.0,
                 "preddays": 3
             },
@@ -90,13 +90,16 @@
                 "modelpath": "/Users/helderm/Documents/churnr/models"
             },
             "abdt": {},
-            "lr": {}
+            "lr": {},
+            "lstm": {}
         },
         "plots":{
             "global": {
                 "plotpath": "/Users/helderm/Documents/churnr/plots"
             },
-            "roc": {}
+            "roc": {},
+            "precrec": {},
+            "confusion": {}
         }
     } 
 }

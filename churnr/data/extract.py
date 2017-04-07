@@ -32,6 +32,7 @@ def main(exppath, experiment, dsname, hddump):
         conf[key] = exp[experiment]['datasets'][dsname][key] if key in exp[experiment]['datasets'][dsname] else exp[experiment]['datasets']['global'][key]
     if conf['enddate'] == 'yesterday':
         conf['enddate'] = (dt.datetime.today() - dt.timedelta(days=1)).strftime('%Y%m%d')
+    conf['experiment'] = experiment
 
     gspath = os.path.join(conf['gsoutput'], experiment, dsname)
     datapath = os.path.join(conf['rawpath'], experiment, dsname)
@@ -99,7 +100,7 @@ def fetch_user_samples(ds, client, conf):
 
     totaldays = conf['obsdays'] + conf['preddays']
 
-    user_table = ds.table(name='user_ids_sampled_{date}_tmp'.format(date=conf['enddate']))
+    user_table = ds.table(name='users_{}_tmp'.format(conf['experiment']))
     if user_table.exists():
         user_table.delete()
 
@@ -166,7 +167,7 @@ def fetch_features(user_table, ds, client, conf):
     timesplits = conf['timesplits']
 
     ft_tables = []
-    ft_table_name = 'user_features_s{sampledate}_'.format(sampledate=conf['enddate'])
+    ft_table_name = 'features_{}_'.format(conf['experiment'])
     for i in range(totaldays):
 
         # calculate the time splits
@@ -201,7 +202,7 @@ def fetch_features(user_table, ds, client, conf):
                     startslot=int(currtimeslot_start*1000), endslot=int(currtimeslot_end*1000),
                     timesplit=currtimeslot_start)
 
-            jobname = 'user_features_job_' + str(uuid.uuid4())
+            jobname = 'features_job_' + str(uuid.uuid4())
             job = client.run_async_query(jobname, query)
             job.destination = ft_table
             job.allow_large_results = True
@@ -230,7 +231,7 @@ def backfill_missing_users(ds, client, conf):
 
     currdate = dt.datetime.strptime(enddate+'000000', '%Y%m%d%H%M%S') - dt.timedelta(days=obsdays + preddays - 1)
 
-    ft_table_name = 'user_features_s{sampledate}_'.format(sampledate=enddate)
+    ft_table_name = 'features_{}_'.format(conf['experiment'])
     for i in range(obsdays):
 
         # calculate the time splits
@@ -246,11 +247,11 @@ def backfill_missing_users(ds, client, conf):
             # append missing values to feature table
             query = """\
                 SELECT  user_id, {timesplit} as time, 0.0 as consumption_time, 0.0 as session_length, 0.0 as skip_ratio, 0.0 as unique_pages\
-                            FROM[{project}:{dataset}.user_ids_sampled_{enddate}]\
+                            FROM[{project}:{dataset}.users_{exp}]\
                             WHERE user_id NOT IN (SELECT user_id FROM [{project}:{dataset}.{table}])\
-            """.format(enddate=enddate, project=project, dataset=ds.name, table=ft_table.name, timesplit=currtimeslot_start)
+            """.format(exp=conf['experiment'], project=project, dataset=ds.name, table=ft_table.name, timesplit=currtimeslot_start)
 
-            jobname = 'backfill_missing_user_features_job_' + str(uuid.uuid4())
+            jobname = 'backfill_missing_features_job_' + str(uuid.uuid4())
             job = client.run_async_query(jobname, query)
             job.destination = ft_table
             job.allow_large_results = True
@@ -277,7 +278,7 @@ def calculate_churn(user_table_tmp, ds, client, conf):
     timesplits = conf['timesplits']
     churnstart = dt.datetime.strptime(enddate+'000000', '%Y%m%d%H%M%S') - dt.timedelta(days=preddays - 1)
 
-    user_table = ds.table(name='user_ids_sampled_{date}'.format(date=enddate))
+    user_table = ds.table(name='users_{}'.format(conf['experiment']))
     if user_table.exists():
         user_table.delete()
 
@@ -287,8 +288,8 @@ def calculate_churn(user_table_tmp, ds, client, conf):
         datestr_2 = (churnstart + dt.timedelta(days=k)).strftime('%Y%m%d')
 
         for l in range(timesplits):
-            union_query += """select user_id from `{project}.{dataset}.user_features_s{enddate}_{split}_{currdate}`
-                        where consumption_time > 0.0 union distinct """.format(enddate=enddate, split=l, currdate=datestr_2, project=conf['project'], dataset=ds.name)
+            union_query += """select user_id from `{project}.{dataset}.features_{exp}_{split}_{currdate}`
+                        where consumption_time > 0.0 union distinct """.format(exp=conf['experiment'], split=l, currdate=datestr_2, project=conf['project'], dataset=ds.name)
 
     union_query = union_query[:-16]
 
@@ -299,7 +300,7 @@ def calculate_churn(user_table_tmp, ds, client, conf):
             where user_id in ({union})
     """.format(project=conf['project'], dataset=ds.name, table=user_table_tmp.name, union=union_query)
 
-    jobname = 'retained_user_features_job_' + str(uuid.uuid4())
+    jobname = 'retained_features_job_' + str(uuid.uuid4())
     job = client.run_async_query(jobname, query)
     job.destination = user_table
     job.allow_large_results = True
@@ -315,7 +316,7 @@ def calculate_churn(user_table_tmp, ds, client, conf):
             where user_id not in ({union})
     """.format(project=conf['project'], dataset=ds.name, table=user_table_tmp.name, union=union_query)
 
-    jobname = 'retained_user_features_job_' + str(uuid.uuid4())
+    jobname = 'retained_features_job_' + str(uuid.uuid4())
     job = client.run_async_query(jobname, query)
     job.destination = user_table
     job.allow_large_results = True
@@ -323,7 +324,6 @@ def calculate_churn(user_table_tmp, ds, client, conf):
     job.use_legacy_sql = False
     job.begin()
     jobs.append(job)
-
 
     return user_table, jobs
 
@@ -381,7 +381,7 @@ def get_table_names(conf):
     currdate = dt.datetime.strptime(conf['enddate']+'000000', '%Y%m%d%H%M%S') - dt.timedelta(days=conf['obsdays'] + conf['preddays'] - 1)
 
     tablenames = []
-    ft_table_name = 'user_features_s{sampledate}_'.format(sampledate=conf['enddate'])
+    ft_table_name = 'features_{}_'.format(conf['experiment'])
     for i in range(conf['obsdays']):
         datestr = currdate.strftime('%Y%m%d')
 
@@ -410,7 +410,7 @@ def wait_for_jobs(jobs):
         numtries = 9000
         job.reload()
         while job.state != 'DONE':
-            time.sleep(3)
+            time.sleep(5)
             job.reload()
             numtries -= 1
 
