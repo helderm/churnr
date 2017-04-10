@@ -51,7 +51,9 @@ def main(exppath, experiment, dsname):
 
     # read all feature tables
     dtype = {'consumption_time': float, 'session_length': float, 'skip_ratio': float,
-                'unique_pages': float, 'user_id': str, 'time': int}
+                'unique_pages': float, 'user_id': str, 'time': int,
+                'consumption_time_std': float, 'session_length_std': float, 'skip_ratio_std': float,
+                'unique_pages_std': float}
 
     featdf = pd.concat((pd.read_csv(f, dtype=dtype) for f in allfiles))
     userdf = pd.concat((pd.read_csv(f) for f in glob.glob(upath)))
@@ -88,9 +90,6 @@ def main(exppath, experiment, dsname):
     logger.info('Extracting labels...')
     y = df[ df['time'] == df['time'].unique()[0] ]
     y = y['churn'].values.astype(int)
-
-    #import pudb
-    #pu.db
 
     # undersample
     logger.info('Undersampling...')
@@ -142,11 +141,6 @@ def main(exppath, experiment, dsname):
     joblib.dump(y_tr, ypath)
     ypath = os.path.join(outdir,  'labels_test.gz')
     joblib.dump(y_te, ypath)
-
-    # write meta file
-    #meta = { 'enddate': imeta['enddate'], 'x': os.path.abspath(xpath), 'y': os.path.abspath(ypath), 'xagg': os.path.abspath(xaggpath)}
-    #with open(os.path.join(outpath, 'meta.json'), 'w') as f:
-    #    json.dump(meta, f)
 
     logger.info('Done!')
 

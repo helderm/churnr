@@ -53,7 +53,7 @@ setup(
     tests_require=get_requirements('requirements-dev.txt'),
     entry_points={
         'console_scripts': [
-            pyt.__name__ + ' = ' + pyt.__name__ + '.' + pyt.__name__ + ':main'
+            pyt.__name__ + ' = ' + pyt.__name__ + '.app:main'
         ]
     },
 

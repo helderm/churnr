@@ -18,7 +18,8 @@ plot2pkg = {
 
 logger = logging.getLogger('churnr.experiment')
 
-def main(exppath, experiment, stage):
+
+def run(exppath, experiment, stage):
     logger.info('Initializing experiment...')
 
     with open(exppath) as fi:
@@ -68,7 +69,8 @@ def main(exppath, experiment, stage):
 
     logger.info('Done!')
 
-if __name__ == '__main__':
+
+def main():
     parser = argparse.ArgumentParser(description='Experiment dispatcher')
     parser.add_argument('--exppath', default='../experiments.json', help='Path to the experiments json file')
     parser.add_argument('--experiment', default='temporal_static', help='Name of the experiment being performed')
@@ -76,5 +78,8 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    main(exppath=args.exppath, experiment=args.experiment, stage=args.stage)
+    run(exppath=args.exppath, experiment=args.experiment, stage=args.stage)
+
+if __name__ == '__main__':
+    main()
 

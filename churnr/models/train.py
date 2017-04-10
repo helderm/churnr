@@ -7,13 +7,15 @@ import json
 import joblib
 
 from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import AdaBoostClassifier
+from sklearn.ensemble import AdaBoostClassifier, RandomForestClassifier
+from sklearn.svm import SVC
 from sklearn.model_selection import KFold, GridSearchCV, RandomizedSearchCV, cross_val_predict
 from sklearn.metrics import roc_curve, auc, f1_score
 from keras.wrappers.scikit_learn import KerasClassifier
 from keras.utils.np_utils import to_categorical
 import numpy as np
 from scipy.stats import randint as sp_randint
+import pandas as pd
 
 from churnr.utils import yes_or_no
 from churnr.models.lstm_models import custom_model
@@ -42,11 +44,24 @@ models = {
         'params': {
             'units1': sp_randint(32, 128),
             'units2': sp_randint(32, 128),
-            'units3': sp_randint(32, 128),
-            'optim': ['rmsprop', 'adagrad', 'sgd'],
-            'layers': sp_randint(1, 3)
+            'optim': ['rmsprop', 'adagrad', 'sgd', 'adam'],
+            'layers': sp_randint(1, 2)
         }
-    }
+    },
+    'rf': {
+        'obj': RandomForestClassifier(),
+        'params': {
+            'n_estimators': [10, 40, 70, 100],
+            'max_depth': [None, 10, 20],
+        }
+    },
+    'svc': {
+        'obj': SVC(probability=True),
+        'params': {
+            'C': [0.001, 0.01, 1, 10, 100],
+            'kernel': ['rbf', 'poly', 'sigmoid']
+        }
+    },
 }
 
 
@@ -89,58 +104,53 @@ def main(exppath, experiment, dsname, modelname):
         logger.info('Cross validating model hyperparams...')
 
         inner_cv = KFold(n_splits=2, shuffle=True, random_state=42)
-        outer_cv = KFold(n_splits=2, shuffle=True, random_state=42)
+        outer_cv = KFold(n_splits=5, shuffle=True, random_state=42)
 
         if modelname == 'lstm':
             model = KerasClassifier(build_fn=custom_model, data_shape=(X.shape[1], X.shape[2]))
             params = models[modelname]['params']
-            clf = RandomizedSearchCV(estimator=model, param_distributions=params, n_iter=1, cv=inner_cv, iid=False, fit_params={'batch_size': 128, 'epochs': 5}, verbose=3, n_jobs=1, random_state=42)
+            clf = RandomizedSearchCV(estimator=model, param_distributions=params, n_iter=10, cv=inner_cv, iid=False, fit_params={'batch_size': 512, 'epochs': 20}, verbose=3, n_jobs=1, random_state=42)
         else:
             model = models[modelname]['obj']
             params = models[modelname]['params']
-            clf = GridSearchCV(estimator=model, param_grid=params, cv=inner_cv)
+            clf = GridSearchCV(estimator=model, param_grid=params, cv=inner_cv, verbose=3)
 
         # Non_nested parameter search and scoring
         clf.fit(X, y)
 
-        # Nested CV with parameter optimization
-        y_pred = cross_val_predict(clf, X=X, y=y, cv=outer_cv, method='predict_proba', n_jobs=1)[:,1]
-        y_pred_th = np.array([0.0 if i <= 0.5 else 1.0 for i in y_pred])
+        best_params = clf.best_params_
+        best_estimator = clf.best_estimator_
 
-        #cv = GridSearchCV(estimator=model, param_grid=params, cv=kf, verbose=1)
-        #cv.fit(X,y)
-
-        model = clf.best_estimator_
-
-        logger.info('Cross validation finished, saving model...')
+        logger.info('Best hyperparams found!')
+        logger.info('-- params = {}'.format(best_params))
+        pd.DataFrame(clf.cv_results_).to_pickle(os.path.join(modeldir, 'cv_results.pkl'))
 
         if modelname == 'lstm':
-            model.model.save(os.path.join(modeldir, 'model.hdf5'))
+            fit_params= {'batch_size': 512, 'epochs': 60}
         else:
-            joblib.dump(model, os.path.join(modeldir, 'model.pkl'))
+            fit_params=None
 
-        # print the model test metrics
-        metrics = {}
-        #logger.info('Evaluating model on the test set...')
-        #acc = model.score(X, y_te)
-        #metrics = {'acc': acc}
+        # Nested CV with parameter optimization
+        logger.info('Initializing outer cross validation loop using best hyperparams...')
+        y_pred = cross_val_predict(best_estimator, X=X, y=y, cv=outer_cv, method='predict_proba', n_jobs=1, verbose=3, fit_params=fit_params)[:,1]
+        y_pred_th = np.array([0.0 if i <= 0.5 else 1.0 for i in y_pred])
+
+        logger.info('Cross validation finished, saving metadata...')
 
         # undo one hot vector for labels
         y = y[:,1] if len(y.shape) > 1 else y
 
-        # calculate roc and auc and plot it
-
-        #y_pred = model.predict_proba(X_te)
+        # print the model test metrics
+        metrics = {}
         fpr, tpr, _ = roc_curve(y, y_pred)
         roc_auc = auc(fpr, tpr)
         metrics['auc'] = roc_auc
         metrics['f1'] = f1_score(y, y_pred_th)
-
         logger.info('** Test metrics **')
         for key, val in metrics.items():
             logger.info('-- {0}: {1:.3f}'.format(key, val))
 
-        # serialize y_true and y_pred for later roc visualization
+        # serialize y_true and y_pred for later plot visualization
         y_trpred = np.empty(shape=(y.shape[0], 2))
         y_trpred[:,0] = y
         y_trpred[:,1] = y_pred
@@ -150,7 +160,7 @@ def main(exppath, experiment, dsname, modelname):
         with open(os.path.join(modeldir, 'metrics.json'), 'w') as f:
             json.dump(metrics, f)
         with open(os.path.join(modeldir, 'config.json'), 'w') as f:
-            json.dump(clf.best_params_, f)
+            json.dump(best_params, f)
 
     except Exception as e:
         logger.exception(e)
@@ -158,10 +168,11 @@ def main(exppath, experiment, dsname, modelname):
         if ans:
             import shutil
             shutil.rmtree(modeldir)
+        raise e
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='LR trainer')
+    parser = argparse.ArgumentParser(description='Model trainer')
     parser.add_argument('--exppath', default='../../experiments.json', help='Path to the experiments json file')
     parser.add_argument('--experiment', default='temporal_static', help='Name of the experiment being performed')
     parser.add_argument('--dsname', default='session_6030d', help='Name of the dataset used for training')

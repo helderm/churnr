@@ -42,7 +42,7 @@ def plot_confusion_matrix(y_trpred, clf_name, fig, numcms):
         ax.set_xlabel('Pred')
 
 def main(exppath, experiment):
-    logger.info('Plotting ROC curve for trained models...')
+    logger.info('Plotting confusion matrices for trained models...')
 
     with open(exppath) as f:
         expconf = json.load(f)[experiment]

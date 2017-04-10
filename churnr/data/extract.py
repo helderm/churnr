@@ -9,6 +9,7 @@ import google.cloud.storage as gcs
 import datetime as dt
 import math
 import json
+import shutil
 
 SECS_IN_DAY = 86399
 
@@ -33,6 +34,7 @@ def main(exppath, experiment, dsname, hddump):
     if conf['enddate'] == 'yesterday':
         conf['enddate'] = (dt.datetime.today() - dt.timedelta(days=1)).strftime('%Y%m%d')
     conf['experiment'] = experiment
+    conf['dsname'] = dsname
 
     gspath = os.path.join(conf['gsoutput'], experiment, dsname)
     datapath = os.path.join(conf['rawpath'], experiment, dsname)
@@ -43,54 +45,62 @@ def main(exppath, experiment, dsname, hddump):
     else:
         os.makedirs(datapath)
 
-    client = bq.Client(project=conf['project'])
+    try:
+        client = bq.Client(project=conf['project'])
 
-    # create dataset
-    ds = client.dataset(conf['dataset'])
-    if not ds.exists():
-        ds.location = 'EU'
-        ds.create()
+        # create dataset
+        ds = client.dataset(conf['dataset'])
+        if not ds.exists():
+            ds.location = 'EU'
+            ds.create()
 
-    # if hddump, skip the db queries and dump the files already stored at GCS
-    if hddump and hddump == 'True':
-        tablenames = get_table_names(conf)
+        # if hddump, skip the db queries and dump the files already stored at GCS
+        if hddump and hddump == 'True':
+            tablenames = get_table_names(conf)
+            extract_dataset_to_disk(datapath, tablenames, conf['project'], gspath)
+            logger.info('Finished! Data dumped to disk at {}!'.format(datapath))
+            return
+
+        # randomly sample users who are active on the last week
+        user_table_tmp, jobs = fetch_user_samples(ds, client, conf)
+        wait_for_jobs(jobs)
+
+        # make samples distinct
+        jobs = distinct_users(user_table_tmp, conf['project'], ds, client)
+        wait_for_jobs(jobs)
+
+        # build feature set
+        ft_tables, jobs = fetch_features(user_table_tmp, ds, client, conf)
+        wait_for_jobs(jobs)
+
+        # calculate the churn label for each user and each timestep
+        user_table, jobs = calculate_churn(user_table_tmp, ds, client, conf)
+        wait_for_jobs(jobs)
+        user_table_tmp.delete()
+
+        # backfill missing users on feature tables
+        jobs = backfill_missing_users(ds, client, conf)
+        wait_for_jobs(jobs)
+
+        # serialize features
+        tables = ft_tables[-(conf['obsdays']*conf['timesplits']):] + [user_table]
+        jobs = dump_features_to_gcs(tables, gspath, client)
+
+        # dump to disk
+        wait_for_jobs(jobs)
+        tablenames = [t.name for t in tables]
         extract_dataset_to_disk(datapath, tablenames, conf['project'], gspath)
-        logger.info('Finished! Data dumped to disk at {}!'.format(datapath))
-        return
+        with open(os.path.join(datapath, 'conf.json'), 'w') as f:
+            json.dump(conf, f)
 
-    # randomly sample users who are active on the last week
-    user_table_tmp, jobs = fetch_user_samples(ds, client, conf)
-    wait_for_jobs(jobs)
-
-    # make samples distinct
-    jobs = distinct_users(user_table_tmp, conf['project'], ds, client)
-    wait_for_jobs(jobs)
-
-    # build feature set
-    ft_tables, jobs = fetch_features(user_table_tmp, ds, client, conf)
-    wait_for_jobs(jobs)
-
-    # calculate the churn label for each user and each timestep
-    user_table, jobs = calculate_churn(user_table_tmp, ds, client, conf)
-    wait_for_jobs(jobs)
-    user_table_tmp.delete()
-
-    # backfill missing users on feature tables
-    jobs = backfill_missing_users(ds, client, conf)
-    wait_for_jobs(jobs)
-
-    # serialize features
-    tables = ft_tables[-(conf['obsdays']*conf['timesplits']):] + [user_table]
-    jobs = dump_features_to_gcs(tables, gspath, client)
-
-    # dump to disk
-    wait_for_jobs(jobs)
-    tablenames = [t.name for t in tables]
-    extract_dataset_to_disk(datapath, tablenames, conf['project'], gspath)
-    with open(os.path.join(datapath, 'conf.json'), 'w') as f:
-        json.dump(conf, f)
+    except Exception as e:
+        logger.exception(e)
+        logger.info('Removing folder {}...'.format(datapath))
+        shutil.rmtree(datapath)
+        raise e
 
     logger.info('Finished! Data dumped to {}'.format(datapath))
+
 
 
 def fetch_user_samples(ds, client, conf):
@@ -100,7 +110,7 @@ def fetch_user_samples(ds, client, conf):
 
     totaldays = conf['obsdays'] + conf['preddays']
 
-    user_table = ds.table(name='users_{}_tmp'.format(conf['experiment']))
+    user_table = ds.table(name='users_{}_{}_tmp'.format(conf['experiment'], conf['dsname']))
     if user_table.exists():
         user_table.delete()
 
@@ -161,13 +171,13 @@ def fetch_features(user_table, ds, client, conf):
     """ Fetch the features for each user session, splitting into timesplits """
 
     jobs = []
-    currdate = dt.datetime.strptime(conf['enddate']+'000000', '%Y%m%d%H%M%S')
+    currdate = dt.datetime.strptime(conf['enddate']+'000000 -0500', '%Y%m%d%H%M%S %z')
 
     totaldays = conf['obsdays'] + conf['preddays']
     timesplits = conf['timesplits']
 
     ft_tables = []
-    ft_table_name = 'features_{}_'.format(conf['experiment'])
+    ft_table_name = 'features_{}_{}_'.format(conf['experiment'], conf['dsname'])
     for i in range(totaldays):
 
         # calculate the time splits
@@ -191,7 +201,8 @@ def fetch_features(user_table, ds, client, conf):
 
             # query user features
             query = """\
-                SELECT  user_id, {timesplit} as time, avg(consumption_time) as consumption_time, avg(session_length) as session_length, avg(skip_ratio) as skip_ratio, avg(unique_pages) as unique_pages FROM\
+                SELECT user_id, {timesplit} as time, avg(consumption_time) as consumption_time, ifnull(stddev(consumption_time),0) as consumption_time_std, avg(session_length) as session_length, ifnull(stddev(session_length),0) as session_length_std,\
+                         avg(skip_ratio) as skip_ratio, ifnull(stddev(skip_ratio),0) as skip_ratio_std, avg(unique_pages) as unique_pages, ifnull(stddev(unique_pages),0) as unique_pages_std FROM\
                         (SELECT user_id, consumption_time/1000 as consumption_time, session_length, skip_ratio, unique_pages\
                             FROM [activation-insights:sessions.features_{date}]\
                             WHERE user_id IN (SELECT user_id FROM [{project}:{dataset}.{table}])\
@@ -229,9 +240,9 @@ def backfill_missing_users(ds, client, conf):
     timesplits = conf['timesplits']
     project = conf['project']
 
-    currdate = dt.datetime.strptime(enddate+'000000', '%Y%m%d%H%M%S') - dt.timedelta(days=obsdays + preddays - 1)
+    currdate = dt.datetime.strptime(enddate+'000000 -0500', '%Y%m%d%H%M%S %z') - dt.timedelta(days=obsdays + preddays - 1)
 
-    ft_table_name = 'features_{}_'.format(conf['experiment'])
+    ft_table_name = 'features_{}_{}_'.format(conf['experiment'], conf['dsname'])
     for i in range(obsdays):
 
         # calculate the time splits
@@ -246,10 +257,11 @@ def backfill_missing_users(ds, client, conf):
 
             # append missing values to feature table
             query = """\
-                SELECT  user_id, {timesplit} as time, 0.0 as consumption_time, 0.0 as session_length, 0.0 as skip_ratio, 0.0 as unique_pages\
-                            FROM[{project}:{dataset}.users_{exp}]\
+                SELECT user_id, {timesplit} as time, 0.0 as consumption_time, 0.0 as consumption_time_std, 0.0 as session_length, 0.0 as session_length_std,\
+                            0.0 as skip_ratio, 0.0 as skip_ratio_std, 0.0 as unique_pages, 0.0 as unique_pages_std\
+                            FROM [{project}:{dataset}.users_{exp}_{ds}]\
                             WHERE user_id NOT IN (SELECT user_id FROM [{project}:{dataset}.{table}])\
-            """.format(exp=conf['experiment'], project=project, dataset=ds.name, table=ft_table.name, timesplit=currtimeslot_start)
+            """.format(exp=conf['experiment'], project=project, dataset=ds.name, table=ft_table.name, timesplit=currtimeslot_start, ds=conf['dsname'])
 
             jobname = 'backfill_missing_features_job_' + str(uuid.uuid4())
             job = client.run_async_query(jobname, query)
@@ -276,9 +288,9 @@ def calculate_churn(user_table_tmp, ds, client, conf):
     preddays = conf['preddays']
     enddate = conf['enddate']
     timesplits = conf['timesplits']
-    churnstart = dt.datetime.strptime(enddate+'000000', '%Y%m%d%H%M%S') - dt.timedelta(days=preddays - 1)
+    churnstart = dt.datetime.strptime(enddate+'000000 -0500', '%Y%m%d%H%M%S %z') - dt.timedelta(days=preddays - 1)
 
-    user_table = ds.table(name='users_{}'.format(conf['experiment']))
+    user_table = ds.table(name='users_{}_{}'.format(conf['experiment'], conf['dsname']))
     if user_table.exists():
         user_table.delete()
 
@@ -288,8 +300,9 @@ def calculate_churn(user_table_tmp, ds, client, conf):
         datestr_2 = (churnstart + dt.timedelta(days=k)).strftime('%Y%m%d')
 
         for l in range(timesplits):
-            union_query += """select user_id from `{project}.{dataset}.features_{exp}_{split}_{currdate}`
-                        where consumption_time > 0.0 union distinct """.format(exp=conf['experiment'], split=l, currdate=datestr_2, project=conf['project'], dataset=ds.name)
+            union_query += """select user_id from `{project}.{dataset}.features_{exp}_{ds}_{split}_{currdate}`
+                        where consumption_time > 0.0 union distinct """.format(exp=conf['experiment'], split=l,
+                                currdate=datestr_2, project=conf['project'], dataset=ds.name, ds=conf['dsname'])
 
     union_query = union_query[:-16]
 
@@ -351,7 +364,6 @@ def extract_dataset_to_disk(datapath, tablenames, project, gsoutput):
     logger.info('Extracting {} files to {}...'.format(len(tablenames), datapath))
 
     if os.path.exists(datapath):
-        import shutil
         shutil.rmtree(datapath)
     os.makedirs(datapath)
 
@@ -378,10 +390,10 @@ def extract_dataset_to_disk(datapath, tablenames, project, gsoutput):
 
 def get_table_names(conf):
 
-    currdate = dt.datetime.strptime(conf['enddate']+'000000', '%Y%m%d%H%M%S') - dt.timedelta(days=conf['obsdays'] + conf['preddays'] - 1)
+    currdate = dt.datetime.strptime(conf['enddate']+'000000i -0500', '%Y%m%d%H%M%S %z') - dt.timedelta(days=conf['obsdays'] + conf['preddays'] - 1)
 
     tablenames = []
-    ft_table_name = 'features_{}_'.format(conf['experiment'])
+    ft_table_name = 'features_{}_{}_'.format(conf['experiment'], conf['dsname'])
     for i in range(conf['obsdays']):
         datestr = currdate.strftime('%Y%m%d')
 
@@ -391,7 +403,7 @@ def get_table_names(conf):
 
         currdate = currdate + dt.timedelta(days=1)
 
-    tablenames.append('user_ids_sampled_{date}'.format(date=conf['enddate']))
+    tablenames.append('users_{}_{}'.format(conf['experiment'], conf['dsname']))
 
     return tablenames
 
