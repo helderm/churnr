@@ -390,7 +390,7 @@ def extract_dataset_to_disk(datapath, tablenames, project, gsoutput):
 
 def get_table_names(conf):
 
-    currdate = dt.datetime.strptime(conf['enddate']+'000000i -0500', '%Y%m%d%H%M%S %z') - dt.timedelta(days=conf['obsdays'] + conf['preddays'] - 1)
+    currdate = dt.datetime.strptime(conf['enddate']+'000000 -0500', '%Y%m%d%H%M%S %z') - dt.timedelta(days=conf['obsdays'] + conf['preddays'] - 1)
 
     tablenames = []
     ft_table_name = 'features_{}_{}_'.format(conf['experiment'], conf['dsname'])

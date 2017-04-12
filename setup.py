@@ -12,7 +12,7 @@ import churnr as pyt
 def get_requirements(file_name='requirements.txt'):
     try:
         filename = open(file_name)
-        lines = [i.strip() for i in filename.readlines()]
+        lines = [i.strip() for i in filename.readlines() if len(i.rstrip()) > 0]
         filename.close()
     except:
         return []
@@ -26,6 +26,7 @@ def read(fname):
     except:
         return ''
 
+reqs = get_requirements()
 
 setup(
     name=pyt.__name__,
@@ -38,7 +39,7 @@ setup(
     packages=find_packages(exclude=('tests')),
     platforms=['any'],
     include_package_data=True,
-    install_requires=get_requirements(),
+    install_requires=reqs,
     license="BSD",
     zip_safe=False,
     keywords=pyt.__name__,

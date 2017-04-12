@@ -5,14 +5,18 @@ import argparse
 import logging
 import json
 
+import matplotlib
+matplotlib.use('Agg')
+
 from churnr.data import extract, process
 from churnr.models import train
-from churnr.plots import roc, precrec, confusion
+from churnr.plots import roc, precrec, confusion, line
 
 plot2pkg = {
     'roc': roc,
     'precrec': precrec,
     'confusion': confusion,
+    'line': line,
 }
 
 
@@ -75,6 +79,7 @@ def main():
     parser.add_argument('--exppath', default='../experiments.json', help='Path to the experiments json file')
     parser.add_argument('--experiment', default='temporal_static', help='Name of the experiment being performed')
     parser.add_argument('--stage', default='extract', help='Stage that the experiment will start from', choices=['extract', 'process', 'train', 'plot'])
+    parser.add_argument('--job-dir', default='gs://helder/churnr', help='Cloud ML job dir')
 
     args = parser.parse_args()
 
