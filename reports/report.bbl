@@ -1,4 +1,4 @@
-\begin{thebibliography}{28}
+\begin{thebibliography}{30}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -66,6 +66,15 @@ David~R Cox.
 \newblock \emph{Journal of the Royal Statistical Society. Series B
   (Methodological)}, pages 215--242, 1958.
 
+\bibitem[Burez and {Van den Poel}(2009)]{Burez2009}
+J.~Burez and D.~{Van den Poel}.
+\newblock {Handling class imbalance in customer churn prediction}.
+\newblock \emph{Expert Systems with Applications}, 36\penalty0 (3 PART
+  1):\penalty0 4626--4636, 2009.
+\newblock ISSN 09574174.
+\newblock \doi{10.1016/j.eswa.2008.05.027}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.eswa.2008.05.027}.
+
 \bibitem[Borbora et~al.(2011)Borbora, Srivastava, Hsu, and Iams]{Borbora2011}
 Zoheb Borbora, Jaideep Srivastava, Kuo~Wei Hsu, and Dmitri~Wil Iams.
 \newblock {Churn prediction in MMORPGs using player motivation theories and an
@@ -130,15 +139,6 @@ Kristof Coussement and Dirk Van~den Poel.
   vector machines while comparing two parameter-selection techniques.
 \newblock \emph{Expert systems with applications}, 34\penalty0 (1):\penalty0
   313--327, 2008.
-
-\bibitem[Burez and {Van den Poel}(2009)]{Burez2009}
-J.~Burez and D.~{Van den Poel}.
-\newblock {Handling class imbalance in customer churn prediction}.
-\newblock \emph{Expert Systems with Applications}, 36\penalty0 (3 PART
-  1):\penalty0 4626--4636, 2009.
-\newblock ISSN 09574174.
-\newblock \doi{10.1016/j.eswa.2008.05.027}.
-\newblock URL \url{http://dx.doi.org/10.1016/j.eswa.2008.05.027}.
 
 \bibitem[Auon et~al.(2015)Auon, Kazmi, Malhotra, Vig, Agarwal, and
   Shroff]{Auon2015}
@@ -206,5 +206,17 @@ Boxun Zhang, Gunnar Kreitz, Marcus Isaksson, Javier Ubillos, Guido Urdaneta,
 \newblock \doi{10.1109/INFCOM.2013.6566767}.
 \newblock URL
   \url{http://ieeexplore.ieee.org/lpdocs/epic03/wrapper.htm?arnumber=6566767}.
+
+\bibitem[LeCun et~al.(2012)LeCun, Bottou, Orr, and
+  M{\"u}ller]{lecun2012efficient}
+Yann~A LeCun, L{\'e}on Bottou, Genevieve~B Orr, and Klaus-Robert M{\"u}ller.
+\newblock Efficient backprop.
+\newblock In \emph{Neural networks: Tricks of the trade}, pages 9--48.
+  Springer, 2012.
+
+\bibitem[Ling and Li(1998)]{ling1998data}
+Charles~X Ling and Chenghui Li.
+\newblock Data mining for direct marketing: Problems and solutions.
+\newblock In \emph{KDD}, volume~98, pages 73--79, 1998.
 
 \end{thebibliography}

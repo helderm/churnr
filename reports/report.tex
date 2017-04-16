@@ -1,10 +1,12 @@
 \documentclass{kththesis}
 
 \justifying
-
 \usepackage{graphicx}
-
+\usepackage{epigraph}
 \usepackage{bm}
+\usepackage{hyperref}
+\usepackage{todo}
+\usepackage{subcaption}
 
 % remove this if you are using XeLaTeX or LuaLaTeX
 \usepackage[utf8]{inputenc}
@@ -63,12 +65,14 @@
 	
 	The rise of streaming services has in recent years revolutionized the way customers get access to digital content. The traditional model of media ownership, even though it still represents a significant share of revenue, is continuously losing ground to a new right-of-access model where users get access to content ether by paying a monthly subscription or by being exposed to advertisement. The customer base of said services is steadily growing, and with it the amount data collected tracking how they interact with the provided digital media. This information is of high-value to any provider who expects improve the user experience, increase its total number of clients and also avoid losing the current ones to the competition.
 	
-	One application of a data set like this that has received attention from the industry is to predict the clients that are more likely to leave the service in the near future and anticipate it by performing a set of actions with the goal of avoiding it from happening. It is predicted that there are a set of features which are highly correlated with their desire of abandoning the application, and thus a model could be trained to leverage this information and classify users based on the probability of that even occurring. Such models are called \emph{churn predictors}, and will be a central subject on this thesis project. Another interest will be to evaluate which set of features among the available ones actually correlates with churn and extract from it actionable insights that can be suggested to the provider as a form of improvement to their application, a task made harder by the extremely large number of attributes that is commonly captured.
+	One application of a data set like this that has received attention from the industry is to predict the clients that are more likely to leave the service in the near future and anticipate it by performing a set of actions with the goal of avoiding it from happening. It is predicted that there is a set of features which are highly correlated with their desire of abandoning the application, and thus a model could be trained to leverage this information and classify users based on the probability of that event occurring. Such models are called \emph{churn predictors}, and will be a central subject on this thesis project. Another interest will be to evaluate which set of features among the available ones actually correlates with churn and extract from it actionable insights that can be suggested to the provider as a form of improvement to their application, a task made harder by the extremely large number of attributes that is commonly captured.
+	 
+	\Todo{Add temporal features paragraph}
 	 
 	The user behaviour data and the required computational resources were provided by \emph{Spotify}, a well known music streaming service that joined this project in a tutoring partnership with the student and the university. Creating a suitable data set for training our proposed models is also part of the project, and it was performed by first exploring the data at our disposal and identifying the features that highly correlates with churn. While the available data is mostly related to the music domain, the methodology of this project and the conclusions reached can also be extended to other domains like video streaming with minor modifications.
 	
 	
-	\subsection{Streaming services}
+	\section{Streaming services}
 
 	The last decade has witnessed an overwhelming increase in popularity in all kinds of streaming services around the globe. Applications like Netflix and Spotify have changed the industry by offering a legal and affordable way of accessing content through a subscription-like contract instead of the classical pay-by-content commonly used by traditional media providers. This change in business model has proven to be successful by the sheer amount of customers that the most popular service providers have nowadays. Netflix for instance has reported to its shareholders a user base of 93 million worldwide at the end of 2016 \citep{netflixsh}, while Spotify recently reached the amazing feat of 50 million paying subscribers, 20 million of that only in one year \citep{spotifypress}. Even though bureaucratic challenges like the dispute between the service providers and the labels regarding the value of licenses are still on debate, the adoption of this new model by consumers indicates no interest of going back to the old ways of getting access to digital content, like through physical or downloadable pay-by-content media.
 
@@ -81,7 +85,7 @@
 
 	Music streaming follows this trend of growth on the latest economical reports. Over the five year period to 2015, the observed revenue from the industry grew four times to US \$2.89 billion as can be seen in Figure \ref{fig:ifpi-growth-report} from the IFPI organisation \citep{ifpi}. The increase in the number of paying subscribers is also of notice, seeing an increase from 8 to 68 million people over the same period. This new model also helped bring some countries where licensed music market was losing ground to piracy like China and Mexico, and it corresponds to around 20\% of the industry's revenue in the top five markets in the world. 
 	
-	\subsection{Spotify and the growing competition}	
+	\section{Spotify and the growing competition}	
 	
 	\begin{figure}[h]
     \centering
@@ -94,25 +98,32 @@
 	
 	The promise of growth in the area however has attracted well known brands to the dispute like Apple and Google, and their growth, while still not up to par with the top players, has been steady and may be significant in the following years \citep{ifpi}. The market is becoming saturated with competition, and any contender to the top position in the music streaming area must strive to keep its current user base at all costs. The loss of a customer, be it for the competition or not, is called in the industry as \emph{churn} and is commonly seen as a metric that should be minimized in a customer relations framework (CRM) of a service provider. For that goal, an important step is to identify prematurely the candidate churning customers and to leverage actions that may avoid them from leaving, and this is commonly achieved by making use of the wealth of historical information that digital providers have about their users. 
 	
-\subsection{Churn prediction}	
+\section{Churn prediction}	
 	
 	\emph{Churn prediction}, the task of identifying the most probable churning customers of a service provider, is an established topic in the literature and has seen a considerable amount of research specially on the mobile telecom industry \citep{Hassouna2015} \citep{Lu2014} \citep{Khan2015}.  Several classical techniques for predicting churn like decision trees and logistic regression have been used on recent work \citep{mahajan2015review}, however most of them make use of user behaviour data at a single point in time, normally the most recent one when the dataset was created. The user is commonly represented by summarizing or aggregating his behavioural feature values over a fixed time window, thus losing any latent sequential information that might be contained in the data set. This is a simplification that eases the burden of training a predictor model since the customer data is commonly high-dimensional and difficult to work with, nonetheless latent attributes, when used properly, have been shown to improve significantly a predictor's performance for industries like mobile telecom \citep{GurAli2014}.
     
     Intuitively one can think that latent factors hidden in the temporal axis of the user behaviour data could yield a better prediction accuracy when comparing to a model which leverage a single and static point in time. For instance, a user that is gradually reducing its consumption of the service over time can be easily thought of a prospect churner. While this intuition is trivial to come up with, we are also interested in learning strong correlations between temporal aspects of the data and the churn rate which are not as clear to the eye. Our hypothesis is that making use of the properties hidden on user behaviour data over time, a churn rate predictor could improve its accuracy greatly when compared to methods which are static on time.
     
-\subsection{User retention}    
+\section{User retention}    
     
 A churn rate predictor which can identify possible churners accurately is just a trigger on the user retention process that can span several different stages. One of these stages is to identify what actions can be taken by the service provider as to avoid the user abandoning the service. An important problem to solve beforehand is to identify which features of the data have a strong statistical correlation with the churn rate. With that information, the providers could for example set up automated actions as to influence the value on these features. Learning which are the most important features is also of relevance for the task of choosing what data to use for training the predictor models, since commonly service providers have a vast amount of data about the user but only a fraction of that is of importance for predicting churn: training models with a full dataset will commonly introduce error on the system and take a large amount of computing resources to train.
 	
-\subsection{Objective}	
+\section{Objective}	
 	
 The goal of this project will be to research different models for churn prediction that can make use of the temporal aspect of user behaviour data at its fullest. Our hypothesis is that latent factors hidden on usage patterns may increase the accuracy of state-of-art predictors which considers only the state of the data at a single point in time. We shall experiment on different models that are known to perform well on time series data and compare their accuracy using different evaluation methods. Detecting possible churners, while important, does not improve user retention without an associated action performed by the service provider. To derive insights on what can done to improve this metric, a deep data exploration and feature analysis is also a goal of this project. Features shall be correlated to their influence on the churn rate, and feature selection techniques shall be researched and implemented in an attempt to reduce bias on the churn classifiers.    
 
 \chapter{Background}
 
-TODO: write intro paragraph
+For a better understanding of this degree project, some concepts are required to be properly introduced. Some of them like the ones present in the Definitions section are mainly application-specific, while others pertains to our choice of methodology and evaluation metrics.
 
-\subsection{Definitions}
+\section{Definitions}
+\label{sec:definitions}
+
+Every service provider has a different definition of what churn is. Some of them use the explicit cancellation of a contract as a indicator of user abandonment, which has  the advantage of being straightforward to calculate and having a clear correlation to revenue metrics, while others prefer to explore the user activity instead, which has the benefit of better leveraging his satisfaction level and working with the assumption that a satisfied customer has a lower chance of leaving the service for the competition. 
+
+In this degree project, the \emph{user activity} will be used as indication of churn. Even though Spotify has a paid Premium version that could be used as a source of churn labels, a considerable fraction of Free users who generates revenue through advertisement would be excluded from this study. Thus their engagement will be measured instead disregarding for labeling purposes whether they are paying customers or not, however they may be split into different clusters for visualization purposes.
+
+To build up the exact definition of what churn is for Spotify, some concepts need to firstly be introduced, which follows.
 
 \newtheorem{definition}{Definition}
 
@@ -120,25 +131,37 @@ TODO: write intro paragraph
 A \emph{session} is defined as the time period the user is engaged into the application, be it to stream music or to navigate through the available content. A session starts when a user interaction trigger is captured (eg. a button click), and the session ends when no such trigger is captured and no continuous activity is being performed (eg. listening to a song) for at least 15 minutes.
 \end{definition}
 
-The session is the basic measurement of activity of the user on the service. Users are considered \emph{active} if they are currently on a session, and \emph{inactive} otherwise. (TODO Check Sahar)
+The session is the basic measurement of activity of the user on the service. It incorporates not only the user music streaming behavior but also his interactions with other features of the application like playlist creation and social interactions between other users. Since Spotify is mainly interested in evaluating the user based on its main feature of content streaming, other user interactions were deemed by the service provider as a weak predictor of churn. 
 
 \begin{definition}
-A user is defined to have \emph{churned} if no session of his was registered in the last 30 days.
+The \emph{consumption time} of a user is the time within a session that he is streaming any service-provided content. A user session is considered \emph{active} if its consumption time is greater that zero, and \emph{inactive} otherwise.
 \end{definition}
 
-Note that this definition is not concerned whether the user is a paying customer or not, but only if he is actually making use of the service. For example, a user may be subscribed to a Premium paid account and still be considered to have churned if no activity was registered in the last 30 days. However, it should be noted that empirical observations by the service provider suggest that there is a significant behavioural difference between the two classes of users that will be taken into consideration when the experiments are performed. (TODO Check Sahar)
+Active and inactive sessions are more constrained definitions that better reflect the goals of the service provider. Even though there may be a highly engaged user that makes use of a wide range of features on the application, every session of his will be considered inactive if no content is streamed.
 
-\subsection{Feature Selection}
+Before we arrive in the definition of churn, a brief introduction to time windows will be given to understand further concepts in this section. These definitions will be thoroughly explored on \autoref{chap:method}.
 
-TODO: add feature selection techniques (Information gain, L1-norm, Recursive Feature Elimination, Variance Threshold...)
+\begin{definition}
+The \emph{observation window} is the time span used to observe user behavior and to train the predictor models. It is always followed by the \emph{prediction window} which is exclusively used to predict whether a user in the observation window is going to churn in the future or not. 
+\end{definition}
 
-\subsection{Predictor Models}
+\begin{definition}
+A user is defined to have \emph{churned} if he has at least one active session in the observation window and no active session in the prediction window.
+\end{definition}
 
-\subsubsection{Logistic Regression}
+Note that as mentioned before this definition is not concerned whether the user is a paying customer or not, but only if he is actually making use of the service. For example, a user may be subscribed to a Premium paid account and still be considered to have churned if no activity was registered in the prediction window. However, it should be noted that empirical observations by the service provider suggest that there is a significant behavioral difference between the two classes of users that will be taken into consideration when the experiments are performed. 
 
-Logistic regression is a linear regression model used to predict the probability of occurrence of a categorical variable, like the churning and non-churning labels. First developed by mathematician David Cox \citep{cox1958regression}, this technique has been used in wide range of domains like medical fields, marketing and economics (TODO: add refs?), and is as of today one of the most used models for predicting the churn rate of customers on the telecom industry \citep{mahajan2015review}. Despite its name, logistic regression is used mostly as a classification algorithm, since its output is a probability score that together with a threshold can map the input to one of the supplied labels (churn and no-churn, for example).
+\section{Feature Selection}
 
-The premise of logistic regression is that the output variable $y$ can be modelled as a linear probability function dependant on a set of input feature values  $\bm{x} = [x_1, x_2, ..., x_n]$ through a set of equations that follows:
+\Todo{add feature selection techniques (Information gain, L1-norm, Recursive Feature Elimination, Variance Threshold...)}
+
+\section{Predictor Models}
+
+\subsection{Logistic Regression}
+
+Logistic regression is a linear regression model used to predict the probability of occurrence of a categorical variable, like the churning and non-churning labels. First developed by mathematician David Cox \citep{cox1958regression}, this technique has been used in wide range of domains like medical fields, marketing and economics \Todo{add refs}, and is as of today one of the most used models for predicting the churn rate of customers on the telecom industry \citep{mahajan2015review}. Despite its name, logistic regression is used mostly as a classification algorithm, since its output is a probability score that together with a threshold can map the input to one of the supplied labels (churn and no-churn, for example).
+
+The premise of logistic regression is that the output variable $y$ can be modeled as a linear probability function dependent on a set of input feature values  $\bm{x} = [x_1, x_2, ..., x_n]$ through a set of equations that follows:
 
 \begin{equation}
 p(y = 1|\bm{x}) = f(t)
@@ -152,19 +175,30 @@ f(t) = \frac{1}{(1+e^{-t})}
 t = w_0 + w_1x_1 + ... + w_nx_n = \bm{w}^T\bm{x}
 \end{equation}
 
-where $y$ is the true output variable that can take the values 0 or 1 in a binary classification problem. $t$ is a linear combination of the input $\bm{x}$ with a trainable weight vector $\bm{w}$. $f(t)$ is the logistic function that gives name to the model. This function has the property of "squashing" any real input to a value between 0 and 1, and thus it can be interpreted as a probability. 
+where $y$ is the true output variable that can take the values 0 or 1 in a binary classification problem. $t$ is a linear combination of the input $\bm{x}$ with a trainable weight vector $\bm{w}$. $f(t)$ is the logistic function that gives name to the model. This function has the property of "squashing" any real input to a value between 0 and 1, and thus it can be interpreted as a probability.
 
-TODO: add models (Decision Trees, Logistic Regression, Random Forests, LSTMs, CNNs...)
+\Todo{improve LR description}
 
-\subsection{Evaluation Metrics}
+\subsection{Long Short-Term Memory}
 
-\subsubsection{Confusion Matrix}
+\Todo{add models (Decision Trees, Random Forests, LSTMs, CNNs...)}
 
-A \emph{confusion matrix} (also called contingency table) is a table layout representing the performance of a classifier's output, judging by its predictions against the actual true values. In a binary classification problem, the confusion matrix is a 2 x 2 table where commonly the rows represent the true labels while the columns the predicted classes. Each cell contains a count of how many samples were classified on that category, and the values in the diagonal represent the correctly classified samples (if the features are ordered). Table (TODO: Add table) depicts a confusion matrix for a binary classifier.
+\section{Evaluation Metrics}
 
-The confusion matrix is an excellent visualization tool to estimate the performance of a model. The values that should be maximized, the \emph{true positives} (TP) and \emph{true negatives} (TN), represent the samples that were correctly labelled as possessing the feature of interest or not, respectively. On the other hand, the \emph{false positives} (FP) and \emph{false negatives} (FN) are the misclassified samples where the algorithm predicted that the feature was present while in truth it was not and vice-versa. In this work, the positive class will always represent a churning user, and it follows that the negative class represents the non-churners.
+\subsection{Confusion Matrix}
 
-\subsubsection{Classification Accuracy}
+A \emph{confusion matrix} (also called contingency table) is a table layout representing the performance of a classifier's output, judging by its predictions against the actual true values. In a binary classification problem, the confusion matrix is a 2 x 2 table where commonly the rows represent the true labels while the columns the predicted classes. Each cell contains a count of how many samples were classified on that category, and the values in the diagonal represent the correctly classified samples (if the features are ordered). Figure \ref{fig:confusion_example} depicts a sample confusion matrix for a binary classifier.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.4\textwidth, natwidth=50bp, natheight=50bp]{figures/confusion_example.png}
+    \caption{An example of a normalized confusion matrix}
+    \label{fig:confusion_example}
+\end{figure}
+
+The confusion matrix is an excellent visualization tool to estimate the performance of a model. The values that should be maximized, the \emph{true positives} (TP) and \emph{true negatives} (TN), represent the samples that were correctly labeled as possessing the feature of interest or not, respectively. On the other hand, the \emph{false positives} (FP) and \emph{false negatives} (FN) are the misclassified samples where the algorithm predicted that the feature was present while in truth it was not and vice-versa. In this work, the positive class will always represent a churning user, and it follows that the negative class represents the non-churners.
+
+\subsection{Classification Accuracy}
 
 Several different metrics can be derived from the confusion matrix table. The \emph{classification accuracy} (CA) of a model is a common metric that corresponds to the fraction of the correctly classified samples on the test set, and can be calculated as follows:
 
@@ -172,11 +206,11 @@ Several different metrics can be derived from the confusion matrix table. The \e
 CA = \frac{TP + TN}{TP + TN + FP + FN} 
 \end{equation}
 
-While trivial to understand, this metric may lead to erroneous conclusions when class imbalance is present in the test set, which is a common occurrence on the churn prediction domain. For example, if 9 out of 10 users of a dataset are non-churners, any classifier that simply outputs a negative class for all samples will result in an accuracy of 90\%, however its ability of detecting churners is non-existent. For a service provider, detecting churn cases is always more important than detecting the loyal users, and this metric by itself cannot represent this goal. (TODO Add ref? Hassouna 2015)
+While trivial to understand, this metric may lead to erroneous conclusions when class imbalance is present in the test set, which is a common occurrence on the churn prediction domain. For example, if 9 out of 10 users of a dataset are non-churners, any classifier that simply outputs a negative class for all samples will result in an accuracy of 90\%, however its ability of detecting churners is non-existent. For a service provider, detecting churn cases is always more important than detecting the loyal users, and this metric by itself cannot represent this goal \citep{Burez2009} \citep{Hassouna2015}.
 
-\subsubsection{Precision, Recall, Fall-out and False Alarm}
+\subsection{Precision, Recall, Fall-out and False Alarm}
 
-To address the class imbalance problem of the classification accuracy, others metrics are also commonly used. The \emph{positive predictive value} (PPV, also known as precision) is the proportion of the samples labelled as positive which are true positives, and describes the performance of the algorithm. The \emph{true positive rate} (TPR, also called sensitivity and recall) of a model corresponds to the number of correctly predicted positive samples divided by all positive samples. \emph{True negative rate} (TNR, also called specificity and fall-out) is the number of correctly predicted negatives divided by all true negatives. The \emph{false positive rate} (FPR, also called false alarm ratio) is the probability of receiving a false positive as output of an experiment, and is calculated by dividing the number of false positives by the total number of positive samples.
+To address the class imbalance problem of the classification accuracy, others metrics are also commonly used. The \emph{positive predictive value} (PPV, also known as precision) is the proportion of the samples labeled as positive which are true positives, and describes the performance of the algorithm. The \emph{true positive rate} (TPR, also called sensitivity and recall) of a model corresponds to the number of correctly predicted positive samples divided by all positive samples. \emph{True negative rate} (TNR, also called specificity and fall-out) is the number of correctly predicted negatives divided by all true negatives. The \emph{false positive rate} (FPR, also called false alarm ratio) is the probability of receiving a false positive as output of an experiment, and is calculated by dividing the number of false positives by the total number of positive samples. The \emph{F1 score} (F1, also called F-score or F-measure) builds upon precision and recall by returning an harmonic mean between these two metrics.
 
 \begin{equation}
 PPV = \frac{TP}{TP + FP}
@@ -194,20 +228,50 @@ TNR = \frac{TN}{TN + FP}
 FPR = \frac{FP}{TN + FP} = 1 - TNR
 \end{equation}
 
-Depending on the distribution of classes of the dataset, it is often difficult (although desirable) to maximize both metrics at the same time. A compromise must be reached that achieves the best trade-off between the two, which is commonly a business decision. For a music streaming service like Spotify, maximizing sensitivity is preferred due to the costs associated with a churning user, however a reasonable specificity is also a metric that should be strived for. (TODO Check with Sahar)
+\begin{equation}
+F1 = 2 \times \frac{PPV \times TPR}{PPV + TPR}
+\end{equation}
 
-\subsubsection{Receiver Operating Characteristic}
+Depending on the distribution of classes of the dataset, it is often difficult (although desirable) to maximize both metrics at the same time. A compromise must be reached that achieves the best trade-off between the two, which is commonly a business decision. For a music streaming service like Spotify, maximizing sensitivity is preferred due to the costs associated with a churning user, however a reasonable specificity is also a metric that should be strived for. \Todo{Check with Sahar}
 
-The \emph{receiver operating characteristic} (ROC) is a visualization tool that plots the relationship between the true positive rate (commonly the y-axis) and the false positive rate (the x-axis) of a binary classifier system. The curve is drawn by selecting different parameters of a model or levels of threshold for the decision boundary between the positive and negative classes. For example, when the output of a classifier is a probability value (like in logistic regression), different thresholds can be chosen to decide whether a user is a churner or not, depending if the goal is to minimize FPR or maximize TPR. An example of a ROC curve can be seen in Figure (TODO Add figure)
+\subsection{Receiver Operating Characteristic}
+
+The \emph{receiver operating characteristic} (ROC) is a visualization tool that plots the relationship between the true positive rate (commonly the y-axis) and the false positive rate (the x-axis) of a binary classifier system. The curve is drawn by selecting different parameters of a model or levels of threshold for the decision boundary between the positive and negative classes. For example, when the output of a classifier is a probability value (like in logistic regression), different thresholds can be chosen to decide whether a user is a churner or not, depending if the goal is to minimize FPR or maximize TPR. An example of a ROC curve can be seen in Figure \ref{fig:roc_example}.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.6\textwidth, natwidth=300bp, natheight=200bp]{figures/roc_example.png}
+    \caption{An example of a ROC curve}
+    \label{fig:roc_example}
+\end{figure}
 
 A good classifier would score values close to the upper-left corner of the plot, where the point (0,1) represents a perfect classifier with 100\% TPR and 0\% FPR. On the other hand, an algorithm that outputs a curve alongside the diagonal where TPR and FPR are almost the same at different threshold levels can be considered close to a random guess, like the flip of a coin. A classifier would underperform if its scores are closer to the bottom-right corner of the plot, however this result can always be mirrored by updating the model to simply invert the positive and negative labels of the classified samples.
 
 ROC curves can be used to compare the performance of different models by measuring the \emph{area under the curve} (AUC) of its plotted scores, which ranges from 0.0 to 1.0. The greater this area, the better the algorithm is to find a specific feature. Moreover, models with an area close to 0.5 can be assumed to perform not much better than random guess, since this is the total area under the diagonal line.
 
-TODO: Add eval methods (F-score, Lift chart, Top Decile Lift (TDL)...)
+\Todo{Add eval methods (Lift chart, Top Decile Lift (TDL)...)}
+
+\Todo{Talk about precision-recall curves and PR AUC}
+
 \chapter{Related Work}
 
-TODO: write intro paragraph
+There is considerable amount of work done on the churn prediction realm. The most common topic that is addressed by the literature is evaluating different types of predictor models trained on a domain-specific dataset, like the telecom and financial industries for example. Understanding what techniques are commonly used on the field is deemed crucial for the success of any churn rate predictor model.
+
+The use of data represented as a time-series for predicting churn, although of high interest to this project, is a rather under researched topic as of today, the user features being commonly aggregated over a time window on the whole observation period. Recently though some interest has been sparked on the literature about trying to leverage temporal aspects of the user behaviour by representing the data as a sequential input, and some examples similar to the task at hand, while not abundant, can nevertheless be found. 
+
+Other research papers focus on answering how different properties inherent to the churn prediction problem affect the performance of classifiers, like for example how to deal with unbalanced data sets, how the evaluation procedure should be performed and how far back in the user history should models be trained on as to obtain a proper balance between accuracy and processor usage.  
+
+This chapter will introduce the literature on the fields of interest for this project, and will focus mainly on the following topics:
+
+\begin{itemize}
+\item Identifying the state-of-the-art for training, modeling and evaluating churn predictor classifiers, the algorithms being used, the methodology for the experiments and the observed results.
+
+\item Researching current techniques for creating models that leverage the properties of time-series data, applied for churn prediction (if any) or similar domains where we can map our problem to. It shall also be studied common features of sequential data as to better understand how to best exploit its properties as to improve the accuracy of our models.
+
+\item Understanding prevalent characteristics on data sets used for churn prediction as to improve the performance of models and also to avoid common pitfalls when training and evaluating their accuracy.
+ 
+\end{itemize}
+
 
 \section{Churn Prediction}
 
@@ -227,7 +291,7 @@ In \citep{Runge2014}, players responsible for generating the most profit on two 
 
 \section{Sequential Modelling for User Behaviour Data}
 
-Even though there is currently a wealth of research on churn prediction techniques, most of them treat the user behavioural features as static points in time by aggregating or summarizing their values over a time window \citep{Auon2015}. It is a simplification that eases the hassle of training models with a data set which is commonly high-dimensional and difficult to work with, however information that could be used to improve the predictors' performance is lost in this process  \citep{GurAli2014}. For example, there is no information as to when over the time window being analysed a user decides to churn, it could be that all defectors are grouped into a period where an external event (like the end of an offer) has taken place. Environmental variables, that is those that varies through time but are common to all users, are also omitted on static models, leaving it to the experts the task of manually integrating these features on their analyses. Newer models like \citep{Pudipeddi2014} attempt to integrate some temporal data by manually engineering features related to time (like the duration of an event, for example), however since each user is represented as a sample in a single point in time the sequence of data transformations is inherently lost in this process.
+Even though there is currently a wealth of research on churn prediction techniques, most of them treat the user behavioral features as static points in time by aggregating or summarizing their values over a time window \citep{Auon2015}. It is a simplification that eases the hassle of training models with a data set which is commonly high-dimensional and difficult to work with, however information that could be used to improve the predictors' performance is lost in this process  \citep{GurAli2014}. For example, there is no information as to when over the time window being analysed a user decides to churn, it could be that all defectors are grouped into a period where an external event (like the end of an offer) has taken place. Environmental variables, that is those that varies through time but are common to all users, are also omitted on static models, leaving it to the experts the task of manually integrating these features on their analyses. Newer models like \citep{Pudipeddi2014} attempt to integrate some temporal data by manually engineering features related to time (like the duration of an event, for example), however since each user is represented as a sample in a single point in time the sequence of data transformations is inherently lost in this process.
 
 It is natural to think that the human behaviour evolves through time. Our opinions and desires changes in accordance to the stimuli that we receive from the world around us, and summarizing our persona by looking at a single point in our life is an oversimplification that does not make justice to the path that leaded us to where we are. Dealing with temporal data is by no means trivial however, and to leverage fully its properties some careful considerations about this type of data must be done. On \citep{Langkvist2014}, an overview of the challenges on creating models that make use of the time component on data sets are presented to the reader. Also, since hand-crafted features are generally domain-specific and difficult to create, a review of the current research on unsupervised feature learning applied for time-series data is the focus of this paper. From the challenges, it is worth of mention the uncertainty that there is enough information to understand the underlying process, its non-stationary characteristics like mean, variance and frequency, and its common high dimensionality and noise. The right representation is deemed then crucial for any model to be successful in its goal. Several different techniques currently being used for unsupervised feature learning are then presented in details to the reader, where it is worth of quick mention the conditional Restricted Boltzmann Machine (cRBM), Recurrent Neural Networks (RNN, with is Long Short-Term Memory extension), the Gated RBM, the Time-Delay Neural Networks, and the Space-Time Deep Belief Network. Finally, several classical time-series problems are reviewed alongside the best models currently being used for each domain. 
 
@@ -247,32 +311,212 @@ Another question that can be made is how far in the user history models must be 
 
 Current data sets from service providers have no lack of user historical information stored, however the probability that all available features have a significant correlation to churn rate is pretty slim. Using too many features may lead to undesirable effects like overfitting and falling into the "curse of dimensionality" problem, reducing the classifiers performance as cited by \citep{guyon2003introduction}. It is a common step to pre process the data in a way as to mitigate this risk, but still there is no single method in the literature that dominates the scene. Several papers do a manual subset selection of features based on theories, testing each using baseline classifiers and selecting the subset with the best performance \citep{Pudipeddi2014}\citep{Runge2014}. Others works like \citep{Borbora2011} and \citep{Dror2012} use information gain as a metric to classify the features on their expected reduction in entropy. One step further is taken by works like \citep{Lu2014} and \citep{Khan2015} where full decision trees are built specifically for feature selection. Another more exotic method was used by \citep{Wangperawong2016} with an autoencoder to discover which features influenced the churn rate the most. 
 
-Churn prediction has been explored in different kind of applications on recent literature, however music streaming services are as of today a quite under-researched area, even though there is a prominent feature that makes it significantly different from other more researched and similar areas like video streaming, which would be the absence of the constant attention factor that video demands. Studying the user behaviour in each application can possibly help optimizing parameters that are difficult to tune without expert knowledge on how the interaction between costumer and application occurs. The work by \citep{Zhang2013} aims to fill that gap by analysing patterns of usage of Spotify's Premium subscribers on features like session and playback arrival patterns, user behaviour on single and multiple devices and favourite times of day for streaming. The main contributions of the study can be summarized as follows: First, daily patterns can be observed on features like session arrival, playback arrivals and session length. Second, there is a high probability of users to continue on the same device for consecutive sessions. Third, users have their unique times of day when they prefer to stream music on the platform. Fourth, a session length can be used as a good indicator of the next session length and also downtime.
+Churn prediction has been explored in different kind of applications on recent literature, however music streaming services are as of today a quite under-researched area, even though there is a prominent feature that makes it significantly different from other more researched and similar areas like video streaming, which would be the absence of the constant attention factor that video demands. Studying the user behaviour in each application can possibly help optimizing parameters that are difficult to tune without expert knowledge on how the interaction between costumer and application occurs. The work by \citep{Zhang2013} aims to fill that gap by analysing patterns of usage of Spotify's Premium subscribers on features like session and playback arrival patterns, user behavior on single and multiple devices and favorite times of day for streaming. The main contributions of the study can be summarized as follows: First, daily patterns can be observed on features like session arrival, playback arrivals and session length. Second, there is a high probability of users to continue on the same device for consecutive sessions. Third, users have their unique times of day when they prefer to stream music on the platform. Fourth, a session length can be used as a good indicator of the next session length and also downtime.
+
+\chapter{Methodology}
+\label{chap:method}
+
+\epigraph{In God we trust: all others bring data.}{\textit{William Edwards Deming}}
+
+\section{The Dataset}
 
 
-\chapter{Methods}
+Every experiment on this projects relies exclusively on the data provided by Spotify. Each day hundreds of terabytes of streaming information are collected through the provider's data pipelines, aggregating customer usage of the application over several different platforms and countries. Since it is technically impossible to train a single model with the data at its entirety, one of the challenges of this project will be to understand the information that is available to us and to choose a subset of features that are most likely to the probability of the user churning.  This task can be extremely daunting by itself, so this project will make use of previous private studies performed by the service provider as a guidance on which features to choose.
 
-* Baseline classifiers (Decision Trees, Logistic Regression, Random Forests?)
+\subsection{Data description}
 
-* Temporal classifiers (LSTM, CNN?)
+The provider's dataset that is going to serve as a source for the creation of our own transformed data is called \emph{Sessions} and contains for each row a set of features for one session and one user.  To limit the influence of time cycles in the learning process, users were sampled from three countries which share a similar timezone between each other and encompass a large share of Spotify's userbase, that is Brazil, Mexico and United States.
 
-* One classifier vs different values of class distribution (skew)
+The Spotify service is provided through a wide range of platforms like through Apple's iPhone or a desktop PC. To minimize the influence that different platforms may have on predicting churn, and also due to higher reliability on collected metrics, the dataset shall be filtered on streams performed on the Android platform, be it on a smartphone or tablet device.
 
-* Different subset of features
+\subsection{Features description}
 
+The \emph{session length} feature is the time in seconds the session lasted. \emph{Consumption time} is the time in seconds the user is streaming content, for example by listening to a song. Since this action is always encompassed by a session, this feature is always at most as large as the session length. \emph{Skip ratio} is the percentage of streams the user skipped by for example pressing the Next button on the app, and \emph{unique pages} is the number of unique pages like Artist, Album and Discover Weekly the user visited in his streams.
+
+Using the above features as source, 8 features were derived by taking the mean and the standard deviation of each one of them. The correlation matrix between these features can be seen in Figure \ref{fig:correlation}.
+
+	\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.7\textwidth, natwidth=580bp, natheight=313bp]{figures/correlation.png}
+    \caption{Pearson correlation matrix between features}
+    \label{fig:correlation}
+\end{figure}
+
+\subsection{Time windows}
+
+In order to predict whether a user is going to churn in the future or not and generate the churn binary labels, the time sequence is split into two time windows. The \emph{observation window} is the time span where the user behavior is tracked, data which will be used for training the predictor models. It is sequentially followed by a \emph{prediction window} that is exclusively used for generating the churn label. The windows can be better visualized in Figure \ref{fig:timewindows}. The size of each window is a parameter that shall be experimented on, but a standard length of 60 days for the observation window and 30 days for the prediction window were chosen by the provider as values that are suitable for the task at hand.
+
+The user is considered to have churned if he has at least one active session during the observation window, but no session during the prediction window. This means that every user will have a single label for the whole sequence instead of one label per time step. 
+
+	\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.7\textwidth, natwidth=580bp, natheight=313bp]{figures/obs_pred_windows.png}
+    \caption{Observation and prediction windows}
+    \label{fig:timewindows}
+	\end{figure}
+
+\Todo{Read \citep{GurAli2014}, \citep{Hassouna2015}, \citep{Wangperawong2016}, \citep{Lu2014}, improve this section}
+
+\subsection{Sequential and Aggregated Datasets}
+
+Our source dataset is sequential by nature. Every interaction is logged and stored in tables representing all sessions of users in any given day. However, taking this data as it is is unsuitable to be used for training since most temporal models \Todo{check this claim} requires (a) that the time step between events to be constant and (b) the it possess the same number of samples in every time step. Since there is no control as to when any given user will interact with the application, some data transformations must be performed.
+
+To address these concerns, the work by \citep{GurAli2014} and its Multiple Period Training Data (MPTD) were the main focus of inspiration for the creation of our dataset. \Todo{write about his approach}
+
+First, a constant \emph{time step length} was chosen as to split the observations equally across time. To capture the routine of users between every day-night cycles, a time step of 8 hours was deemed to be a suitable value. Second, the features of users that have no session in any single time step are set to zero as to keep the number of samples constant through time. \Todo{Important! Go into more details here, maybe add a figure}
+
+In order to train our time-invariant models, another dataset was generated where each user is represented by a single sample with its features aggregated over the whole observation window. The source data is exactly the same as the sequential dataset, however the features are aggregated by taking the mean of values over the window instead of splitting it into smaller time steps.
+
+\subsection{Data Exploration}
+
+(NOTE TO THE READER!! The Y axis values were intentionally hidden in the following plots due to the Non-Disclosure Agreement signed by me. Proper plots will be placed here after the internal review is performed by the company)
+
+\subsubsection{Class Distribution}
+
+A recurring problem in churn prediction is how the non-churning class dominates over the churners for almost all applications, a problem properly examined by \citep{Burez2009}. Figure \ref{fig:classdist} plots the distribution of classes in our generated dataset. In it we can observe that indeed the non-churning class has approximately 5 times more samples than the churners, and even though the difference is significant users abandoning the service can hardly be considered as a "rare" event.
+
+	\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.7\textwidth, natwidth=400bp, natheight=200bp]{figures/class_count.png}
+    \caption{Count of users distributed in the churn and non-churn classes}
+    \label{fig:classdist}
+	\end{figure}
+
+\subsubsection{User Behavior through Time}
+
+Humans are creatures of habits. Our daily routines follow distinguishable patterns mainly influenced by day-night cycles that are far from being random. To better visualize these patterns, Figure \ref{fig:featstime} plots the feature values for churning and non-churning users over the course of the observation window sized at 60 days. 
+The first pattern that can be noticed is that users that are labeled as churning have lower feature values for unique pages, consumption time and session length, and that it gradually decreases over time as users abandon the service.
+
+The second trait that can be observed is that skip ratio values are way more intertwined between the classes when comparing to other features. This is due to the fact that churning users exhibits a higher skip ratio as was shown by empirical studies from the service provider, however since we fill with zeroes the feature values for the sessions where the user did not stream any content we end up conveying the exact opposite: that churning users have a low skip ratio. This suggests that if we want to make use of this feature properly, transforming this feature through a function like the negative logarithm might be beneficial.
+	
+	\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.7\textwidth, natwidth=500bp, natheight=250bp]{figures/features_vs_time.png}
+    \caption{Mean and standard deviation of features through the observation window}
+    \label{fig:featstime}
+	\end{figure}
+
+Even though plotting the features over the whole observation window let us visualize the overall tendency between the churning and non-churning classes, this representation does not emphasize daily and weekly routines that are present in the data. To address that, the mean and standard deviation of features were plotted by clusters of week days and day-night periods, and this visualization can be seen in Figure \ref{fig:featsweekday}. As expected, higher values can be seen during day time (8h-16h CST) for all features, and also a slightly lower mean on Sundays related to lower usage on this day.
+
+	\begin{figure}[b]
+	\centering
+\begin{subfigure}{0.8\textwidth}
+  \centering
+    \includegraphics[width=1.0\textwidth, natwidth=580bp, natheight=313bp]{figures/sessionlength_vs_weekdays.png}
+\end{subfigure}
+\begin{subfigure}{0.8\textwidth}
+  \centering
+    \includegraphics[width=1.0\textwidth, natwidth=580bp, natheight=313bp]{figures/consumption_vs_weekdays.png}
+\end{subfigure}    
+\begin{subfigure}{0.8\textwidth}
+  \centering
+    \includegraphics[width=1.0\textwidth, natwidth=580bp, natheight=313bp]{figures/uniquepages_vs_weekdays.png}
+\end{subfigure}  
+\begin{subfigure}{0.8\textwidth}
+  \centering
+    \includegraphics[width=1.0\textwidth, natwidth=580bp, natheight=313bp]{figures/skipratio_vs_weekdays.png}
+\end{subfigure}  
+    \caption{Mean and standard deviation of features through different weekdays and periods}
+    \label{fig:featsweekday}
+	\end{figure}
+
+\section{Feature Preprocessing}
+
+While it is possible to use raw features as input to train predictor models, often there is a benefit on normalizing the values using some standard technique. \citep{lecun2012efficient} argues that for the backpropagation algorithm commonly used in neural networks, well-behaved features centered around and with unit variance usually provides a faster convergence time. This is mainly due to the way weights are updated in the network: if the input vector has all features with the same sign, the weights can only be increased or decreased together for a single input, zigzagging the values back and forth which turns to be extremely inefficient. In deep architectures, the output a network layer is used as input to the next layers, and for the same reasons it is also desirable that this input is centered around zero. Inputs with unit variance will keep the layer's output well behaved and thus speed up convergence.
+
+Therefore, the following transformations were applied to the input before the training process:
+
+ \begin{equation}
+ \mu_i = \frac{1}{N}\sum_{n=1}^{N}x_n^i
+ \end{equation}
+
+\begin{equation}
+\sigma_i^2 = \frac{1}{N}\sum_{n=1}^{N}(x_n^i - \mu_i)^2
+\end{equation}
+ 
+\begin{equation}
+x_n^i = \frac{x_n^i - \mu_i}{\sigma_i^2}
+\end{equation}
+
+where $N$ is the total number of samples, $x_n^i$ is a scalar value representing the feature $i$ of the training sample $n$, feature which has mean $\mu_i$ and variance $\sigma^2_i$.
+
+\section{Handling the Class Imbalance Problem}
+
+For any relatively successful company the non-churning class heavily outweigh the amount of churners in the dataset. Depending on the estimator, this property can have a negative impact in performance where the models only can only learn how to distinguish the majority class and failing to detect the class of interest. However empirical observations have shown that a better performance can be achieved if the class ratio difference is reduced \citep{Burez2009} \citep{ling1998data}. Unless otherwise stated, the experiments in this project will be \emph{randomly undersampled} to a class ratio of 1-to-1. This technique, while easy to implement, throws away several samples from the majority class that could be used for learning. Testing different ratios for the class distribution is however one of the experiments that will be performed in this project.
+
+\section{Cross-Validation}
+
+It is a common  practice in supervised machine learning experiments to split the data sets into \emph{train} and \emph{test sets} as to obtain an unbiased estimate of the performance of the trained models on unseen data: evaluating a model on the data it was trained on can return an overly optimistic score that does not generalize well for data that is not included in the training, a phenomenon called \emph{overfitting}. Therefore, every score in this project is reported using data that was not present in the training stage.
+
+Almost all machine learning predictor models have arguments that needs to be chosen even before the training process starts, values that are commonly called \emph{hyperparameters}. To fine tune these parameters, we need a method to evaluate how good a set of values are against all other (or a reasonably sized subset of) available options, and for that purpose we need a set of unseen data for the same reasons mentioned before. If the test set were used for such an evaluation, it could not be considered as unseen data anymore since it was used for the purpose of choosing the best model, thus our bias may have "leaked" to the prediction score. Therefore another set is needed to tune the hyperparameters, which is commonly called the \emph{validation set} in the machine learning domain.
+
+Dividing the dataset into three splits however drastically reduces the number of samples that are available for model learning. Another concern is that if the sets are unique, the overall performance metric will depend in a seemingly random split of validation and test sets. To mitigate this problem, a technique called \emph{cross-validation} can be applied. In its most basic approach, instead of having a single validation set, the training set is instead divided into $k$ folds, and at each hyperparameter tuning round the model is trained on $k-1$ folds and validated on the fold that was left out. For each set of parameters, $k$ models are generated, and the final metric can then be an aggregation function over all estimators performance, like the mean. An example of this procedure can be seen in Figure \ref{fig:crossval}.
+
+	\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.6\textwidth, natwidth=400bp, natheight=200bp]{figures/crossval.png}
+    \caption{3-fold cross validation split}
+    \label{fig:crossval}
+	\end{figure}
+
+The above technique helps to strengthen our performance metric against biases when selecting the best set of hyperparameters to train our model with. However we still have an unique test set where we evaluate our model to obtain a final score. When comparing different types of estimators, it may happen that one estimator may better learn from the samples that are on the training set while the other can better learn from the patterns contained on the samples of the test set, a split that was purely made by chance. The same procedure used for hyperparameter tuning can be applied for splitting the train and test sets, a technique called \emph{nested cross-validation}. In it, the full dataset is split into $k$ outer folds of training and test sets, and each training set is further split into $l$ inner folds for hyperameter tuning. A diagram of this procedure can be seen in Figure \ref{fig:nest_crossval}.
+
+	\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.6\textwidth, natwidth=450bp, natheight=200bp]{figures/nest_crossval.png}
+    \caption{2x2 nested cross validation}
+    \label{fig:nest_crossval}
+	\end{figure}
+
+Even though this technique increases the confidence of our metric scores, there is a price to pay in terms of performance: training all these models may take a considerable amount of time. Spotify however has no lack of computational resources available, so this project makes use of this method. Inspired by \citep{Burez2009}, all our models were trained using \emph{5x2 cross-validation}, with 5 outer folds for the train/test split and 2 inner folds for train/validation splits.
 
 \chapter{Results}
 
-\lipsum
+\section{Temporal vs. Time-invariant Models}
+
+\section{Experimenting on Different Window Sizes}
+
+The size chosen for the time windows may have an influence on the performance metrics of our trained estimators that is non-trivial to predict. Even though an intuitive guess can be made for the effect of the change, the set of values that maximizes the accuracy of the classifiers while being compliant to the company's goals and also the available computing resources is \textit{a priori} unknown. This experiment attempts to answer this question by training several LSTM models while changing the observation and the prediction window sizes, and by plotting the best score obtained for each estimator.
+
+\subsection{Observation Window}
+
+Increasing the size of the observation window basically means that more data is going to be used for training. It is expected that with more data, a better accuracy can be achieved, however that comes with the cost of an ever increasing training time. So the question that this experiment is exploring is how far in the user history must we train our models on as to obtain a good trade-off between accuracy and training time, a topic thoroughly explored in the work of \citep{Ballings2012}.
+
+Our experiment involved increasing the size of the observation window roughly by 7 days while keeping the size of the prediction window constant in 30 days, the resulting scores can be seen in Figure \ref{fig:obswindow}. There is a noticeable gain in ROC AUC and F1 score when increasing the size of the observation window, however this gain visibly diminishes at larger windows. This suggests that there is a threshold where the performance gain is so insignificant that would not justify the increase in time for training these models.
+
+	\begin{figure}[t]
+	\centering
+    \includegraphics[width=0.8\textwidth, natwidth=400bp, natheight=200bp]{figures/obswindow_line.png}
+	\caption{Effect on performance metrics for different observation window sizes}	
+	\label{fig:obswindow}
+	\end{figure}
+
+\subsection{Prediction Window}
+
+Modifying the size of the prediction window indicates how tolerant we are for considering a user a churner or not. Small windows are commonly used for services lacking a formal contract between the provider and the customer, which is similar approach used in the works of \citep{Dror2012}, \citep{Runge2014} and \citep{Pudipeddi2014}. Larger prediction window sizes are often seem in "classical" service providers like the telecom industry where a contract is commonly established, an approach that is widely seem in the churn prediction literature, \citep{Khan2015} and \citep{Hassouna2015} to name a few.
+
+This experiment involves changing the size of the prediction window while keeping the observation window size constant at 30 days. It is important to note that smaller window sizes means that a larger share of users will be considered churners, and due to our undersampling technique this also means that the number of samples used for training will be larger. However the effect on performance metrics hardly seems to be affected by it as can be seen in Figure \ref{fig:predwindow}. The effect in ROC AUC and F1 scores suffer only minor changes when the prediction window size increaases from 7 to 59 days.
+
+	\begin{figure}[t]
+	\centering
+    \includegraphics[width=0.8\textwidth, natwidth=400bp, natheight=200bp]{figures/predwindow_line.png}  
+	\caption{Effect on performance metrics for different prediction window sizes}	
+    \label{fig:predwindow}
+	\end{figure}
+
+\section{Effect of Class Distribution}
+
+\section{Experimenting on Different Subset of Features}
+
 
 \chapter{Conclusions and Future Work}
-
-\lipsum[5]
 
 \bibliography{references}
 
 \appendix
 
 \chapter{Unnecessary Appended Material}
+
+\todos
 
 \end{document}
