@@ -5,6 +5,7 @@ import argparse
 import logging
 import joblib
 import json
+import datetime as dt
 import pandas as pd
 import glob
 from sklearn import preprocessing
@@ -13,6 +14,7 @@ from sklearn.model_selection import train_test_split
 from imblearn.under_sampling import RandomUnderSampler
 import numpy as np
 
+import churnr.utils as utils
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('churnr.process')
@@ -29,18 +31,32 @@ def main(exppath, experiment, dsname):
         dsconf = json.load(fi)[experiment]['datasets']
 
     # load experiment configuration
-    keys = ['rawpath', 'procpath', 'testsize', 'classbalance']
+    keys = ['rawpath', 'procpath', 'testsize', 'classbalance', 'gsoutput', 'enddate', 'project', 'obsdays', 'preddays', 'timesplits']
     conf = {}
     for key in keys:
         conf[key] = dsconf[dsname][key] if key in dsconf[dsname] else dsconf['global'][key]
+    if conf['enddate'] == 'yesterday':
+        conf['enddate'] = (dt.datetime.today() - dt.timedelta(days=1)).strftime('%Y%m%d')
+    conf['experiment'] = experiment
+    conf['dsname'] = dsname
 
     rawpath = conf['rawpath']
     procpath = conf['procpath']
     testsize = conf['testsize']
     classbalance = conf['classbalance']
+    gsoutput = conf['gsoutput']
+    project = conf['project']
 
     inpath = os.path.join(rawpath, experiment, dsname)
 
+    # if raw path is empty, assume the data is in GCS and try to download it
+    if not os.path.exists(inpath):
+        logger.info('Raw data not found in {}, trying to download it from GCS...'.format(inpath))
+        gspath = os.path.join(gsoutput, experiment, dsname)
+        tablenames = utils.get_table_names(conf)
+        utils.extract_dataset_to_disk(inpath, tablenames, project, gspath)
+
+    # read all csv tables
     tablenames = 'features_*'
     usertablename = 'users_*'
     fpath = os.path.join(inpath, tablenames)
@@ -49,11 +65,10 @@ def main(exppath, experiment, dsname):
 
     logger.info('Loading {} tables from {}..'.format(len(allfiles), inpath))
 
-    # read all feature tables
     dtype = {'consumption_time': float, 'session_length': float, 'skip_ratio': float,
                 'unique_pages': float, 'user_id': str, 'time': int,
                 'consumption_time_std': float, 'session_length_std': float, 'skip_ratio_std': float,
-                'unique_pages_std': float}
+                'unique_pages_std': float, 'backfill': bool}
 
     featdf = pd.concat((pd.read_csv(f, dtype=dtype) for f in allfiles))
     userdf = pd.concat((pd.read_csv(f) for f in glob.glob(upath)))
@@ -63,19 +78,19 @@ def main(exppath, experiment, dsname):
 
     # normalize
     logger.info('Normalizing features...')
-    features = [f for f in df.columns if f != 'churn' and f != 'time' and f != 'user_id']
+    features = [f for f in df.columns if f != 'churn' and f != 'time' and f != 'user_id' and f != 'backfill']
     scaled = preprocessing.scale(df[features], copy=False)
-    scaled = np.c_[ scaled, df['user_id'], df['time'], df['churn'] ]
-    df = pd.DataFrame(scaled, columns=features + ['user_id', 'time', 'churn'], )
+    scaled = np.c_[ scaled, df['user_id'], df['time'], df['churn'], df['backfill'] ]
+    df = pd.DataFrame(scaled, columns=features + ['user_id', 'time', 'churn', 'backfill'], )
     for f in features:
         df[f] = df[f].astype(np.float)
-    df['time'] = df['time'].astype (np.int)
+    df['time'] = df['time'].astype(np.int)
 
     # for lstms, reshape X into timesteps
     logger.info('Generating sequential dataset...')
     timepoints = df['time'].unique()
     num_samples = len(df[ df['time'] == timepoints[0] ])
-    features = [f for f in df.columns if f != 'churn' and f != 'time' and f != 'user_id']
+    #features = [f for f in df.columns if f != 'churn' and f != 'time' and f != 'user_id']
     timesteps = len(timepoints)
     X = np.empty(shape=(num_samples, timesteps, len(features)))
     for i, ts in enumerate(timepoints):
@@ -83,8 +98,9 @@ def main(exppath, experiment, dsname):
 
     # for aggregated models, get the mean of features
     logger.info('Generating aggregated dataset...')
+    nobf_df = df[df.backfill == False]
     X_agg = np.empty(shape=(num_samples, len(features)))
-    X_agg[:,:] = df.groupby('user_id')[features].mean()
+    X_agg[:,:] = nobf_df.groupby('user_id', sort=True)[features].mean()
 
     # extract labels
     logger.info('Extracting labels...')
@@ -101,10 +117,6 @@ def main(exppath, experiment, dsname):
     # shuffle on the samples dimension
     logger.info('Shuffling...')
     X, X_agg, y = shuffle(X, X_agg, y)
-
-    # assert the indexes of both Xs correspond to the same users
-    for i in range(1000):
-        assert np.allclose(X_agg[i,:], np.mean(X[i,:,:], axis=0))
 
     # split into train and test sets
     logger.info('Splitting into train and test sets...')

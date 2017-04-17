@@ -5,11 +5,12 @@ import logging
 import uuid
 import argparse
 from google.cloud import bigquery as bq
-import google.cloud.storage as gcs
 import datetime as dt
 import math
 import json
 import shutil
+
+import churnr.utils as utils
 
 SECS_IN_DAY = 86399
 
@@ -39,7 +40,7 @@ def main(exppath, experiment, dsname, hddump):
     gspath = os.path.join(conf['gsoutput'], experiment, dsname)
     datapath = os.path.join(conf['rawpath'], experiment, dsname)
     if os.path.exists(datapath):
-        ans = yes_or_no('This extraction will overwrite the dataset at {}. Are you sure?'.format(datapath))
+        ans = utils.yes_or_no('This extraction will overwrite the dataset at {}. Are you sure?'.format(datapath))
         if not ans:
             return
     else:
@@ -56,8 +57,8 @@ def main(exppath, experiment, dsname, hddump):
 
         # if hddump, skip the db queries and dump the files already stored at GCS
         if hddump and hddump == 'True':
-            tablenames = get_table_names(conf)
-            extract_dataset_to_disk(datapath, tablenames, conf['project'], gspath)
+            tablenames = utils.get_table_names(conf)
+            utils.extract_dataset_to_disk(datapath, tablenames, conf['project'], gspath)
             logger.info('Finished! Data dumped to disk at {}!'.format(datapath))
             return
 
@@ -79,7 +80,7 @@ def main(exppath, experiment, dsname, hddump):
         user_table_tmp.delete()
 
         # backfill missing users on feature tables
-        jobs = backfill_missing_users(ds, client, conf)
+        jobs = backfill_missing_users(user_table, ds, client, conf)
         wait_for_jobs(jobs)
 
         # serialize features
@@ -89,7 +90,7 @@ def main(exppath, experiment, dsname, hddump):
         # dump to disk
         wait_for_jobs(jobs)
         tablenames = [t.name for t in tables]
-        extract_dataset_to_disk(datapath, tablenames, conf['project'], gspath)
+        utils.extract_dataset_to_disk(datapath, tablenames, conf['project'], gspath)
         with open(os.path.join(datapath, 'conf.json'), 'w') as f:
             json.dump(conf, f)
 
@@ -115,11 +116,12 @@ def fetch_user_samples(ds, client, conf):
         user_table.delete()
 
     #currdate = dt.datetime.strptime(enddate, '%Y%m%d')
-    currdate = dt.datetime.strptime(conf['enddate'], '%Y%m%d') - dt.timedelta(days=totaldays - 1)
-
+    #currdate = dt.datetime.strptime(conf['enddate'], '%Y%m%d') - dt.timedelta(days=totaldays - 1)
+    currdate = dt.datetime.strptime(conf['enddate']+'000000 -0500', '%Y%m%d%H%M%S %z') - dt.timedelta(days=totaldays - 1)
     jobs = []
     for i in range(min(conf['obsdays'], 7)):
         datestr = currdate.strftime('%Y%m%d')
+        currdate_end = currdate + dt.timedelta(seconds=SECS_IN_DAY)
 
         # select a random sample of users based on a user_id hash and some wanted features
         query = """\
@@ -129,7 +131,9 @@ def fetch_user_samples(ds, client, conf):
                 ON uss.user_id = usn.user_id
                 WHERE uss.consumption_time > 0.0 AND uss.platform IN ("android","android-tablet")
                     AND ABS(HASH(uss.user_id)) % {share} == 0 AND usn.reporting_country IN ("BR", "US", "MX")
-        """.format(date=datestr, share=int(1 / conf['shareusers']))
+                    AND TIMESTAMP_TO_MSEC(TIMESTAMP(uss.start_time)) >= {startslot} AND TIMESTAMP_TO_MSEC(TIMESTAMP(uss.start_time)) < {endslot}
+        """.format(date=datestr, share=int(1 / conf['shareusers']),
+                    startslot=int(currdate.timestamp()*1000), endslot=int(currdate_end.timestamp()*1000))
 
         logger.info('Selecting a random sample of users ({} of users on {})'.format(conf['shareusers'], datestr))
 
@@ -202,7 +206,7 @@ def fetch_features(user_table, ds, client, conf):
             # query user features
             query = """\
                 SELECT user_id, {timesplit} as time, avg(consumption_time) as consumption_time, ifnull(stddev(consumption_time),0) as consumption_time_std, avg(session_length) as session_length, ifnull(stddev(session_length),0) as session_length_std,\
-                         avg(skip_ratio) as skip_ratio, ifnull(stddev(skip_ratio),0) as skip_ratio_std, avg(unique_pages) as unique_pages, ifnull(stddev(unique_pages),0) as unique_pages_std FROM\
+                         avg(skip_ratio) as skip_ratio, ifnull(stddev(skip_ratio),0) as skip_ratio_std, avg(unique_pages) as unique_pages, ifnull(stddev(unique_pages),0) as unique_pages_std, false as backfill FROM\
                         (SELECT user_id, consumption_time/1000 as consumption_time, session_length, skip_ratio, unique_pages\
                             FROM [activation-insights:sessions.features_{date}]\
                             WHERE user_id IN (SELECT user_id FROM [{project}:{dataset}.{table}])\
@@ -230,7 +234,7 @@ def fetch_features(user_table, ds, client, conf):
     return ft_tables, jobs
 
 
-def backfill_missing_users(ds, client, conf):
+def backfill_missing_users(user_table, ds, client, conf):
     """ add the remaining missing users to the feature tables who did in fact churn """
 
     jobs = []
@@ -258,10 +262,10 @@ def backfill_missing_users(ds, client, conf):
             # append missing values to feature table
             query = """\
                 SELECT user_id, {timesplit} as time, 0.0 as consumption_time, 0.0 as consumption_time_std, 0.0 as session_length, 0.0 as session_length_std,\
-                            0.0 as skip_ratio, 0.0 as skip_ratio_std, 0.0 as unique_pages, 0.0 as unique_pages_std\
-                            FROM [{project}:{dataset}.users_{exp}_{ds}]\
-                            WHERE user_id NOT IN (SELECT user_id FROM [{project}:{dataset}.{table}])\
-            """.format(exp=conf['experiment'], project=project, dataset=ds.name, table=ft_table.name, timesplit=currtimeslot_start, ds=conf['dsname'])
+                            0.0 as skip_ratio, 0.0 as skip_ratio_std, 0.0 as unique_pages, 0.0 as unique_pages_std, true as backfill\
+                            FROM [{project}:{dataset}.{utable}]\
+                            WHERE user_id NOT IN (SELECT user_id FROM [{project}:{dataset}.{ftable}])\
+            """.format(project=project, dataset=ds.name, ftable=ft_table.name, timesplit=currtimeslot_start, ds=conf['dsname'], utable=user_table.name)
 
             jobname = 'backfill_missing_features_job_' + str(uuid.uuid4())
             job = client.run_async_query(jobname, query)
@@ -358,56 +362,6 @@ def dump_features_to_gcs(ft_tables, dest, client):
     return jobs
 
 
-def extract_dataset_to_disk(datapath, tablenames, project, gsoutput):
-    """ Extract dataset to local files on disk"""
-
-    logger.info('Extracting {} files to {}...'.format(len(tablenames), datapath))
-
-    if os.path.exists(datapath):
-        shutil.rmtree(datapath)
-    os.makedirs(datapath)
-
-    client = gcs.Client(project)
-
-    split_uri = gsoutput.split('/')
-    bucket_name = split_uri[2]
-
-    bucket = gcs.Bucket(client, bucket_name)
-
-    filepath = '/'.join(split_uri[3:])
-    cntr = 0
-    for filename in tablenames:
-        if cntr % 10 == 0:
-            logger.info('{} out of {} files imported...'.format(cntr, len(tablenames)))
-        cntr += 1
-
-        blob = gcs.Blob(name=os.path.join(filepath, filename), bucket=bucket)
-
-        local_file = os.path.join(datapath, filename)
-        with open(local_file, 'wb') as f:
-            blob.download_to_file(f)
-
-
-def get_table_names(conf):
-
-    currdate = dt.datetime.strptime(conf['enddate']+'000000 -0500', '%Y%m%d%H%M%S %z') - dt.timedelta(days=conf['obsdays'] + conf['preddays'] - 1)
-
-    tablenames = []
-    ft_table_name = 'features_{}_{}_'.format(conf['experiment'], conf['dsname'])
-    for i in range(conf['obsdays']):
-        datestr = currdate.strftime('%Y%m%d')
-
-        for j in range(conf['timesplits']):
-            ft_table = ft_table_name + '{split}_{currdate}'.format(currdate=datestr, split=j)
-            tablenames.append(ft_table)
-
-        currdate = currdate + dt.timedelta(days=1)
-
-    tablenames.append('users_{}_{}'.format(conf['experiment'], conf['dsname']))
-
-    return tablenames
-
-
 def wait_for_jobs(jobs):
     """ wait for async GCP jobs to finish """
     logger.info("Waiting for {} jobs to finish...".format(len(jobs)))
@@ -433,17 +387,6 @@ def wait_for_jobs(jobs):
         if job.errors:
             logger.error('Job {} failed! Aborting!'.format(job.name))
             raise Exception('Async job failed')
-
-
-def yes_or_no(question):
-    """ Simple yes or no user prompt """
-    reply = str(input(question+' (y/N): ')).lower().strip()
-    if len(reply) and reply[0] == 'y':
-        return True
-    elif not len(reply) or reply[0] == 'n':
-        return False
-    else:
-        return yes_or_no("Uhhhh... " + question)
 
 
 if __name__ == '__main__':
