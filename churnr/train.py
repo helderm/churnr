@@ -9,7 +9,7 @@ import joblib
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import AdaBoostClassifier, RandomForestClassifier
 from sklearn.svm import SVC
-from sklearn.model_selection import KFold, GridSearchCV, RandomizedSearchCV, cross_val_predict
+from sklearn.model_selection import KFold, StratifiedKFold, GridSearchCV, RandomizedSearchCV
 from sklearn.metrics import roc_auc_score, average_precision_score
 from keras.wrappers.scikit_learn import KerasClassifier
 from keras.utils.np_utils import to_categorical
@@ -43,6 +43,7 @@ models = {
         'params': {
             'units1': sp_randint(32, 128),
             'units2': sp_randint(32, 128),
+            'units3': sp_randint(32, 128),
             'optim': ['rmsprop', 'adagrad', 'adam'],
             'layers': sp_randint(1, 4)
         }
@@ -64,6 +65,68 @@ models = {
 }
 
 
+def _fit_and_predict(estimator, X, y, train, test, class_ratio, verbose, fit_params, method):
+    from sklearn.utils.metaestimators import _safe_split
+    from sklearn.model_selection._validation import _index_param_value
+    from imblearn.under_sampling import RandomUnderSampler
+
+    # Adjust length of sample weights
+    fit_params = fit_params if fit_params is not None else {}
+    fit_params = dict([(k, _index_param_value(X, v, train))
+                      for k, v in fit_params.items()])
+
+    X_train, y_train = _safe_split(estimator, X, y, train)
+    X_test, _ = _safe_split(estimator, X, y, test, train)
+
+    rus = RandomUnderSampler(ratio=class_ratio, return_indices=True, random_state=42)
+    if len(X_train.shape) > 2:
+        _, y_train, idxs = rus.fit_sample(X_train[:,0,:], y_train)
+        X_train = X_train[idxs, :, :]
+        y_train = to_categorical(y_train)
+    else:
+        X_train, y_train, idxs = rus.fit_sample(X_train, y_train)
+
+    estimator.fit(X_train, y_train, **fit_params)
+
+    func = getattr(estimator, method)
+    predictions = func(X_test)
+    return predictions, test
+
+
+def cross_val_predict(estimator, X, y, cv, class_ratio=1.0, method='predict', n_jobs=1, verbose=0, fit_params=None, pre_dispatch='2*n_jobs'):
+    """ Cross-validated estimates for each input data point. Based mainly on scikit
+        equally-named function, but with support for undersampling
+    """
+    from sklearn.utils import indexable
+    from sklearn.utils.validation import _num_samples
+    from sklearn.externals.joblib import Parallel, delayed
+    from sklearn.model_selection._validation import _check_is_permutation
+    from sklearn.base import clone
+
+    X, y, _ = indexable(X, y, None)
+    cv_iter = list(cv.split(X, y, None))
+
+    parallel = Parallel(n_jobs=n_jobs, verbose=verbose, pre_dispatch=pre_dispatch)
+
+    prediction_blocks = parallel(delayed(_fit_and_predict)(
+        clone(estimator), X, y, train, test, class_ratio, verbose, fit_params, method)
+        for train, test in cv_iter)
+
+    # Concatenate the predictions
+    predictions = [pred_block_i for pred_block_i, _ in prediction_blocks]
+    test_indices = np.concatenate([indices_i
+                                   for _, indices_i in prediction_blocks])
+
+    if not _check_is_permutation(test_indices, _num_samples(X)):
+        raise ValueError('cross_val_predict only works for partitions')
+
+    inv_test_indices = np.empty(len(test_indices), dtype=int)
+    inv_test_indices[test_indices] = np.arange(len(test_indices))
+
+    predictions = np.concatenate(predictions)
+    return predictions[inv_test_indices]
+
+
 def main(exppath, experiment, dsname, modelname, debug):
     with open(exppath) as fi:
         expconf = json.load(fi)[experiment]
@@ -71,7 +134,7 @@ def main(exppath, experiment, dsname, modelname, debug):
     logger.info('Initializing training of {} model...'.format(modelname.upper()))
 
     # load experiment configuration
-    keys = ['procpath']
+    keys = ['procpath', 'classbalance']
     conf = {}
     for key in keys:
         conf[key] = expconf['datasets'][dsname][key] if key in expconf['datasets'][dsname] else expconf['datasets']['global'][key]
@@ -82,14 +145,15 @@ def main(exppath, experiment, dsname, modelname, debug):
     # load data
     procpath = conf['procpath']
     modelpath = conf['modelpath']
+    classratio = conf['classbalance']
 
     ypath_tr = os.path.join(procpath, experiment, dsname, 'labels_train.gz')
     if modelname == 'lstm':
         Xpath_tr = os.path.join(procpath, experiment, dsname, 'features_seq_train.gz')
-        y = to_categorical(joblib.load(ypath_tr))
     else:
         Xpath_tr = os.path.join(procpath, experiment, dsname, 'features_agg_train.gz')
-        y = joblib.load(ypath_tr)
+
+    y = joblib.load(ypath_tr)
 
     logger.info('Loading features from [{}] and targets from [{}]'.format(Xpath_tr, ypath_tr))
     X = joblib.load(Xpath_tr)
@@ -101,12 +165,12 @@ def main(exppath, experiment, dsname, modelname, debug):
     try:
         # cross validate model params, using 5x2 CV
         inner_cv = KFold(n_splits=2, shuffle=True, random_state=42)
-        outer_cv = KFold(n_splits=5 if not debug else 2, shuffle=True, random_state=42)
+        outer_cv = StratifiedKFold(n_splits=5 if not debug else 2, shuffle=True, random_state=42)
 
         if modelname == 'lstm':
             model = KerasClassifier(build_fn=custom_model, data_shape=(X.shape[1], X.shape[2]))
             params = models[modelname]['params']
-            clf = RandomizedSearchCV(estimator=model, param_distributions=params, n_iter=7 if not debug else 1, cv=inner_cv, iid=False, fit_params={'batch_size': 512, 'epochs': 100 if not debug else 5}, verbose=3, n_jobs=1, random_state=42)
+            clf = RandomizedSearchCV(estimator=model, param_distributions=params, n_iter=7 if not debug else 1, cv=inner_cv, fit_params={'batch_size': 512, 'epochs': 20 if not debug else 5}, verbose=3, n_jobs=1, random_state=42)
         else:
             model = models[modelname]['obj']
             params = models[modelname]['params']
@@ -115,7 +179,7 @@ def main(exppath, experiment, dsname, modelname, debug):
         # Nested CV with parameter optimization
         logger.info('Initializing cross validation loop...')
 
-        y_pred = cross_val_predict(clf, X=X, y=y, cv=outer_cv, method='predict_proba', n_jobs=1, verbose=3)[:,1]
+        y_pred = cross_val_predict(clf, X=X, y=y, cv=outer_cv, class_ratio=classratio, method='predict_proba', n_jobs=1, verbose=3)[:,1]
 
         logger.info('Cross validation finished, saving metadata...')
 

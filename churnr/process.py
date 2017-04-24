@@ -11,7 +11,6 @@ import glob
 from sklearn import preprocessing
 from sklearn.utils import shuffle
 from sklearn.model_selection import train_test_split
-from imblearn.under_sampling import RandomUnderSampler
 import numpy as np
 
 import churnr.utils as utils
@@ -31,7 +30,7 @@ def main(exppath, experiment, dsname):
         dsconf = json.load(fi)[experiment]['datasets']
 
     # load experiment configuration
-    keys = ['rawpath', 'procpath', 'testsize', 'classbalance', 'gsoutput', 'enddate', 'project', 'obsdays', 'preddays', 'timesplits']
+    keys = ['rawpath', 'procpath', 'testsize', 'gsoutput', 'enddate', 'project', 'obsdays', 'preddays', 'timesplits']
     conf = {}
     for key in keys:
         conf[key] = dsconf[dsname][key] if key in dsconf[dsname] else dsconf['global'][key]
@@ -43,7 +42,6 @@ def main(exppath, experiment, dsname):
     rawpath = conf['rawpath']
     procpath = conf['procpath']
     testsize = conf['testsize']
-    classbalance = conf['classbalance']
     gsoutput = conf['gsoutput']
     project = conf['project']
 
@@ -107,13 +105,6 @@ def main(exppath, experiment, dsname):
     y = df[ df['time'] == df['time'].unique()[0] ]
     y = y['churn'].values.astype(int)
 
-    # undersample
-    logger.info('Undersampling...')
-    rus = RandomUnderSampler(ratio=classbalance, return_indices=True, random_state=42)
-    _, y, idxs = rus.fit_sample(X[:,0,:], y)
-    X = X[idxs, :, :]
-    X_agg = X_agg[idxs, :]
-
     # shuffle on the samples dimension
     logger.info('Shuffling...')
     X, X_agg, y = shuffle(X, X_agg, y)
@@ -158,7 +149,7 @@ def main(exppath, experiment, dsname):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Data processer')
-    parser.add_argument('--exppath', default='../../experiments.json', help='Path to the experiments json file')
+    parser.add_argument('--exppath', default='./experiments.json', help='Path to the experiments json file')
     parser.add_argument('--experiment', default='temporal_static', help='Name of the experiment being performed')
     parser.add_argument('--dsname', default='session_6030d', help='Name of the dataset being transformed')
 
