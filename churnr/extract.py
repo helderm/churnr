@@ -18,7 +18,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level
 logger = logging.getLogger('churnr.extract')
 
 
-def main(exppath, experiment, dsname, hddump):
+def main(exppath, experiment, dsname, hddump, sampleusers):
     """ Extract data from several sources on BigQuery using intermediary tables
         and dump the final output as a file into ../data/raw
     """
@@ -63,12 +63,17 @@ def main(exppath, experiment, dsname, hddump):
             return
 
         # randomly sample users who are active on the last week
-        user_table_tmp, jobs = fetch_user_samples(ds, client, conf)
-        wait_for_jobs(jobs)
+        if sampleusers:
+            user_tables_tmp, jobs = fetch_user_samples(ds, client, conf)
+            wait_for_jobs(jobs)
 
-        # make samples distinct
-        jobs = distinct_users(user_table_tmp, conf['project'], ds, client)
-        wait_for_jobs(jobs)
+            # make samples distinct
+            user_table_tmp, jobs = distinct_users(user_tables_tmp, conf, ds, client)
+            wait_for_jobs(jobs)
+            for ut in user_tables_tmp:
+                ut.delete()
+        else:
+            user_table_tmp = ds.table(name='users_{}_sampled'.format(conf['experiment']))
 
         # build feature set
         ft_tables, jobs = fetch_features(user_table_tmp, ds, client, conf)
@@ -77,7 +82,6 @@ def main(exppath, experiment, dsname, hddump):
         # calculate the churn label for each user and each timestep
         user_table, jobs = calculate_churn(user_table_tmp, ds, client, conf)
         wait_for_jobs(jobs)
-        user_table_tmp.delete()
 
         # backfill missing users on feature tables
         jobs = backfill_missing_users(user_table, ds, client, conf)
@@ -103,7 +107,6 @@ def main(exppath, experiment, dsname, hddump):
     logger.info('Finished! Data dumped to {}'.format(datapath))
 
 
-
 def fetch_user_samples(ds, client, conf):
     """ Fetch a random sample of users based on a user_id hash """
 
@@ -111,29 +114,40 @@ def fetch_user_samples(ds, client, conf):
 
     totaldays = conf['obsdays'] + conf['preddays']
 
-    user_table = ds.table(name='users_{}_{}_tmp'.format(conf['experiment'], conf['dsname']))
-    if user_table.exists():
-        user_table.delete()
-
-    #currdate = dt.datetime.strptime(enddate, '%Y%m%d')
-    #currdate = dt.datetime.strptime(conf['enddate'], '%Y%m%d') - dt.timedelta(days=totaldays - 1)
     currdate = dt.datetime.strptime(conf['enddate']+'000000 -0500', '%Y%m%d%H%M%S %z') - dt.timedelta(days=totaldays - 1)
     jobs = []
-    for i in range(min(conf['obsdays'], 7)):
+
+    user_tables = []
+    for i in range(max(conf['obsdays']-conf['preddays'], 1)):
         datestr = currdate.strftime('%Y%m%d')
         currdate_end = currdate + dt.timedelta(seconds=SECS_IN_DAY)
 
+        user_table = ds.table(name='users_{}_{}_{}_tmp'.format(conf['experiment'], conf['dsname'], datestr))
+        if user_table.exists():
+            user_table.delete()
+
+        union_query = ''
+        if conf['obsdays'] > conf['preddays']:
+            for k in range(1, conf['preddays']+1):
+                datestr_2 = (currdate + dt.timedelta(days=k)).strftime('%Y%m%d')
+                union_query += 'SELECT DISTINCT(user_id) FROM `activation-insights.sessions.features_{}` WHERE consumption_time > 0 union distinct '.format(datestr_2)
+
+            union_query = union_query[:-16]
+
         # select a random sample of users based on a user_id hash and some wanted features
         query = """\
-            SELECT uss.user_id as user_id
-                FROM [activation-insights:sessions.features_{date}] as uss
-                JOIN [business-critical-data:user_snapshot.user_snapshot_{date}] as usn
+            SELECT DISTINCT(uss.user_id) as user_id
+                FROM `activation-insights.sessions.features_{date}` as uss
+                JOIN `business-critical-data.user_snapshot.user_snapshot_{date}` as usn
                 ON uss.user_id = usn.user_id
                 WHERE uss.consumption_time > 0.0 AND uss.platform IN ("android","android-tablet")
-                    AND ABS(HASH(uss.user_id)) % {share} == 0 AND usn.reporting_country IN ("BR", "US", "MX")
-                    AND TIMESTAMP_TO_MSEC(TIMESTAMP(uss.start_time)) >= {startslot} AND TIMESTAMP_TO_MSEC(TIMESTAMP(uss.start_time)) < {endslot}
+                    AND MOD(ABS(FARM_FINGERPRINT(uss.user_id)), {share}) = 0 AND usn.reporting_country IN ("BR", "US", "MX")
+                    AND UNIX_MILLIS(uss.start_time) >= {startslot} AND UNIX_MILLIS(uss.start_time) < {endslot}
         """.format(date=datestr, share=int(1 / conf['shareusers']),
                     startslot=int(currdate.timestamp()*1000), endslot=int(currdate_end.timestamp()*1000))
+
+        if len(union_query):
+            query += " AND uss.user_id IN ({union})".format(union=union_query)
 
         logger.info('Selecting a random sample of users ({} of users on {})'.format(conf['shareusers'], datestr))
 
@@ -142,33 +156,46 @@ def fetch_user_samples(ds, client, conf):
         job.destination = user_table
         job.allow_large_results = True
         job.write_disposition = 'WRITE_APPEND'
+        job.use_legacy_sql = False
         job.begin()
 
         jobs.append(job)
+        user_tables.append(user_table)
 
         currdate = currdate + dt.timedelta(days=1)
 
-    return user_table, jobs
+    return user_tables, jobs
 
 
-def distinct_users(user_table, project, ds, client):
+def distinct_users(user_tables, conf, ds, client):
     """ Distinct the user table """
 
-    query = """\
-       SELECT user_id FROM [{project}:{dataset}.{table}]
-        GROUP BY user_id\
-    """.format(project=project, dataset=ds.name, table=user_table.name)
+    user_table_tmp = ds.table(name='users_{}_sampled'.format(conf['experiment']))
+    if user_table_tmp.exists():
+        user_table_tmp.delete()
+
+    query = 'SELECT t0.user_id FROM `{project}.{dataset}.{table}` AS t0 '.format(project=conf['project'], dataset=ds.name, table=user_tables[0].name)
+
+    for tx, user_table in enumerate(user_tables[1:]):
+        query += 'JOIN `{project}.{dataset}.{table}` AS t{alias_curr} ON t{alias_prev}.user_id = t{alias_curr}.user_id '.format(project=conf['project'], dataset=ds.name, table=user_table.name, alias_curr=tx+1, alias_prev=tx)
+    query += 'GROUP BY user_id'
+
+    #query = """\
+    #   SELECT user_id FROM [{project}:{dataset}.{table}]
+    #    GROUP BY user_id\
+    #""".format(project=project, dataset=ds.name, table=user_table.name)
 
     logger.info('Fetching distinct user ids from samples...')
 
     jobname = 'user_distinct_samples_job_' + str(uuid.uuid4())
     job = client.run_async_query(jobname, query)
-    job.destination = user_table
+    job.destination = user_table_tmp
     job.allow_large_results = True
+    job.use_legacy_sql = False
     job.write_disposition = 'WRITE_TRUNCATE'
     job.begin()
 
-    return [job]
+    return user_table_tmp, [job]
 
 
 def fetch_features(user_table, ds, client, conf):
@@ -395,8 +422,9 @@ if __name__ == '__main__':
     parser.add_argument('--experiment', default='temporal_static', help='Name of the experiment being performed')
     parser.add_argument('--dsname', default='session_6030d', help='Name of the dataset being transformed')
     parser.add_argument('--hddump', default='False', help='If True, jump straight to the data import from GCS')
+    parser.add_argument('--sampleusers', default=False, help='If True, will fetch new user samples', action='store_true')
 
     args = parser.parse_args()
 
-    main(exppath=args.exppath, experiment=args.experiment, dsname=args.dsname, hddump=args.hddump)
+    main(exppath=args.exppath, experiment=args.experiment, dsname=args.dsname, hddump=args.hddump, sampleusers=args.sampleusers)
 

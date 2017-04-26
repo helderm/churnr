@@ -26,11 +26,16 @@ def run(exppath, experiment, stage, singlestage, debug):
 
     # extract stage
     if stage in ['extract']:
-        for dsname in datasets.keys():
+        # sort the datasets by size of observation window, and sample users only on the largest one
+
+        datasets_sorted = sorted(datasets.items(), key=lambda x: x[1].get('obsdays', 0), reverse=True)
+        sampleusers = True
+        for dsname, _ in datasets_sorted:
             if dsname == 'global':
                 continue
 
-            extract.main(exppath=expabspath, experiment=experiment, dsname=dsname, hddump=False)
+            extract.main(exppath=expabspath, experiment=experiment, dsname=dsname, hddump=False, sampleusers=sampleusers)
+            sampleusers = False
 
     # process stage
     if stage in ['extract', 'process'] and (not singlestage or (singlestage and stage == 'process')):

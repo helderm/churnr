@@ -73,6 +73,12 @@ def main(exppath, experiment, dsname):
 
     logger.info('Merging tables into a single dataframe...')
     df = pd.merge(featdf, userdf, on='user_id', sort=True)
+
+    # filter out the user_ids not present in this dataset
+    # that may have been added by another dataset with a larger window
+    unknown_users = list(set(df.user_id.unique()) - set(df[df.backfill==False].user_id.unique()))
+    df = df[~df.user_id.isin(unknown_users)]
+
     nobf_df = df[df.backfill == False]
 
     # normalize
@@ -92,7 +98,8 @@ def main(exppath, experiment, dsname):
     # for lstms, reshape X into timesteps
     logger.info('Generating sequential dataset...')
     timepoints = df['time'].unique()
-    num_samples = len(df[ df['time'] == timepoints[0] ])
+    #num_samples = len(df[ df['time'] == timepoints[0] ])
+    num_samples = len(df['user_id'].unique())
     #features = [f for f in df.columns if f != 'churn' and f != 'time' and f != 'user_id']
     timesteps = len(timepoints)
     X = np.empty(shape=(num_samples, timesteps, len(features)))
@@ -101,6 +108,7 @@ def main(exppath, experiment, dsname):
 
     # for aggregated models, get the mean of features
     logger.info('Generating aggregated dataset...')
+    num_samples = len(nobf_df['user_id'].unique())
     X_agg = np.empty(shape=(num_samples, len(features)))
     X_agg[:,:] = nobf_df.groupby('user_id', sort=True)[features].mean()
 
