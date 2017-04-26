@@ -73,16 +73,21 @@ def main(exppath, experiment, dsname):
 
     logger.info('Merging tables into a single dataframe...')
     df = pd.merge(featdf, userdf, on='user_id', sort=True)
+    nobf_df = df[df.backfill == False]
 
     # normalize
     logger.info('Normalizing features...')
     features = [f for f in df.columns if f != 'churn' and f != 'time' and f != 'user_id' and f != 'backfill']
-    scaled = preprocessing.scale(df[features], copy=False)
-    scaled = np.c_[ scaled, df['user_id'], df['time'], df['churn'], df['backfill'] ]
-    df = pd.DataFrame(scaled, columns=features + ['user_id', 'time', 'churn', 'backfill'], )
+    scaled = preprocessing.scale(nobf_df[features], copy=False)
+    scaled = np.c_[ scaled, nobf_df['user_id'], nobf_df['time'], nobf_df['churn'], nobf_df['backfill'] ]
+    new_df = pd.DataFrame(scaled, columns=features + ['user_id', 'time', 'churn', 'backfill'], )
     for f in features:
-        df[f] = df[f].astype(np.float)
-    df['time'] = df['time'].astype(np.int)
+        new_df[f] = new_df[f].astype(np.float)
+    new_df['time'] = new_df['time'].astype(np.int)
+
+    # join the normalized data with the ones backfilled
+    df = pd.concat([new_df, df[df.backfill == True]])
+    df = df.sort_values(['user_id','time'])
 
     # for lstms, reshape X into timesteps
     logger.info('Generating sequential dataset...')
@@ -96,7 +101,6 @@ def main(exppath, experiment, dsname):
 
     # for aggregated models, get the mean of features
     logger.info('Generating aggregated dataset...')
-    nobf_df = df[df.backfill == False]
     X_agg = np.empty(shape=(num_samples, len(features)))
     X_agg[:,:] = nobf_df.groupby('user_id', sort=True)[features].mean()
 
