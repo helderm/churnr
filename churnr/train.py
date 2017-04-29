@@ -9,7 +9,8 @@ import joblib
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import AdaBoostClassifier, RandomForestClassifier
 from sklearn.svm import SVC
-from sklearn.model_selection import KFold, StratifiedKFold, GridSearchCV, RandomizedSearchCV
+from sklearn.naive_bayes import GaussianNB
+from sklearn.model_selection import StratifiedKFold, GridSearchCV, RandomizedSearchCV
 from sklearn.metrics import roc_auc_score, average_precision_score
 from keras.wrappers.scikit_learn import KerasClassifier
 from keras.utils.np_utils import to_categorical
@@ -27,8 +28,9 @@ models = {
     'lr': {
         'obj': LogisticRegression(),
         'params': {
-            'C': [0.001, 0.01, 1, 10, 100],
+            'C': [0.01, 0.1, 1, 10, 100],
             'penalty': ['l1', 'l2'],
+            'class_weight': [None, 'balanced']
         }
     },
     'abdt': {
@@ -52,7 +54,7 @@ models = {
         'obj': RandomForestClassifier(),
         'params': {
             'n_estimators': [10, 40, 70, 100],
-            'max_depth': [None, 10, 20],
+            'class_weight': [None, 'balanced']
         }
     },
     'svc': {
@@ -62,6 +64,12 @@ models = {
             'kernel': ['rbf', 'poly', 'sigmoid']
         }
     },
+    'gnb': {
+        'obj': GaussianNB(),
+        'params': {
+            'priors': [None, [0.9,0.1], [0.8, 0.2], [0.7,0.3], [0.6,0.4], [0.5,0.5]],
+        }
+    }
 }
 
 
@@ -164,7 +172,7 @@ def main(exppath, experiment, dsname, modelname, debug):
 
     try:
         # cross validate model params, using 5x2 CV
-        inner_cv = KFold(n_splits=2, shuffle=True, random_state=42)
+        inner_cv = StratifiedKFold(n_splits=2, shuffle=True, random_state=42)
         outer_cv = StratifiedKFold(n_splits=5 if not debug else 2, shuffle=True, random_state=42)
 
         if modelname == 'lstm':
