@@ -1,7 +1,7 @@
 #!/usr/bin/env pythonw
 # -*- coding: utf-8 -*-
 from keras.models import Sequential
-from keras.layers import LSTM, Dense
+from keras.layers import LSTM, Dense, Masking
 
 
 def custom_model(data_shape, layers=1, units1=128, units2=128, units3=128, units4=128, units5=128, optim='rmsprop'):
@@ -14,6 +14,7 @@ def custom_model(data_shape, layers=1, units1=128, units2=128, units3=128, units
     }
 
     model = Sequential()
+    model.add(Masking(mask_value=0.0, input_shape=data_shape))
     return_sequences = True
     for i in range(layers):
         if i+1 >= layers:
