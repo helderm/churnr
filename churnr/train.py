@@ -178,7 +178,7 @@ def main(exppath, experiment, dsname, modelname, debug):
         if modelname == 'lstm':
             model = KerasClassifier(build_fn=custom_model, data_shape=(X.shape[1], X.shape[2]))
             params = models[modelname]['params']
-            clf = RandomizedSearchCV(estimator=model, param_distributions=params, n_iter=7 if not debug else 1, cv=inner_cv, fit_params={'batch_size': 512, 'epochs': 20 if not debug else 5}, verbose=3, n_jobs=1, random_state=42)
+            clf = RandomizedSearchCV(estimator=model, param_distributions=params, n_iter=7 if not debug else 1, cv=inner_cv, fit_params={'batch_size': 512, 'epochs': 70 if not debug else 30}, verbose=3, n_jobs=1, random_state=42)
         else:
             model = models[modelname]['obj']
             params = models[modelname]['params']
