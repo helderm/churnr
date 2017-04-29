@@ -81,8 +81,15 @@ def main(exppath, experiment, dsname, hddump, sampleusers):
         jobs = backfill_missing_users(user_table, ds, client, conf)
         wait_for_jobs(jobs)
 
+        # join the feature tables into a single one
+        tables = ft_tables[-(conf['obsdays']*conf['timesplits']):]
+        features_table, jobs = join_feature_tables(tables, ds, client, conf)
+        wait_for_jobs(jobs)
+        for ft in ft_tables:
+            ft.delete()
+
         # serialize features
-        tables = ft_tables[-(conf['obsdays']*conf['timesplits']):] + [user_table]
+        tables = [features_table, user_table]
         jobs = dump_features_to_gcs(tables, gspath, client)
 
         # dump to disk
@@ -311,7 +318,7 @@ def calculate_churn(user_table_tmp, ds, client, conf):
             where user_id not in ({union})
     """.format(project=conf['project'], dataset=ds.name, table=user_table_tmp.name, union=union_query)
 
-    jobname = 'retained_features_job_' + str(uuid.uuid4())
+    jobname = 'churned_features_job_' + str(uuid.uuid4())
     job = client.run_async_query(jobname, query)
     job.destination = user_table
     job.allow_large_results = True
@@ -321,6 +328,31 @@ def calculate_churn(user_table_tmp, ds, client, conf):
     jobs.append(job)
 
     return user_table, jobs
+
+
+def join_feature_tables(ft_tables, ds, client, conf):
+    """ Join all feature tables into a single one for later csv exporting """
+
+    features_table = ds.table(name='features_{}_{}'.format(conf['experiment'], conf['dsname']))
+    if features_table.exists():
+        features_table.delete()
+
+    query = ''
+    for ft in ft_tables:
+        query += 'SELECT * FROM `{}.{}.{}` UNION ALL '.format(conf['project'], ds.name, ft.name)
+
+    query = query[:-11]
+    query += ' ORDER BY user_id, time'
+
+    jobname = 'features_union_job_' + str(uuid.uuid4())
+    job = client.run_async_query(jobname, query)
+    job.destination = features_table
+    job.allow_large_results = True
+    job.write_disposition = 'WRITE_APPEND'
+    job.use_legacy_sql = False
+    job.begin()
+
+    return features_table, [job]
 
 
 def dump_features_to_gcs(ft_tables, dest, client):
