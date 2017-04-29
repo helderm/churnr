@@ -15,46 +15,61 @@
                 "classbalance": 1.0,
                 "preddays": 30
             },
-            "session_6030d" : {},
-            "session_6030d_small" : {
-                "shareusers": 0.001,
-                "obsdays": 59,
-                "enddate": "20170409"
-            }
+            "session_60_30d" : {}
         },
         "models":{
             "global": {
                 "modelpath": "/Users/helderm/Documents/churnr/models"
             },
-            "lr": {},
-            "abdt": {},
-            "lstm": {}
+            "lr": {
+                "prettyname": "Logistic Regression"
+            },
+            "abdt": {
+                "prettyname": "AdaBoost DT"
+            },
+            "lstm": {
+                "prettyname": "LSTM"
+            },
+            "rf": {
+                "prettyname": "Random Forest"
+            },
+            "svc": {
+                "prettyname": "Supp Vector Machine"
+            }
         },
         "plots":{
             "global": {
-                "plotpath": "/Users/helderm/Documents/churnr/plots"
+                "plotpath": "/Users/helderm/Documents/churnr/plots",
+                "dslabel": 0
             },
-            "roc": {}
+            "roc": {},
+            "precrec": {},
+            "confusion": {}
         }
     },
     "obs_window": {
         "datasets": {
             "global": {
-                "preddays": 30,
+                "preddays": 7,
+                "actdays": 4,
                 "gsoutput": "gs://helder/data/",
                 "timesplits": 3,
-                "shareusers": 0.01,
+                "shareusers": 0.05,
                 "enddate": "yesterday",
                 "dataset": "helder",
                 "project": "user-lifecycle",
                 "rawpath": "/Users/helderm/Documents/churnr/data/raw",
                 "procpath":"/Users/helderm/Documents/churnr/data/processed",
-                "testsize": 0.1,
+                "testsize": 0.05,
                 "classbalance": 1.0
             },
             "session_7_30d" :  {
                  "obsdays": 7,
                  "prettyname": "7"
+            },
+            "session_14_30d" :  {
+                 "obsdays": 14,
+                 "prettyname": "14"
             },
             "session_21_30d" :  {
                  "obsdays": 21,
@@ -72,13 +87,13 @@
                  "obsdays": 42,
                  "prettyname": "42"
             },
-            "session_50_30d" :  {
-                 "obsdays": 50,
-                 "prettyname": "50"
+            "session_49_30d" :  {
+                 "obsdays": 49,
+                 "prettyname": "49"
             },
-            "session_60_30d" :  {
-                 "obsdays": 60,
-                 "prettyname": "60"
+            "session_56_30d" :  {
+                 "obsdays": 56,
+                 "prettyname": "56"
             }
         },
         "models":{
@@ -159,7 +174,8 @@
         },
         "plots":{
             "global": {
-                "plotpath": "/Users/helderm/Documents/churnr/plots"
+                "plotpath": "/Users/helderm/Documents/churnr/plots",
+                "modellabel": 0
             },
             "roc": {},
             "precrec": {},
@@ -174,27 +190,38 @@
     "coolexp": {
         "datasets": {
             "global": { 
-                "obsdays": 3, 
                 "gsoutput": "gs://helder/data/", 
                 "timesplits": 3, 
-                "shareusers": 0.005, 
+                "shareusers": 0.01, 
                 "enddate": "yesterday", 
                 "dataset": "helder", 
                 "project": "user-lifecycle", 
                 "rawpath": "/Users/helderm/Documents/churnr/data/raw", 
                 "procpath":"/Users/helderm/Documents/churnr/data/processed", 
                 "testsize": 0.1,
-                "classbalance": 1.0,
-                "preddays": 3
+                "classbalance": 0.35,
+                "preddays": 3,
+                "actdays": 2
             },
-            "session_3_3d":  {}
+            "session_6_3d":  {
+                "obsdays": 6 
+            },
+            "session_3_3d":  {
+                "obsdays": 3 
+            }
         },
         "models":{
             "global": {
                 "modelpath": "/Users/helderm/Documents/churnr/models"
             },
-            "lstm": {
-                "prettyname": "LSTM"
+            "lr": {
+                "prettyname": "Logistic Regression"
+            },
+            "rf": {
+                "prettyname": "Random Forest"
+            },
+            "gnb": {
+                "prettyname": "Gaussian Naive Bayes"
             }
         },
         "plots":{
@@ -208,5 +235,67 @@
             },
             "confusion": {}
         }
-    } 
+    },
+    "class_balance": {
+        "datasets": {
+            "global": {
+                "preddays": 1,
+                "obsdays": 1,
+                "gsoutput": "gs://helder/data/",
+                "timesplits": 3,
+                "shareusers": 0.01,
+                "enddate": "yesterday",
+                "dataset": "helder",
+                "project": "user-lifecycle",
+                "rawpath": "/Users/helderm/Documents/churnr/data/raw",
+                "procpath":"/Users/helderm/Documents/churnr/data/processed",
+                "testsize": 0.1
+            },
+            "session_60_30d_25p" :  {
+                 "classbalance": 0.35,
+                 "prettyname": "25%"
+            },  
+            "session_60_30d_30p" :  {
+                 "classbalance": 0.43,
+                 "prettyname": "30%"
+            }, 
+            "session_60_30d_35p" :  {
+                 "classbalance": 0.54,
+                 "prettyname": "35%"
+            },
+             "session_60_30d_40p" :  {
+                 "classbalance": 0.67,
+                 "prettyname": "40%"
+            },
+            "session_60_30d_45p" :  {
+                 "classbalance": 0.82,
+                 "prettyname": "45%"
+            },
+            "session_60_30d_50p" :  {
+                 "classbalance": 1.0,
+                 "prettyname": "50%"
+            }
+       },
+        "models":{
+            "global": {
+                "modelpath": "/Users/helderm/Documents/churnr/models"
+            },
+            "lstm": {}
+        },
+        "plots":{
+            "global": {
+                "plotpath": "/Users/helderm/Documents/churnr/plots",
+                "modellabel": 0
+            },
+            "roc": {},
+            "precrec": {
+                "at_k": 1000
+            },
+            "confusion": {},
+            "line": {
+                "xlabel": "Window size (days)",
+                "title": "Observation window"
+            }
+        }
+   }
 }

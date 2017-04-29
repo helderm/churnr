@@ -75,7 +75,6 @@ def main():
     parser.add_argument('--stage', default='extract', help='Stage that the experiment will start from', choices=['extract', 'process', 'train', 'plot'])
     parser.add_argument('--singlestage', default=False, help='Stage that the experiment will start from', action='store_true')
     parser.add_argument('--debug', default=False, help='Debug flag that sped up some stages', action='store_true')
-    parser.add_argument('--job-dir', default='gs://helder/churnr', help='Cloud ML job dir')
 
     args = parser.parse_args()
 
