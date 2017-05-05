@@ -5,6 +5,7 @@ import logging
 import uuid
 import argparse
 from google.cloud import bigquery as bq
+import google.cloud.storage as gcs
 import datetime as dt
 import math
 import json
@@ -39,12 +40,13 @@ def main(exppath, experiment, dsname, hddump, sampleusers):
 
     gspath = os.path.join(conf['gsoutput'], experiment, dsname)
     datapath = os.path.join(conf['rawpath'], experiment, dsname)
-    if os.path.exists(datapath):
-        ans = utils.yes_or_no('This extraction will overwrite the dataset at {}. Are you sure?'.format(datapath))
-        if not ans:
-            return
-    else:
-        os.makedirs(datapath)
+    if hddump:
+        if os.path.exists(datapath):
+            ans = utils.yes_or_no('This extraction will overwrite the dataset at {}. Are you sure?'.format(datapath))
+            if not ans:
+                return
+        else:
+            os.makedirs(datapath)
 
     try:
         client = bq.Client(project=conf['project'])
@@ -55,16 +57,11 @@ def main(exppath, experiment, dsname, hddump, sampleusers):
             ds.location = 'EU'
             ds.create()
 
-        # if hddump, skip the db queries and dump the files already stored at GCS
-        if hddump and hddump == 'True':
-            tablenames = utils.get_table_names(conf)
-            utils.extract_dataset_to_disk(datapath, tablenames, conf['project'], gspath)
-            logger.info('Finished! Data dumped to disk at {}!'.format(datapath))
-            return
-
         # randomly sample users who are active on the last week
         if sampleusers:
             user_table_tmp, jobs = fetch_user_samples(ds, client, conf)
+            wait_for_jobs(jobs)
+            user_table_tmp, jobs = add_user_info(user_table_tmp, ds, client, conf)
             wait_for_jobs(jobs)
         else:
             user_table_tmp = ds.table(name='users_{}_sampled'.format(conf['experiment']))
@@ -90,19 +87,24 @@ def main(exppath, experiment, dsname, hddump, sampleusers):
 
         # serialize features
         tables = [features_table, user_table]
-        jobs = dump_features_to_gcs(tables, gspath, client)
+        jobs = dump_features_to_gcs(tables, gspath, conf['project'], client)
+        wait_for_jobs(jobs)
 
         # dump to disk
-        wait_for_jobs(jobs)
-        tablenames = [t.name for t in tables]
-        utils.extract_dataset_to_disk(datapath, tablenames, conf['project'], gspath)
-        with open(os.path.join(datapath, 'conf.json'), 'w') as f:
-            json.dump(conf, f)
+        if hddump:
+            tablenames = [t.name for t in tables]
+            utils.extract_dataset_to_disk(datapath, tablenames, conf['project'], gspath)
+
+            with open(os.path.join(datapath, 'conf.json'), 'w') as f:
+                json.dump(conf, f)
+
+        logger.info('Data extraction done!')
 
     except Exception as e:
         logger.exception(e)
         logger.info('Removing folder {}...'.format(datapath))
-        shutil.rmtree(datapath)
+        if hddump and os.path.exists(datapath):
+            shutil.rmtree(datapath)
         raise e
 
     logger.info('Finished! Data dumped to {}'.format(datapath))
@@ -113,35 +115,37 @@ def fetch_user_samples(ds, client, conf):
 
     logger.info('Fetching user samples...')
 
+    if conf['obsdays'] < conf['actdays']:
+        raise Exception("Obs window smaller than activation window, this probably wont work!")
+
     totaldays = conf['actdays'] + conf['preddays']
 
     currdate = dt.datetime.strptime(conf['enddate']+'000000 -0500', '%Y%m%d%H%M%S %z') - dt.timedelta(days=totaldays - 1)
-    jobs = []
 
-    if conf['obsdays'] < conf['preddays']:
-        raise Exception("Obs window smaller than pred window, this probably wont work!")
-
-    datestr = currdate.strftime('%Y%m%d')
-    currdate_end = currdate + dt.timedelta(seconds=SECS_IN_DAY)
-
-    user_table = ds.table(name='users_{}_sampled'.format(conf['experiment'], conf['dsname'], datestr))
+    user_table = ds.table(name='users_{}_sampled'.format(conf['experiment']))
     if user_table.exists():
         user_table.delete()
 
     query = ''
     for k in range(conf['actdays']):
-        datestr_2 = (currdate + dt.timedelta(days=k)).strftime('%Y%m%d')
+        datestr = currdate.strftime('%Y%m%d')
+        currdate_end = currdate + dt.timedelta(seconds=SECS_IN_DAY)
+
         query += """\
-            SELECT DISTINCT(uss{k}.user_id) FROM `activation-insights.sessions.features_{date}` as uss{k}
+            SELECT uss{k}.user_id
+            FROM `activation-insights.sessions.features_{date}` as uss{k}
                 JOIN `business-critical-data.user_snapshot.user_snapshot_{date}` as usn{k}
                 ON uss{k}.user_id=usn{k}.user_id
                 WHERE uss{k}.consumption_time > 0 AND uss{k}.platform IN ("android","android-tablet")
                     AND MOD(ABS(FARM_FINGERPRINT(uss{k}.user_id)), {share}) = 0 AND usn{k}.reporting_country IN ("BR", "US", "MX")
+                    AND DATE_DIFF(PARSE_DATE("%E4Y%m%d", "{date}"), PARSE_DATE("%E4Y-%m-%d", usn{k}.registration_date), DAY) > {obswindow}
                     AND UNIX_MILLIS(uss{k}.start_time) >= {startslot} AND UNIX_MILLIS(uss{k}.start_time) < {endslot}
-                UNION DISTINCT """.format(date=datestr_2, share=int(1 / conf['shareusers']), startslot=int(currdate.timestamp()*1000),
-                    endslot=int(currdate_end.timestamp()*1000), k=k)
+                UNION DISTINCT (""".format(date=datestr, share=int(1 / conf['shareusers']), startslot=int(currdate.timestamp()*1000),
+                    endslot=int(currdate_end.timestamp()*1000), k=k, obswindow=conf['obsdays'])
 
-    query = query[:-16]
+        currdate = currdate + dt.timedelta(days=1)
+    query = query[:-17]
+    query += ')' * (conf['actdays']-1)
 
     jobname = 'user_ids_sampled_job_' + str(uuid.uuid4())
     job = client.run_async_query(jobname, query)
@@ -151,9 +155,36 @@ def fetch_user_samples(ds, client, conf):
     job.use_legacy_sql = False
     job.begin()
 
-    jobs.append(job)
+    return user_table, [job]
 
-    return user_table, jobs
+
+def add_user_info(user_table, ds, client, conf):
+    """ Add some columns to the user table """
+
+    logger.info('Getting more info about sampled users...')
+
+    totaldays = conf['actdays'] + conf['preddays']
+    currdate = dt.datetime.strptime(conf['enddate']+'000000 -0500', '%Y%m%d%H%M%S %z') - dt.timedelta(days=totaldays - 1)
+    datestr = currdate.strftime('%Y%m%d')
+
+    query = """\
+        SELECT uss.user_id as user_id, DATE_DIFF(PARSE_DATE("%E4Y%m%d", "{date}"), PARSE_DATE("%E4Y-%m-%d", usn.registration_date), DAY) as day_since_registration,
+            usn.product as product, usn.reporting_country as reporting_country
+        FROM `{project}.{dataset}.{table}` as uss
+            JOIN `business-critical-data.user_snapshot.user_snapshot_{date}` as usn
+            ON uss.user_id=usn.user_id
+            """.format(date=datestr, project=conf['project'], dataset=ds.name, table=user_table.name)
+
+    jobname = 'users_info_job_' + str(uuid.uuid4())
+    job = client.run_async_query(jobname, query)
+    job.destination = user_table
+    job.allow_large_results = True
+    job.write_disposition = 'WRITE_TRUNCATE'
+    job.use_legacy_sql = False
+    job.begin()
+
+    return user_table, [job]
+
 
 
 def fetch_features(user_table, ds, client, conf):
@@ -214,6 +245,10 @@ def fetch_features(user_table, ds, client, conf):
 
             currtimeslot_start += math.ceil(SECS_IN_DAY / timesplits)
 
+        if (i+1) % 15 == 0:
+            wait_for_jobs(jobs)
+            jobs = []
+
         currdate = currdate - dt.timedelta(days=1)
 
     return ft_tables, jobs
@@ -262,6 +297,10 @@ def backfill_missing_users(user_table, ds, client, conf):
             jobs.append(job)
 
             currtimeslot_start += math.ceil(SECS_IN_DAY / timesplits)
+
+        if (i+1) % 15 == 0:
+            wait_for_jobs(jobs)
+            jobs = []
 
         currdate = currdate + dt.timedelta(days=1)
 
@@ -333,6 +372,8 @@ def calculate_churn(user_table_tmp, ds, client, conf):
 def join_feature_tables(ft_tables, ds, client, conf):
     """ Join all feature tables into a single one for later csv exporting """
 
+    logger.info('Merging {} feature tables into one...'.format(len(ft_tables)))
+
     features_table = ds.table(name='features_{}_{}'.format(conf['experiment'], conf['dsname']))
     if features_table.exists():
         features_table.delete()
@@ -342,7 +383,6 @@ def join_feature_tables(ft_tables, ds, client, conf):
         query += 'SELECT * FROM `{}.{}.{}` UNION ALL '.format(conf['project'], ds.name, ft.name)
 
     query = query[:-11]
-    query += ' ORDER BY user_id, time'
 
     jobname = 'features_union_job_' + str(uuid.uuid4())
     job = client.run_async_query(jobname, query)
@@ -355,14 +395,33 @@ def join_feature_tables(ft_tables, ds, client, conf):
     return features_table, [job]
 
 
-def dump_features_to_gcs(ft_tables, dest, client):
+def dump_features_to_gcs(ft_tables, dest, project, client):
     """ Dump generated tables as files on Google Cloud Storage"""
+
+
+    gs_client = gcs.Client(project)
+    split_uri = dest.split('/')
+    filepath = '/'.join(split_uri[3:])
+    bucket_name = split_uri[2]
+    bucket = gcs.Bucket(gs_client, bucket_name)
 
     logger.info('Dumping {} tables to {}...'.format(len(ft_tables), dest))
 
     jobs = []
     for ft_table in ft_tables:
-        path = dest + '/' + ft_table.name
+        filename_shard = ft_table.name + '{0:012d}'.format(0)
+        blob = gcs.Blob(name=os.path.join(filepath, filename_shard), bucket=bucket)
+        if blob.exists():
+            count = 0
+            while blob.exists():
+                logger.info(' -- Removing blob {}'.format(blob.path))
+                blob.delete()
+
+                count += 1
+                filename_shard = ft_table.name + '{0:012d}'.format(count)
+                blob = gcs.Blob(name=os.path.join(filepath, filename_shard), bucket=bucket)
+
+        path = dest + '/' + ft_table.name + '*'
         jobname = 'features_dump_job_' + str(uuid.uuid4())
         job = client.extract_table_to_storage(jobname, ft_table, path)
         job.begin()
@@ -401,13 +460,14 @@ def wait_for_jobs(jobs):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Data extracter')
-    parser.add_argument('--exppath', default='../../experiments.json', help='Path to the experiments json file')
+    parser.add_argument('--exppath', default='./experiments.json', help='Path to the experiments json file')
     parser.add_argument('--experiment', default='temporal_static', help='Name of the experiment being performed')
     parser.add_argument('--dsname', default='session_6030d', help='Name of the dataset being transformed')
-    parser.add_argument('--hddump', default='False', help='If True, jump straight to the data import from GCS')
+    parser.add_argument('--hddump', default=False, help='If True, will dump the tables to the local filesystem', action='store_true')
     parser.add_argument('--sampleusers', default=False, help='If True, will fetch new user samples', action='store_true')
 
     args = parser.parse_args()
 
     main(exppath=args.exppath, experiment=args.experiment, dsname=args.dsname, hddump=args.hddump, sampleusers=args.sampleusers)
+
 

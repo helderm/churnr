@@ -5,19 +5,20 @@ import argparse
 import logging
 import json
 import joblib
+import shutil
 
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import AdaBoostClassifier, RandomForestClassifier
 from sklearn.svm import SVC
 from sklearn.naive_bayes import GaussianNB
-from sklearn.model_selection import StratifiedKFold, GridSearchCV, RandomizedSearchCV
+from sklearn.model_selection import KFold, StratifiedKFold, GridSearchCV, RandomizedSearchCV
 from sklearn.metrics import roc_auc_score, average_precision_score
 from keras.wrappers.scikit_learn import KerasClassifier
 from keras.utils.np_utils import to_categorical
 import numpy as np
 from scipy.stats import randint as sp_randint
+import google.cloud.storage as gcs
 
-from churnr.utils import yes_or_no
 from churnr.lstm_models import custom_model
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -111,7 +112,7 @@ def cross_val_predict(estimator, X, y, cv, class_ratio=1.0, method='predict', n_
     from sklearn.model_selection._validation import _check_is_permutation
     from sklearn.base import clone
 
-    X, y, _ = indexable(X, y, None)
+    X, y, groups = indexable(X, y, None)
     cv_iter = list(cv.split(X, y, None))
 
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose, pre_dispatch=pre_dispatch)
@@ -135,6 +136,50 @@ def cross_val_predict(estimator, X, y, cv, class_ratio=1.0, method='predict', n_
     return predictions[inv_test_indices]
 
 
+def load_data(modeltype, conf):
+    yfilename = 'labels_train.gz'
+    ypath = os.path.join(conf['procpath'], conf['experiment'], conf['dsname'], yfilename)
+    if modeltype == 'lstm':
+        Xfilename = 'features_seq_train.gz'
+    else:
+        Xfilename = 'features_agg_train.gz'
+    Xpath = os.path.join(conf['procpath'], conf['experiment'], conf['dsname'], 'features_seq_train.gz')
+
+    if os.path.exists(Xpath) and os.path.exists(ypath):
+        logger.info('Loading features from [{}] and targets from [{}]'.format(Xpath, ypath))
+        y = joblib.load(ypath)
+        X = joblib.load(Xpath)
+        return X, y
+
+    if os.path.exists(conf['procpath']):
+        shutil.rmtree(conf['procpath'])
+    os.makedirs(conf['procpath'])
+
+    client = gcs.Client(conf['project'])
+    split_uri = conf['gsoutput'].split('/')
+    bucket_name = split_uri[2]
+
+    filepath = '/'.join(split_uri[3:])
+    bucket = gcs.Bucket(client, bucket_name)
+
+    # download and load X
+    blob = gcs.Blob(name=os.path.join(filepath, Xfilename), bucket=bucket)
+    local_file = os.path.join(conf['procpath'], Xfilename)
+    logger.info('Downloading blob {} to local file {}'.format(blob.path, local_file))
+    with open(local_file, 'wb') as f:
+        blob.download_to_file(f)
+    X = joblib.load(local_file)
+
+    blob = gcs.Blob(name=os.path.join(filepath, yfilename), bucket=bucket)
+    local_file = os.path.join(conf['procpath'], yfilename)
+    logger.info('Downloading blob {} to local file {}'.format(blob.path, local_file))
+    with open(local_file, 'wb') as f:
+        blob.download_to_file(f)
+    y = joblib.load(local_file)
+
+    return X, y
+
+
 def main(exppath, experiment, dsname, modelname, debug):
     with open(exppath) as fi:
         expconf = json.load(fi)[experiment]
@@ -142,46 +187,40 @@ def main(exppath, experiment, dsname, modelname, debug):
     logger.info('Initializing training of {} model...'.format(modelname.upper()))
 
     # load experiment configuration
-    keys = ['procpath', 'classbalance']
+    keys = ['procpath', 'project', 'gsoutput']
     conf = {}
     for key in keys:
         conf[key] = expconf['datasets'][dsname][key] if key in expconf['datasets'][dsname] else expconf['datasets']['global'][key]
-    keys = ['modelpath']
+    keys = ['modelpath', 'classbalance']
     for key in keys:
         conf[key] = expconf['models'][modelname][key] if key in expconf['models'][modelname] else expconf['models']['global'][key]
+    conf['experiment'] = experiment
+    conf['dsname'] = dsname
 
-    # load data
-    procpath = conf['procpath']
     modelpath = conf['modelpath']
     classratio = conf['classbalance']
+    modeltype = modelname.split('_')[0]
+    conf['gsoutput'] = os.path.join(conf['gsoutput'], experiment, dsname)
+    conf['procpath'] = os.path.join(conf['procpath'], experiment, dsname)
 
-    ypath_tr = os.path.join(procpath, experiment, dsname, 'labels_train.gz')
-    if modelname == 'lstm':
-        Xpath_tr = os.path.join(procpath, experiment, dsname, 'features_seq_train.gz')
-    else:
-        Xpath_tr = os.path.join(procpath, experiment, dsname, 'features_agg_train.gz')
-
-    y = joblib.load(ypath_tr)
-
-    logger.info('Loading features from [{}] and targets from [{}]'.format(Xpath_tr, ypath_tr))
-    X = joblib.load(Xpath_tr)
+    # load data
+    X, y = load_data(modeltype, conf)
 
     modeldir = os.path.join(modelpath, experiment, dsname, modelname)
     if not os.path.exists(modeldir):
         os.makedirs(modeldir)
-
     try:
         # cross validate model params, using 5x2 CV
-        inner_cv = StratifiedKFold(n_splits=2, shuffle=True, random_state=42)
-        outer_cv = StratifiedKFold(n_splits=5 if not debug else 2, shuffle=True, random_state=42)
+        inner_cv = KFold(n_splits=2, shuffle=True, random_state=42)
+        outer_cv = StratifiedKFold(n_splits=2, shuffle=True, random_state=42)
 
-        if modelname == 'lstm':
+        if modeltype == 'lstm':
             model = KerasClassifier(build_fn=custom_model, data_shape=(X.shape[1], X.shape[2]))
-            params = models[modelname]['params']
-            clf = RandomizedSearchCV(estimator=model, param_distributions=params, n_iter=7 if not debug else 1, cv=inner_cv, fit_params={'batch_size': 512, 'epochs': 70 if not debug else 30}, verbose=3, n_jobs=1, random_state=42)
+            params = models[modeltype]['params']
+            clf = RandomizedSearchCV(estimator=model, param_distributions=params, n_iter=5 if not debug else 1, cv=inner_cv, fit_params={'batch_size': 512, 'epochs': 70 if not debug else 30}, verbose=3, n_jobs=1, random_state=42)
         else:
-            model = models[modelname]['obj']
-            params = models[modelname]['params']
+            model = models[modeltype]['obj']
+            params = models[modeltype]['params']
             clf = GridSearchCV(estimator=model, param_grid=params, cv=inner_cv, verbose=3)
 
         # Nested CV with parameter optimization
@@ -211,10 +250,6 @@ def main(exppath, experiment, dsname, modelname, debug):
 
     except Exception as e:
         logger.exception(e)
-        ans = yes_or_no('Delete folder at {}?'.format(modeldir))
-        if ans:
-            import shutil
-            shutil.rmtree(modeldir)
         raise e
 
 

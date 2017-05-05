@@ -19,14 +19,13 @@ logger = logging.getLogger('churnr.plot')
 
 def plot_confusion_matrix(confusions, labels):
     """ Plot a confusion matrix with the result of the classifier """
-
-    fig = 0
+    fig = 1
     numcms = len(confusions)
     for cnf, title in zip(confusions, labels):
         cnf = cnf.astype('float') / cnf.sum(axis=1)[:, np.newaxis]
-        ax = plt.subplot(np.ceil(numcms/3), min(numcms, 3), fig+1)
+        ax = plt.subplot(np.ceil(numcms/3)+1, min(numcms, 3), fig)
         ax.set_title(title)
-        plt.imshow(cnf, interpolation='nearest', cmap=plt.cm.Blues)
+        ax.imshow(cnf, interpolation='nearest', cmap=plt.cm.Blues)
         thresh = cnf.max() / 2.0
         for i, j in itertools.product(range(cnf.shape[0]), range(cnf.shape[1])):
             ax.text(j, i, '{:.2f}'.format(cnf[i, j]), horizontalalignment="center", color="white" if cnf[i, j] > thresh else "black")
@@ -147,7 +146,7 @@ def main(exppath, experiment, plotname):
 
     if plotname == 'line':
         plt.xlim([0.0, float(len(labels)+1)])
-        plt.ylim([0.5, 1.0])
+        #plt.ylim([0.5, 1.0])
 
         x = list(range(1,len(labels)+1))
         plt.xticks(x, labels, rotation=xrotation)
@@ -155,9 +154,9 @@ def main(exppath, experiment, plotname):
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
 
-        plt.plot(x, aucs, label='ROC AUC')
+        #plt.plot(x, aucs, label='ROC AUC')
         plt.plot(x, pr_aucs, label='PR AUC')
-        plt.plot(x, f1s, label='F1 score')
+        #plt.plot(x, f1s, label='F1 score')
         plt.legend(loc="lower left")
 
     if plotname == 'roc':

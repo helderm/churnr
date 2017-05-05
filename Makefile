@@ -4,10 +4,13 @@
 # GLOBALS                                                                       #
 #################################################################################
 
-BUCKET = [OPTIONAL] your-bucket-for-syncing-data (do not include 's3://')
+BUCKET= helder/churnr 
 PROJECT_NAME = churnr
-PYTHON_INTERPRETER = python3
+PYTHON_INTERPRETER = python
 IS_ANACONDA=$(shell python -c "import sys;t=str('anaconda' in sys.version.lower() or 'continuum' in sys.version.lower());sys.stdout.write(t)")
+#VERSION=$(shell grep "__version__" churnr/__init__.py | sed 's/[^0-9.]*\([0-9.]*\).*/\1/') 
+VERSION=0.6.0
+NOW=`date +"%Y%m%d_%H%M%S"`
 
 #################################################################################
 # COMMANDS                                                                      #
@@ -25,17 +28,25 @@ data: requirements
 clean:
 	find . -name "*.pyc" -exec rm {} \;
 
+## Create a Python package
+package:
+	$(PYTHON_INTERPRETER) setup.py sdist
+
 ## Lint using flake8
 lint:
 	flake8 --exclude=lib/,bin/,docs/conf.py .
 
-## Upload Data to S3
-sync_data_to_s3:
-	aws s3 sync data/ s3://$(BUCKET)/data/
+## Upload Data to GCS
+upload:
+	gsutil -m cp -r churnr/experiments.json gs://helder/churnr/
 
-## Download Data from S3
-sync_data_from_s3:
-	aws s3 sync s3://$(BUCKET)/data/ data/
+## Download Data from GCS
+download:
+	gsutil -m cp -r gs://helder/churnr/data/* data/proce
+
+## Submit a training job to CloudML
+submit: package
+	gcloud ml-engine jobs submit training job_ts_$(NOW) --config config.yaml --job-dir gs://helder/churnr/ --runtime-version 1.0 --module-name churnr.submitter --region us-east1 --packages dist/churnr-$(VERSION).tar.gz --project user-lifecycle -- --experiment temporal_static --stage train --singlestage
 
 ## Set up python interpreter environment
 env:

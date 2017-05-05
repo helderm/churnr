@@ -74,11 +74,6 @@ def main(exppath, experiment, dsname):
     logger.info('Merging tables into a single dataframe...')
     df = pd.merge(featdf, userdf, on='user_id', sort=True)
 
-    # filter out the user_ids not present in this dataset
-    # that may have been added by another dataset with a larger window
-    unknown_users = list(set(df.user_id.unique()) - set(df[df.backfill==False].user_id.unique()))
-    df = df[~df.user_id.isin(unknown_users)]
-
     nobf_df = df[df.backfill == False]
 
     # normalize

@@ -1,0 +1,6 @@
+trainingInput:
+  scaleTier: CUSTOM
+  masterType: "complex_model_m_gpu"
+  pythonModule: "churnr.submitter"
+  runtimeVersion: "1.0"
+  jobDir: "gs://helder/churnr"

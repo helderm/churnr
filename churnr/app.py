@@ -13,7 +13,7 @@ from churnr import extract, process, train, plot
 logger = logging.getLogger('churnr.experiment')
 
 
-def run(exppath, experiment, stage, singlestage, debug):
+def run(exppath, experiment, stage, singlestage, debug, hddump):
     logger.info('Initializing experiment...')
 
     with open(exppath) as fi:
@@ -26,15 +26,18 @@ def run(exppath, experiment, stage, singlestage, debug):
 
     # extract stage
     if stage in ['extract']:
-        # sort the datasets by size of observation window, and sample users only on the largest one
-
-        datasets_sorted = sorted(datasets.items(), key=lambda x: x[1].get('obsdays', 0), reverse=True)
+        # sort the datasets by size of observation or prediction window, and sample users only on
+        # the largest one as to have the same set of user ids of across all datasets
+        if 'preddays' not in datasets['global']:
+            datasets_sorted = sorted(datasets.items(), key=lambda x: x[1].get('preddays', 0), reverse=True)
+        else:
+            datasets_sorted = sorted(datasets.items(), key=lambda x: x[1].get('obsdays', 0), reverse=True)
         sampleusers = True
         for dsname, _ in datasets_sorted:
             if dsname == 'global':
                 continue
 
-            extract.main(exppath=expabspath, experiment=experiment, dsname=dsname, hddump=False, sampleusers=sampleusers)
+            extract.main(exppath=expabspath, experiment=experiment, dsname=dsname, hddump=hddump, sampleusers=sampleusers)
             sampleusers = False
 
     # process stage
@@ -74,11 +77,12 @@ def main():
     parser.add_argument('--experiment', default='temporal_static', help='Name of the experiment being performed')
     parser.add_argument('--stage', default='extract', help='Stage that the experiment will start from', choices=['extract', 'process', 'train', 'plot'])
     parser.add_argument('--singlestage', default=False, help='Stage that the experiment will start from', action='store_true')
+    parser.add_argument('--hddump', default=False, help='Store files in local disk', action='store_true')
     parser.add_argument('--debug', default=False, help='Debug flag that sped up some stages', action='store_true')
 
     args = parser.parse_args()
 
-    run(exppath=args.exppath, experiment=args.experiment, stage=args.stage, singlestage=args.singlestage, debug=args.debug)
+    run(exppath=args.exppath, experiment=args.experiment, stage=args.stage, singlestage=args.singlestage, debug=args.debug, hddump=args.hddump)
 
 if __name__ == '__main__':
     main()

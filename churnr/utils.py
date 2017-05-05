@@ -2,7 +2,6 @@
 import os
 import shutil
 import logging
-import datetime as dt
 import google.cloud.storage as gcs
 
 
@@ -44,29 +43,33 @@ def extract_dataset_to_disk(datapath, tablenames, project, gsoutput):
             logger.info('{} out of {} files imported...'.format(cntr, len(tablenames)))
         cntr += 1
 
+        # try unsharded file first
         blob = gcs.Blob(name=os.path.join(filepath, filename), bucket=bucket)
+        if blob.exists():
+            local_file = os.path.join(datapath, filename)
+            with open(local_file, 'wb') as f:
+                blob.download_to_file(f)
+            continue
 
-        local_file = os.path.join(datapath, filename)
-        with open(local_file, 'wb') as f:
-            blob.download_to_file(f)
+        # sharded file
+        filename_shard = filename + '{0:012d}'.format(0)
+        blob = gcs.Blob(name=os.path.join(filepath, filename_shard), bucket=bucket)
+        if blob.exists():
+            count = 0
+            while blob.exists():
+                local_file = os.path.join(datapath, filename_shard)
+                logger.info('Downloading blob {} to local file {}'.format(blob.path, local_file))
+
+                with open(local_file, 'wb') as f:
+                    blob.download_to_file(f)
+                count += 1
+                filename_shard = filename + '{0:012d}'.format(count)
+                blob = gcs.Blob(name=os.path.join(filepath, filename_shard), bucket=bucket)
+        else:
+            raise Exception('Blob {} not found in GCS!'.format(os.path.join(filepath, filename)))
 
 
 def get_table_names(conf):
-
-    currdate = dt.datetime.strptime(conf['enddate']+'000000', '%Y%m%d%H%M%S') - dt.timedelta(days=conf['obsdays'] + conf['preddays'] - 1)
-
-    tablenames = []
-    ft_table_name = 'features_{}_{}_'.format(conf['experiment'], conf['dsname'])
-    for i in range(conf['obsdays']):
-        datestr = currdate.strftime('%Y%m%d')
-
-        for j in range(conf['timesplits']):
-            ft_table = ft_table_name + '{split}_{currdate}'.format(currdate=datestr, split=j)
-            tablenames.append(ft_table)
-
-        currdate = currdate + dt.timedelta(days=1)
-
-    tablenames.append('users_{}_{}'.format(conf['experiment'], conf['dsname']))
-
-    return tablenames
-
+    features_table = 'features_{}_{}'.format(conf['experiment'], conf['dsname'])
+    users_table = 'users_{}_{}'.format(conf['experiment'], conf['dsname'])
+    return [features_table, users_table]
