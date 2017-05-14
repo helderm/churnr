@@ -7,6 +7,7 @@ import argparse
 from google.cloud import bigquery as bq
 import google.cloud.storage as gcs
 import datetime as dt
+import time
 import math
 import json
 import shutil
@@ -17,6 +18,9 @@ SECS_IN_DAY = 86399
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('churnr.extract')
+
+FEATURES = ['skip_ratio', 'secs_played']
+FEATURES_ITS = ['iat', 'sum_secs_played'] # intertimestep features
 
 
 def main(exppath, experiment, dsname, hddump, sampleusers):
@@ -66,32 +70,40 @@ def main(exppath, experiment, dsname, hddump, sampleusers):
         else:
             user_table_tmp = ds.table(name='users_{}_sampled'.format(conf['experiment']))
 
+        # filter features from raw sources
+        features_table_raw, jobs = join_feature_tables(user_table_tmp, ds, client, conf)
+        wait_for_jobs(jobs)
+
+        # calculate all inter timesteps features
+        features_table_raw, jobs = fetch_intertimestep_features(features_table_raw, ds, client, conf)
+        wait_for_jobs(jobs)
+
         # build feature set
-        ft_tables, jobs = fetch_features(user_table_tmp, ds, client, conf)
+        features_table, jobs, timesplits = fetch_features(features_table_raw, ds, client, conf)
         wait_for_jobs(jobs)
 
         # calculate the churn label for each user and each timestep
-        user_table, jobs = calculate_churn(user_table_tmp, ds, client, conf)
+        user_table, jobs = calculate_churn(user_table_tmp, features_table, ds, client, conf)
+        wait_for_jobs(jobs)
+
+        # filter out features values in the prediction window
+        features_table, jobs = filter_features_table(features_table, max(timesplits), ds, client, conf)
         wait_for_jobs(jobs)
 
         # backfill missing users on feature tables
-        jobs = backfill_missing_users(user_table, ds, client, conf)
+        jobs = backfill_missing_users(user_table, features_table, timesplits, ds, client, conf)
         wait_for_jobs(jobs)
 
-        # join the feature tables into a single one
-        tables = ft_tables[-(conf['obsdays']*conf['timesplits']):]
-        features_table, jobs = join_feature_tables(tables, ds, client, conf)
-        wait_for_jobs(jobs)
-        for ft in ft_tables:
-            ft.delete()
+        # normalize feature values
+        #features_table, jobs = normalize_features(features_table, ds, client, conf)
+        #wait_for_jobs(jobs)
 
         # serialize features
-        tables = [features_table, user_table]
-        jobs = dump_features_to_gcs(tables, gspath, conf['project'], client)
-        wait_for_jobs(jobs)
-
-        # dump to disk
         if hddump:
+            tables = [features_table, user_table]
+            jobs = dump_features_to_gcs(tables, gspath, conf['project'], client)
+            wait_for_jobs(jobs)
+
             tablenames = [t.name for t in tables]
             utils.extract_dataset_to_disk(datapath, tablenames, conf['project'], gspath)
 
@@ -107,8 +119,6 @@ def main(exppath, experiment, dsname, hddump, sampleusers):
             shutil.rmtree(datapath)
         raise e
 
-    logger.info('Finished! Data dumped to {}'.format(datapath))
-
 
 def fetch_user_samples(ds, client, conf):
     """ Fetch a random sample of users based on a user_id hash """
@@ -120,7 +130,8 @@ def fetch_user_samples(ds, client, conf):
 
     totaldays = conf['actdays'] + conf['preddays']
 
-    currdate = dt.datetime.strptime(conf['enddate']+'000000 -0500', '%Y%m%d%H%M%S %z') - dt.timedelta(days=totaldays - 1)
+    # CST timezone
+    currdate = dt.datetime.strptime(conf['enddate']+'060000', '%Y%m%d%H%M%S') - dt.timedelta(days=totaldays - 1)
 
     user_table = ds.table(name='users_{}_sampled'.format(conf['experiment']))
     if user_table.exists():
@@ -129,19 +140,21 @@ def fetch_user_samples(ds, client, conf):
     query = ''
     for k in range(conf['actdays']):
         datestr = currdate.strftime('%Y%m%d')
-        currdate_end = currdate + dt.timedelta(seconds=SECS_IN_DAY)
+        currdate_ts = get_utctimestamp(currdate)
+        currdate_end_ts = (currdate_ts + SECS_IN_DAY)
 
         query += """\
-            SELECT uss{k}.user_id
-            FROM `activation-insights.sessions.features_{date}` as uss{k}
+            SELECT DISTINCT(uss{k}.user_id)
+            FROM `royalty-reporting.reporting_end_content.reporting_end_content_{date}` as uss{k}
                 JOIN `business-critical-data.user_snapshot.user_snapshot_{date}` as usn{k}
                 ON uss{k}.user_id=usn{k}.user_id
-                WHERE uss{k}.consumption_time > 0 AND uss{k}.platform IN ("android","android-tablet")
+                WHERE uss{k}.ms_played > 30000 AND uss{k}.platform IN ("android","android-tablet")
                     AND MOD(ABS(FARM_FINGERPRINT(uss{k}.user_id)), {share}) = 0 AND usn{k}.reporting_country IN ("BR", "US", "MX")
                     AND DATE_DIFF(PARSE_DATE("%E4Y%m%d", "{date}"), PARSE_DATE("%E4Y-%m-%d", usn{k}.registration_date), DAY) > {obswindow}
-                    AND UNIX_MILLIS(uss{k}.start_time) >= {startslot} AND UNIX_MILLIS(uss{k}.start_time) < {endslot}
-                UNION DISTINCT (""".format(date=datestr, share=int(1 / conf['shareusers']), startslot=int(currdate.timestamp()*1000),
-                    endslot=int(currdate_end.timestamp()*1000), k=k, obswindow=conf['obsdays'])
+                    AND UNIX_SECONDS(PARSE_TIMESTAMP('%Y-%m-%d %H:%M:%E*S', uss{k}.time)) >= {startslot}
+                    AND UNIX_SECONDS(PARSE_TIMESTAMP('%Y-%m-%d %H:%M:%E*S', uss{k}.time)) < {endslot}
+                UNION DISTINCT (""".format(date=datestr, share=int(1 / conf['shareusers']), startslot=currdate_ts,
+                    endslot=currdate_end_ts, k=k, obswindow=conf['obsdays'])
 
         currdate = currdate + dt.timedelta(days=1)
     query = query[:-17]
@@ -164,11 +177,11 @@ def add_user_info(user_table, ds, client, conf):
     logger.info('Getting more info about sampled users...')
 
     totaldays = conf['actdays'] + conf['preddays']
-    currdate = dt.datetime.strptime(conf['enddate']+'000000 -0500', '%Y%m%d%H%M%S %z') - dt.timedelta(days=totaldays - 1)
+    currdate = dt.datetime.strptime(conf['enddate']+'060000', '%Y%m%d%H%M%S') - dt.timedelta(days=totaldays - 1)
     datestr = currdate.strftime('%Y%m%d')
 
     query = """\
-        SELECT uss.user_id as user_id, DATE_DIFF(PARSE_DATE("%E4Y%m%d", "{date}"), PARSE_DATE("%E4Y-%m-%d", usn.registration_date), DAY) as day_since_registration,
+        SELECT uss.user_id as user_id, DATE_DIFF(PARSE_DATE("%E4Y%m%d", "{date}"), PARSE_DATE("%E4Y-%m-%d", usn.registration_date), DAY) as days_since_registration,
             usn.product as product, usn.reporting_country as reporting_country
         FROM `{project}.{dataset}.{table}` as uss
             JOIN `business-critical-data.user_snapshot.user_snapshot_{date}` as usn
@@ -186,22 +199,24 @@ def add_user_info(user_table, ds, client, conf):
     return user_table, [job]
 
 
-
-def fetch_features(user_table, ds, client, conf):
-    """ Fetch the features for each user session, splitting into timesplits """
-
-    jobs = []
-    currdate = dt.datetime.strptime(conf['enddate']+'000000 -0500', '%Y%m%d%H%M%S %z')
+def fetch_features(ftable_raw, ds, client, conf):
+    """ Fetch the features for each user session, splsum_secs_playeding into timesplits """
 
     totaldays = conf['obsdays'] + conf['preddays']
     timesplits = conf['timesplits']
 
-    ft_tables = []
-    ft_table_name = 'features_{}_{}_'.format(conf['experiment'], conf['dsname'])
+    currdate = dt.datetime.strptime(conf['enddate']+'060000', '%Y%m%d%H%M%S')
+
+    jobs = []
+    tsl = []
+    features_table = ds.table(name='features_{}_{}_{}'.format(conf['experiment'], conf['dsname'], conf['enddate']))
+    if features_table.exists():
+        features_table.delete()
+
     for i in range(totaldays):
 
         # calculate the time splits
-        currtimeslot_start = currdate.timestamp()
+        currtimeslot_start = get_utctimestamp(currdate)
         datestr = currdate.strftime('%Y%m%d')
 
         logger.info('Fetching features for day {}'.format(datestr))
@@ -212,134 +227,171 @@ def fetch_features(user_table, ds, client, conf):
                 currtimeslot_end = currtimeslot_start + math.ceil(SECS_IN_DAY / timesplits) + 0.999
             else:
                 # get the remaining secs lost due to rounding on the last slot. Will it be biased?
-                currtimeslot_end = currdate.timestamp() + SECS_IN_DAY + 0.999
-
-            # dump the features table
-            ft_table = ds.table(name=ft_table_name+'{split}_{currdate}'.format(currdate=datestr, split=j))
-            if ft_table.exists():
-                ft_table.delete()
+                currtimeslot_end = get_utctimestamp(currdate) + SECS_IN_DAY + 0.999
 
             # query user features
+            select_inner = ''
+            select = ''
+            for f in FEATURES + FEATURES_ITS:
+                if f == 'skip_ratio':
+                    select += 'SUM(CAST(skipped as INT64)) / COUNT(skipped) AS skip_ratio,'
+                    select_inner += 'skipped,'.format(feat=f)
+                elif f == 'sum_secs_played':
+                    select += 'MAX({feat}) as {feat},'.format(feat=f)
+                    select_inner += '{feat},'.format(feat=f)
+                else:
+                    select += 'avg({feat}) as {feat}, ifnull(stddev({feat}),0) as {feat}_std,'.format(feat=f)
+                    select_inner += '{feat},'.format(feat=f)
+
             query = """\
-                SELECT user_id, {timesplit} as time, avg(consumption_time) as consumption_time, ifnull(stddev(consumption_time),0) as consumption_time_std, avg(session_length) as session_length, ifnull(stddev(session_length),0) as session_length_std,\
-                         avg(skip_ratio) as skip_ratio, ifnull(stddev(skip_ratio),0) as skip_ratio_std, avg(unique_pages) as unique_pages, ifnull(stddev(unique_pages),0) as unique_pages_std, false as backfill FROM\
-                        (SELECT user_id, consumption_time/1000 as consumption_time, session_length, skip_ratio, unique_pages\
-                            FROM [activation-insights:sessions.features_{date}]\
-                            WHERE user_id IN (SELECT user_id FROM [{project}:{dataset}.{table}])\
-                                AND TIMESTAMP_TO_MSEC(TIMESTAMP(start_time)) >= {startslot} AND TIMESTAMP_TO_MSEC(TIMESTAMP(start_time)) < {endslot}
-                                AND session_length > 0.0)
+                WITH
+                  user_raw_features AS (
+                  SELECT
+                    {select_inner}
+                    user_id
+                  FROM
+                    `{project}.{dataset}.{table}`
+                  WHERE
+                    timestampp >= {startslot} AND
+                    timestampp < {endslot})
+
+                SELECT user_id, CAST({timesplit} AS INT64) as time, {select} false as backfill \
+                FROM user_raw_features
                 GROUP BY user_id\
-            """.format(date=datestr, project=conf['project'], dataset=ds.name, table=user_table.name,
-                    startslot=int(currtimeslot_start*1000), endslot=int(currtimeslot_end*1000),
-                    timesplit=currtimeslot_start)
+            """.format(project=conf['project'], dataset=ds.name, table=ftable_raw.name,
+                    startslot=int(currtimeslot_start), endslot=int(currtimeslot_end), select=select,
+                    timesplit=currtimeslot_start, select_inner=select_inner)
 
             jobname = 'features_job_' + str(uuid.uuid4())
             job = client.run_async_query(jobname, query)
-            job.destination = ft_table
+            job.destination = features_table
             job.allow_large_results = True
+            job.use_legacy_sql = False
             job.write_disposition = 'WRITE_APPEND'
             job.begin()
 
             jobs.append(job)
-            ft_tables.append(ft_table)
+            tsl.append(currtimeslot_start)
 
-            currtimeslot_start += math.ceil(SECS_IN_DAY / timesplits)
+            currtimeslot_start += int(math.ceil(SECS_IN_DAY / timesplits))
 
-        if (i+1) % 15 == 0:
+        if (i+1) % 5 == 0:
             wait_for_jobs(jobs)
             jobs = []
 
         currdate = currdate - dt.timedelta(days=1)
 
-    return ft_tables, jobs
+    tsl = sorted(tsl)[:-(conf['preddays']*conf['timesplits'])]
+    return features_table, jobs, tsl
 
 
-def backfill_missing_users(user_table, ds, client, conf):
-    """ add the remaining missing users to the feature tables who did in fact churn """
+def filter_features_table(features_table, max_timesplit, ds, client, conf):
+    """ filter out feature values in the prediction window """
+
+    logger.info('Filtering out features in the prediction window...')
+
+    query = """
+        SELECT * FROM `{project}.{dataset}.{table}`
+        WHERE time <= {timesplit}
+    """.format(project=conf['project'], dataset=ds.name, table=features_table.name, timesplit=max_timesplit)
+
+    jobname = 'filter_features_job_' + str(uuid.uuid4())
+    job = client.run_async_query(jobname, query)
+    job.destination = features_table
+    job.allow_large_results = True
+    job.use_legacy_sql = False
+    job.write_disposition = 'WRITE_TRUNCATE'
+    job.begin()
+
+    return features_table, [job]
+
+
+def backfill_missing_users(users_table, features_table, timesplits, ds, client, conf):
+    """ add the remaining missing users to the feature tables """
 
     jobs = []
-    enddate = conf['enddate']
-    obsdays = conf['obsdays']
-    preddays = conf['preddays']
-    timesplits = conf['timesplits']
     project = conf['project']
 
-    currdate = dt.datetime.strptime(enddate+'000000 -0500', '%Y%m%d%H%M%S %z') - dt.timedelta(days=obsdays + preddays - 1)
+    select_query = ''
+    for f in FEATURES + FEATURES_ITS:
+        if f == 'skip_ratio':
+            select_query += '0.0 as {feat},'.format(feat=f)
+        elif f == 'sum_secs_played':
+            select_query += 'ifnull(MAX(countt*max_prev_sum_secs_played),0) as sum_secs_played,'.format(feat=f)
+        else:
+            select_query += '0.0 as {feat}, 0.0 as {feat}_std,'.format(feat=f)
 
-    ft_table_name = 'features_{}_{}_'.format(conf['experiment'], conf['dsname'])
-    for i in range(obsdays):
+    logger.info('Backfilling features...')
+    for i, ts in enumerate(timesplits):
+        query = """
+	    SELECT
+              {select}
+	      user_id,
+              CAST({timesplit} as INT64) as time,
+              TRUE as backfill
+	    FROM
+              (SELECT us.user_id,
+                COUNTIF(ft.time <= {timesplit}) OVER (PARTITION BY ft.user_id ORDER BY ft.time ROWS BETWEEN 1 PRECEDING AND 1 PRECEDING) as countt,
+                MAX(ft.sum_secs_played) OVER (PARTITION BY ft.user_id ORDER BY ft.time ROWS BETWEEN 1 PRECEDING and 1 PRECEDING) as max_prev_sum_secs_played
+               FROM `{project}.{dataset}.{utable}` us JOIN
+                 `{project}.{dataset}.{ftable}` ft ON us.user_id=ft.user_id
+	       WHERE
+		us.user_id NOT IN (
+		  SELECT
+		    user_id
+		  FROM
+		    `{project}.{dataset}.{ftable}`
+		  WHERE
+		    time = {timesplit} ) )
+	    GROUP BY
+	      user_id
+        """.format(project=project, dataset=ds.name, ftable=features_table.name, timesplit=ts, ds=conf['dsname'], utable=users_table.name, select=select_query)
 
-        # calculate the time splits
-        datestr = currdate.strftime('%Y%m%d')
-        currtimeslot_start = currdate.timestamp()
+        jobname = 'backfill_missing_features_job_' + str(uuid.uuid4())
+        job = client.run_async_query(jobname, query)
+        job.destination = features_table
+        job.allow_large_results = True
+        job.use_legacy_sql = False
+        job.write_disposition = 'WRITE_APPEND'
+        job.begin()
 
-        logger.info('Backfilling features for day {}'.format(datestr))
-
-        for j in range(timesplits):
-
-            ft_table = ds.table(name=ft_table_name+'{split}_{currdate}'.format(currdate=datestr, split=j))
-
-            # append missing values to feature table
-            query = """\
-                SELECT user_id, {timesplit} as time, 0.0 as consumption_time, 0.0 as consumption_time_std, 0.0 as session_length, 0.0 as session_length_std,\
-                            0.0 as skip_ratio, 0.0 as skip_ratio_std, 0.0 as unique_pages, 0.0 as unique_pages_std, true as backfill\
-                            FROM [{project}:{dataset}.{utable}]\
-                            WHERE user_id NOT IN (SELECT user_id FROM [{project}:{dataset}.{ftable}])\
-            """.format(project=project, dataset=ds.name, ftable=ft_table.name, timesplit=currtimeslot_start, ds=conf['dsname'], utable=user_table.name)
-
-            jobname = 'backfill_missing_features_job_' + str(uuid.uuid4())
-            job = client.run_async_query(jobname, query)
-            job.destination = ft_table
-            job.allow_large_results = True
-            job.write_disposition = 'WRITE_APPEND'
-            job.begin()
-
-            jobs.append(job)
-
-            currtimeslot_start += math.ceil(SECS_IN_DAY / timesplits)
+        jobs.append(job)
 
         if (i+1) % 15 == 0:
             wait_for_jobs(jobs)
             jobs = []
 
-        currdate = currdate + dt.timedelta(days=1)
-
     return jobs
 
 
-def calculate_churn(user_table_tmp, ds, client, conf):
+def calculate_churn(users_sampled, features_table, ds, client, conf):
     """ Calculate the users that will churn by checking the churn window """
     logger.info('Calculating churning and non-churning labels...')
 
     jobs = []
 
+    project = conf['project']
     preddays = conf['preddays']
     enddate = conf['enddate']
-    timesplits = conf['timesplits']
-    churnstart = dt.datetime.strptime(enddate+'000000 -0500', '%Y%m%d%H%M%S %z') - dt.timedelta(days=preddays - 1)
+    predstart = dt.datetime.strptime(enddate+'060000', '%Y%m%d%H%M%S') - dt.timedelta(days=preddays - 1)
 
-    user_table = ds.table(name='users_{}_{}'.format(conf['experiment'], conf['dsname']))
+    user_table = ds.table(name='users_{}_{}_{}'.format(conf['experiment'], conf['dsname'], conf['enddate']))
     if user_table.exists():
         user_table.delete()
 
     # build the query part that will join all users who had streams in the churn window
-    union_query = ''
-    for k in range(preddays):
-        datestr_2 = (churnstart + dt.timedelta(days=k)).strftime('%Y%m%d')
+    in_query = """
+        (   SELECT user_id from `{project}.{dataset}.{table}`
+            WHERE time >= {predstart}
+                AND secs_played > 0 )
+    """.format(project=project, dataset=ds.name, table=features_table.name, predstart=get_utctimestamp(predstart))
 
-        for l in range(timesplits):
-            union_query += """select user_id from `{project}.{dataset}.features_{exp}_{ds}_{split}_{currdate}`
-                        where consumption_time > 0.0 union distinct """.format(exp=conf['experiment'], split=l,
-                                currdate=datestr_2, project=conf['project'], dataset=ds.name, ds=conf['dsname'])
-
-    union_query = union_query[:-16]
-
-    # append sessions from users that did not stream in this timesplit but who are also not churners
+    # retained query
     query = """\
-        select user_id, 0 as churn
+        select *, 0 as churn
             from `{project}.{dataset}.{table}`
-            where user_id in ({union})
-    """.format(project=conf['project'], dataset=ds.name, table=user_table_tmp.name, union=union_query)
+            where user_id in {in_query}
+    """.format(in_query=in_query, project=conf['project'], dataset=ds.name, table=users_sampled.name)
 
     jobname = 'retained_features_job_' + str(uuid.uuid4())
     job = client.run_async_query(jobname, query)
@@ -350,12 +402,12 @@ def calculate_churn(user_table_tmp, ds, client, conf):
     job.begin()
     jobs.append(job)
 
-    # append sessions from users that did not stream in this timesplit but who are also not churners
+    # churners query
     query = """\
-        select user_id, 1 as churn
+        select *, 1 as churn
             from `{project}.{dataset}.{table}`
-            where user_id not in ({union})
-    """.format(project=conf['project'], dataset=ds.name, table=user_table_tmp.name, union=union_query)
+            where user_id not in {in_query}
+    """.format(in_query=in_query, project=conf['project'], dataset=ds.name, table=users_sampled.name)
 
     jobname = 'churned_features_job_' + str(uuid.uuid4())
     job = client.run_async_query(jobname, query)
@@ -369,36 +421,159 @@ def calculate_churn(user_table_tmp, ds, client, conf):
     return user_table, jobs
 
 
-def join_feature_tables(ft_tables, ds, client, conf):
+def join_feature_tables(users_table, ds, client, conf):
     """ Join all feature tables into a single one for later csv exporting """
 
-    logger.info('Merging {} feature tables into one...'.format(len(ft_tables)))
+    logger.info('Filtering source feature tables...')
 
-    features_table = ds.table(name='features_{}_{}'.format(conf['experiment'], conf['dsname']))
+    features_table = ds.table(name='features_{}_{}_r_{}'.format(conf['experiment'], conf['dsname'], conf['enddate']))
     if features_table.exists():
         features_table.delete()
 
-    query = ''
-    for ft in ft_tables:
-        query += 'SELECT * FROM `{}.{}.{}` UNION ALL '.format(conf['project'], ds.name, ft.name)
+    currdate = dt.datetime.strptime(conf['enddate']+'060000', '%Y%m%d%H%M%S')
+    totaldays = conf['obsdays'] + conf['preddays']
 
-    query = query[:-11]
+    select = ''
+    select_inner = ''
+    for f in FEATURES:
+        if f == 'skip_ratio':
+            select += 'skipped,'
+            select_inner += 'skipped,'
+        elif f == 'secs_played':
+            select += 'secs_played,'
+            select_inner += 'CAST(ms_played/1000 as INT64) as secs_played,'
+        else:
+            select += '{feat},'.format(feat=f)
+            select_inner += '{feat},'.format(feat=f)
 
-    jobname = 'features_union_job_' + str(uuid.uuid4())
+    jobs = []
+    for i in range(totaldays):
+        datestr = currdate.strftime('%Y%m%d')
+
+        query = """\
+            WITH filterq AS (
+              SELECT
+                user_id,
+                {select_inner}
+                UNIX_SECONDS(PARSE_TIMESTAMP('%Y-%m-%d %H:%M:%E*S', time)) AS timestampp,
+                time as timestr
+              FROM
+                `royalty-reporting.reporting_end_content.reporting_end_content_{date}`
+              WHERE
+                user_id IN (SELECT user_id FROM `{project}.{dataset}.{table}`)
+                    AND ms_played > 0.0
+            )
+            SELECT {select} user_id, timestampp, timestr FROM filterq
+
+        """.format(date=datestr, project=conf['project'], dataset=ds.name, table=users_table.name,
+                    select=select, select_inner=select_inner)
+
+        jobname = 'features_filter_job_' + str(uuid.uuid4())
+        job = client.run_async_query(jobname, query)
+        job.destination = features_table
+        job.allow_large_results = True
+        job.write_disposition = 'WRITE_APPEND'
+        job.use_legacy_sql = False
+        job.begin()
+
+        if (i+1) % 15 == 0:
+            wait_for_jobs(jobs)
+            jobs = []
+
+        jobs.append(job)
+        currdate = currdate - dt.timedelta(days=1)
+
+    return features_table, jobs
+
+
+def fetch_intertimestep_features(features_table, ds, client, conf):
+    """ Fetch the inter timesteps feaures """
+
+    logger.info('Calculating temporal features...')
+
+    currdate = dt.datetime.strptime(conf['enddate']+'060000', '%Y%m%d%H%M%S')
+    totaldays = conf['obsdays'] + conf['preddays']
+
+    startdate = currdate - dt.timedelta(days=totaldays, minutes=1)
+    select = ''
+    for f in FEATURES_ITS:
+        if f == 'iat':
+            select += 'timestampp - (LAG(timestampp,1,{startdate}) OVER (PARTITION BY user_id ORDER BY timestampp) ) AS iat,'.format(startdate=get_utctimestamp(startdate))
+        elif f == 'sum_secs_played':
+            select += 'ifnull(SUM(secs_played) OVER(PARTITION BY user_id ORDER BY timestampp ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING),0) as sum_secs_played,'
+        else:
+            raise Exception()
+
+    query = """ \
+        SELECT
+            {select}
+            *
+        FROM
+            `{project}.{dataset}.{table}`
+    """.format(project=conf['project'], dataset=ds.name, table=features_table.name, select=select)
+
+    jobname = 'features_intertimestep_job_' + str(uuid.uuid4())
     job = client.run_async_query(jobname, query)
     job.destination = features_table
     job.allow_large_results = True
-    job.write_disposition = 'WRITE_APPEND'
     job.use_legacy_sql = False
+    job.write_disposition = 'WRITE_TRUNCATE'
     job.begin()
 
     return features_table, [job]
 
 
+def normalize_features(ftable, ds, client, conf):
+    """ Normalize the feature tables with a zero mean and unit variance """
+    select_with = ''
+    select = ''
+    select_union = ''
+    for f in FEATURES + FEATURES_ITS:
+        select_with += 'AVG({feat}) AS {feat}_avg, STDDEV_POP({feat}) AS {feat}_stddev,'.format(feat=f)
+        select += '( ({feat} - (SELECT {feat}_avg FROM avgs_stdvs)) / (SELECT {feat}_stddev FROM avgs_stdvs) ) AS {feat},'.format(feat=f)
+        select_union += '{feat},'.format(feat=f if f != 'sum_secs_played' else '( ({feat} - (SELECT {feat}_avg FROM avgs_stdvs)) / (SELECT {feat}_stddev FROM avgs_stdvs) ) AS {feat}'.format(feat=f))
+
+    nftable = ds.table(name='features_{}_{}_n'.format(conf['experiment'], conf['dsname']))
+    query = """\
+     WITH
+       avgs_stdvs AS (
+       SELECT {select_with} 0
+       FROM
+         `{project}.{dataset}.{table}`
+       WHERE
+         backfill = FALSE )
+     SELECT
+       {select}
+       user_id,
+       time
+     FROM
+       `{project}.{dataset}.{table}`
+     WHERE
+         backfill = FALSE
+     UNION ALL
+     SELECT
+         {select_union}
+        user_id,
+        time
+     FROM
+       `{project}.{dataset}.{table}`
+     WHERE
+         backfill = TRUE
+    """.format(select_with=select_with, select=select, select_union=select_union, table=ftable.name, project=conf['project'], dataset=ds.name)
+
+    jobname = 'features_norm_job_' + str(uuid.uuid4())
+    job = client.run_async_query(jobname, query)
+    job.destination = nftable
+    job.allow_large_results = True
+    job.write_disposition = 'WRITE_TRUNCATE'
+    job.use_legacy_sql = False
+    job.begin()
+
+    return nftable, [job]
+
+
 def dump_features_to_gcs(ft_tables, dest, project, client):
     """ Dump generated tables as files on Google Cloud Storage"""
-
-
     gs_client = gcs.Client(project)
     split_uri = dest.split('/')
     filepath = '/'.join(split_uri[3:])
@@ -435,7 +610,6 @@ def wait_for_jobs(jobs):
     """ wait for async GCP jobs to finish """
     logger.info("Waiting for {} jobs to finish...".format(len(jobs)))
 
-    import time
     cntr = 0
     for job in jobs:
         if cntr % 10 == 0:
@@ -445,7 +619,7 @@ def wait_for_jobs(jobs):
         numtries = 9000
         job.reload()
         while job.state != 'DONE':
-            time.sleep(30)
+            time.sleep(10)
             job.reload()
             numtries -= 1
 
@@ -456,6 +630,12 @@ def wait_for_jobs(jobs):
         if job.errors:
             logger.error('Job {} failed! Aborting!'.format(job.name))
             raise Exception('Async job failed')
+
+
+def get_utctimestamp(dtobj):
+    from calendar import timegm
+    iso_string = dtobj.strftime('%Y%m%d%H%M%S') + 'Z'
+    return timegm(time.strptime(iso_string.replace('Z', 'GMT'), '%Y%m%d%H%M%S%Z'))
 
 
 if __name__ == '__main__':
