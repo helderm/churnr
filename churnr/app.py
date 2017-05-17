@@ -54,6 +54,13 @@ def run(exppath, experiment, stage, singlestage, debug, hddump):
             if dsname == 'global':
                 continue
 
+            # remove any local files stored in another run
+            dspath = os.path.join(datasets['global']['procpath'], experiment, dsname)
+            if os.path.exists(dspath):
+                import shutil
+                shutil.rmtree(dspath)
+            os.makedirs(dspath)
+
             for modelname in models.keys():
                 if modelname == 'global':
                     continue
