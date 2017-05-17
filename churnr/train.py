@@ -5,7 +5,6 @@ import argparse
 import logging
 import json
 import joblib
-import shutil
 
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import AdaBoostClassifier, RandomForestClassifier
@@ -17,9 +16,9 @@ from keras.wrappers.scikit_learn import KerasClassifier
 from keras.utils.np_utils import to_categorical
 import numpy as np
 from scipy.stats import randint as sp_randint
-import google.cloud.storage as gcs
 
 from churnr.lstm_models import custom_model
+from churnr.utils import extract_dataset_to_disk
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('churnr.train')
@@ -137,45 +136,34 @@ def cross_val_predict(estimator, X, y, cv, class_ratio=1.0, method='predict', n_
 
 
 def load_data(modeltype, conf):
-    yfilename = 'labels_train.gz'
-    ypath = os.path.join(conf['procpath'], conf['experiment'], conf['dsname'], yfilename)
-    if modeltype == 'lstm':
-        Xfilename = 'features_seq_train.gz'
-    else:
-        Xfilename = 'features_agg_train.gz'
-    Xpath = os.path.join(conf['procpath'], conf['experiment'], conf['dsname'], 'features_seq_train.gz')
+    tablename = 'features_{}_{}_tr_{}'.format(conf['experiment'], conf['dsname'], conf['enddate'])
 
-    if os.path.exists(Xpath) and os.path.exists(ypath):
-        logger.info('Loading features from [{}] and targets from [{}]'.format(Xpath, ypath))
-        y = joblib.load(ypath)
-        X = joblib.load(Xpath)
-        return X, y
+    local_files = extract_dataset_to_disk(conf['procpath'], [tablename], conf['project'], conf['gsoutput'])
 
-    if os.path.exists(conf['procpath']):
-        shutil.rmtree(conf['procpath'])
-    os.makedirs(conf['procpath'])
+    Xs = []
+    ys = []
 
-    client = gcs.Client(conf['project'])
-    split_uri = conf['gsoutput'].split('/')
-    bucket_name = split_uri[2]
+    # read the json file with user data
+    for local_file in local_files:
+        with open(local_file, 'r') as f:
+            text = '[' + f.read().replace('\n', ',')[:-1] + ']'
+            jdata = json.loads(text)
 
-    filepath = '/'.join(split_uri[3:])
-    bucket = gcs.Bucket(client, bucket_name)
+        for user in jdata:
+            features = [user['secs_played'], user['sum_secs_played'], user['iat'], user['total_streams'], user['skip_ratio']]
+            Xs.append(features)
+            ys.append(int(user['churn']))
 
-    # download and load X
-    blob = gcs.Blob(name=os.path.join(filepath, Xfilename), bucket=bucket)
-    local_file = os.path.join(conf['procpath'], Xfilename)
-    logger.info('Downloading blob {} to local file {}'.format(blob.path, local_file))
-    with open(local_file, 'wb') as f:
-        blob.download_to_file(f)
-    X = joblib.load(local_file)
+        logger.info('Added {} users to queue. Current queue size is {}'.format(len(jdata), len(Xs)))
 
-    blob = gcs.Blob(name=os.path.join(filepath, yfilename), bucket=bucket)
-    local_file = os.path.join(conf['procpath'], yfilename)
-    logger.info('Downloading blob {} to local file {}'.format(blob.path, local_file))
-    with open(local_file, 'wb') as f:
-        blob.download_to_file(f)
-    y = joblib.load(local_file)
+    # load data into a numpy array
+    X = np.swapaxes(np.array(Xs), 1, 2)
+    y = np.array(ys)
+    if modeltype != 'lstm':
+        # for time-invariant models, reshape the time dimension
+        # as if they were independent dimensions (GurAli 2014)
+        y = np.repeat(ys, X.shape[1])
+        X = np.reshape(X, (X.shape[0]*X.shape[1], X.shape[2]))
 
     return X, y
 
@@ -187,7 +175,7 @@ def main(exppath, experiment, dsname, modelname, debug):
     logger.info('Initializing training of {} model...'.format(modelname.upper()))
 
     # load experiment configuration
-    keys = ['procpath', 'project', 'gsoutput']
+    keys = ['procpath', 'project', 'gsoutput', 'enddate']
     conf = {}
     for key in keys:
         conf[key] = expconf['datasets'][dsname][key] if key in expconf['datasets'][dsname] else expconf['datasets']['global'][key]
