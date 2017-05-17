@@ -1,27 +1,24 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import os
 import logging
 import uuid
 import argparse
 from google.cloud import bigquery as bq
-import google.cloud.storage as gcs
 import datetime as dt
 import time
 import math
 import json
-import shutil
 
-import churnr.utils as utils
 
-SECS_IN_DAY = 86399
+SECS_IN_DAY = 86400
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('churnr.extract')
 
 FEATURES = ['skip_ratio', 'secs_played']
-FEATURES_ITS = ['iat', 'sum_secs_played'] # intertimestep features
-
+FEATURES_IAT = ['iat'] # intertimestep features
+FEATURES_SUM = ['sum_secs_played']
+FEATURES_COUNT = ['total_streams']
 
 def main(exppath, experiment, dsname, hddump, sampleusers):
     """ Extract data from several sources on BigQuery using intermediary tables
@@ -41,16 +38,6 @@ def main(exppath, experiment, dsname, hddump, sampleusers):
         conf['enddate'] = (dt.datetime.today() - dt.timedelta(days=1)).strftime('%Y%m%d')
     conf['experiment'] = experiment
     conf['dsname'] = dsname
-
-    gspath = os.path.join(conf['gsoutput'], experiment, dsname)
-    datapath = os.path.join(conf['rawpath'], experiment, dsname)
-    if hddump:
-        if os.path.exists(datapath):
-            ans = utils.yes_or_no('This extraction will overwrite the dataset at {}. Are you sure?'.format(datapath))
-            if not ans:
-                return
-        else:
-            os.makedirs(datapath)
 
     try:
         client = bq.Client(project=conf['project'])
@@ -94,29 +81,10 @@ def main(exppath, experiment, dsname, hddump, sampleusers):
         jobs = backfill_missing_users(user_table, features_table, timesplits, ds, client, conf)
         wait_for_jobs(jobs)
 
-        # normalize feature values
-        #features_table, jobs = normalize_features(features_table, ds, client, conf)
-        #wait_for_jobs(jobs)
-
-        # serialize features
-        if hddump:
-            tables = [features_table, user_table]
-            jobs = dump_features_to_gcs(tables, gspath, conf['project'], client)
-            wait_for_jobs(jobs)
-
-            tablenames = [t.name for t in tables]
-            utils.extract_dataset_to_disk(datapath, tablenames, conf['project'], gspath)
-
-            with open(os.path.join(datapath, 'conf.json'), 'w') as f:
-                json.dump(conf, f)
-
-        logger.info('Data extraction done!')
+        logger.info('Dataset {} extracted successfully!'.format(dsname))
 
     except Exception as e:
         logger.exception(e)
-        logger.info('Removing folder {}...'.format(datapath))
-        if hddump and os.path.exists(datapath):
-            shutil.rmtree(datapath)
         raise e
 
 
@@ -213,6 +181,24 @@ def fetch_features(ftable_raw, ds, client, conf):
     if features_table.exists():
         features_table.delete()
 
+    # query user features
+    select_inner = ''
+    select = ''
+    for f in FEATURES + FEATURES_IAT:
+        if f == 'skip_ratio':
+            select += 'SUM(CAST(skipped as INT64)) / COUNT(skipped) AS skip_ratio,'
+            select_inner += 'skipped,'.format(feat=f)
+        else:
+            select += 'avg({feat}) as {feat}, ifnull(stddev({feat}),0) as {feat}_std,'.format(feat=f)
+            select_inner += '{feat},'.format(feat=f)
+
+    for f in FEATURES_SUM:
+        select += 'MAX({feat}) as {feat},'.format(feat=f)
+        select_inner += '{feat},'.format(feat=f)
+
+    for f in FEATURES_COUNT:
+        select += 'COUNT(user_id) as {feat},'.format(feat=f)
+
     for i in range(totaldays):
 
         # calculate the time splits
@@ -229,19 +215,6 @@ def fetch_features(ftable_raw, ds, client, conf):
                 # get the remaining secs lost due to rounding on the last slot. Will it be biased?
                 currtimeslot_end = get_utctimestamp(currdate) + SECS_IN_DAY + 0.999
 
-            # query user features
-            select_inner = ''
-            select = ''
-            for f in FEATURES + FEATURES_ITS:
-                if f == 'skip_ratio':
-                    select += 'SUM(CAST(skipped as INT64)) / COUNT(skipped) AS skip_ratio,'
-                    select_inner += 'skipped,'.format(feat=f)
-                elif f == 'sum_secs_played':
-                    select += 'MAX({feat}) as {feat},'.format(feat=f)
-                    select_inner += '{feat},'.format(feat=f)
-                else:
-                    select += 'avg({feat}) as {feat}, ifnull(stddev({feat}),0) as {feat}_std,'.format(feat=f)
-                    select_inner += '{feat},'.format(feat=f)
 
             query = """\
                 WITH
@@ -275,7 +248,7 @@ def fetch_features(ftable_raw, ds, client, conf):
 
             currtimeslot_start += int(math.ceil(SECS_IN_DAY / timesplits))
 
-        if (i+1) % 5 == 0:
+        if (i+1) % 4 == 0:
             wait_for_jobs(jobs)
             jobs = []
 
@@ -313,13 +286,17 @@ def backfill_missing_users(users_table, features_table, timesplits, ds, client, 
     project = conf['project']
 
     select_query = ''
-    for f in FEATURES + FEATURES_ITS:
+    for f in FEATURES + FEATURES_IAT:
         if f == 'skip_ratio':
             select_query += '0.0 as {feat},'.format(feat=f)
-        elif f == 'sum_secs_played':
-            select_query += 'ifnull(MAX(countt*max_prev_sum_secs_played),0) as sum_secs_played,'.format(feat=f)
         else:
             select_query += '0.0 as {feat}, 0.0 as {feat}_std,'.format(feat=f)
+
+    for f in FEATURES_COUNT:
+        select_query += '0 as {feat},'.format(feat=f)
+
+    for f in FEATURES_SUM:
+        select_query += 'ifnull(MAX(countt*max_prev_sum_secs_played),0) as {feat},'.format(feat=f)
 
     logger.info('Backfilling features...')
     for i, ts in enumerate(timesplits):
@@ -496,10 +473,14 @@ def fetch_intertimestep_features(features_table, ds, client, conf):
 
     startdate = currdate - dt.timedelta(days=totaldays, minutes=1)
     select = ''
-    for f in FEATURES_ITS:
+    for f in FEATURES_IAT:
         if f == 'iat':
             select += 'timestampp - (LAG(timestampp,1,{startdate}) OVER (PARTITION BY user_id ORDER BY timestampp) ) AS iat,'.format(startdate=get_utctimestamp(startdate))
-        elif f == 'sum_secs_played':
+        else:
+            raise Exception()
+
+    for f in FEATURES_SUM:
+        if f == 'sum_secs_played':
             select += 'ifnull(SUM(secs_played) OVER(PARTITION BY user_id ORDER BY timestampp ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING),0) as sum_secs_played,'
         else:
             raise Exception()
@@ -521,89 +502,6 @@ def fetch_intertimestep_features(features_table, ds, client, conf):
     job.begin()
 
     return features_table, [job]
-
-
-def normalize_features(ftable, ds, client, conf):
-    """ Normalize the feature tables with a zero mean and unit variance """
-    select_with = ''
-    select = ''
-    select_union = ''
-    for f in FEATURES + FEATURES_ITS:
-        select_with += 'AVG({feat}) AS {feat}_avg, STDDEV_POP({feat}) AS {feat}_stddev,'.format(feat=f)
-        select += '( ({feat} - (SELECT {feat}_avg FROM avgs_stdvs)) / (SELECT {feat}_stddev FROM avgs_stdvs) ) AS {feat},'.format(feat=f)
-        select_union += '{feat},'.format(feat=f if f != 'sum_secs_played' else '( ({feat} - (SELECT {feat}_avg FROM avgs_stdvs)) / (SELECT {feat}_stddev FROM avgs_stdvs) ) AS {feat}'.format(feat=f))
-
-    nftable = ds.table(name='features_{}_{}_n'.format(conf['experiment'], conf['dsname']))
-    query = """\
-     WITH
-       avgs_stdvs AS (
-       SELECT {select_with} 0
-       FROM
-         `{project}.{dataset}.{table}`
-       WHERE
-         backfill = FALSE )
-     SELECT
-       {select}
-       user_id,
-       time
-     FROM
-       `{project}.{dataset}.{table}`
-     WHERE
-         backfill = FALSE
-     UNION ALL
-     SELECT
-         {select_union}
-        user_id,
-        time
-     FROM
-       `{project}.{dataset}.{table}`
-     WHERE
-         backfill = TRUE
-    """.format(select_with=select_with, select=select, select_union=select_union, table=ftable.name, project=conf['project'], dataset=ds.name)
-
-    jobname = 'features_norm_job_' + str(uuid.uuid4())
-    job = client.run_async_query(jobname, query)
-    job.destination = nftable
-    job.allow_large_results = True
-    job.write_disposition = 'WRITE_TRUNCATE'
-    job.use_legacy_sql = False
-    job.begin()
-
-    return nftable, [job]
-
-
-def dump_features_to_gcs(ft_tables, dest, project, client):
-    """ Dump generated tables as files on Google Cloud Storage"""
-    gs_client = gcs.Client(project)
-    split_uri = dest.split('/')
-    filepath = '/'.join(split_uri[3:])
-    bucket_name = split_uri[2]
-    bucket = gcs.Bucket(gs_client, bucket_name)
-
-    logger.info('Dumping {} tables to {}...'.format(len(ft_tables), dest))
-
-    jobs = []
-    for ft_table in ft_tables:
-        filename_shard = ft_table.name + '{0:012d}'.format(0)
-        blob = gcs.Blob(name=os.path.join(filepath, filename_shard), bucket=bucket)
-        if blob.exists():
-            count = 0
-            while blob.exists():
-                logger.info(' -- Removing blob {}'.format(blob.path))
-                blob.delete()
-
-                count += 1
-                filename_shard = ft_table.name + '{0:012d}'.format(count)
-                blob = gcs.Blob(name=os.path.join(filepath, filename_shard), bucket=bucket)
-
-        path = dest + '/' + ft_table.name + '*'
-        jobname = 'features_dump_job_' + str(uuid.uuid4())
-        job = client.extract_table_to_storage(jobname, ft_table, path)
-        job.begin()
-
-        jobs.append(job)
-
-    return jobs
 
 
 def wait_for_jobs(jobs):
