@@ -7,6 +7,7 @@ import json
 
 import google.cloud.storage as gcs
 
+import churnr
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('churnr.submitter')
@@ -54,22 +55,21 @@ def upload_dir_to_gcs(local_dir, gcs_uri, project):
 
 
 def main():
+    pkgpath = os.path.dirname(churnr.__file__)
+    exppath = os.path.join(pkgpath, 'experiments.json')
+
     parser = argparse.ArgumentParser(description='Model trainer')
     parser.add_argument('--job-dir', default='gs://helder/churnr/', help='GCS path where the model is going to be stored')
+    parser.add_argument('--exppath', default=exppath, help='Path to the experiments json file')
     parser.add_argument('--experiment', default='temporal_static', help='Name of the experiment being performed')
-    parser.add_argument('--project', default='user_lifecycle', help='Name of the GCP project')
+    parser.add_argument('--stages', default=['extract','process','train', 'plot'], help='Stages that will be executed', nargs='*')
     parser.add_argument('--debug', default=False, help='Debug flag that sped up some stages', action='store_true')
-    parser.add_argument('--stage', default='process', help='Stage that the experiment will start from', choices=['extract', 'process', 'train', 'plot'])
-    parser.add_argument('--singlestage', default=False, help='Stage that the experiment will start from', action='store_true')
 
     args = parser.parse_args()
     logger.info('Initializing experiment [{}]...'.format(args.experiment))
 
-    # download experiments.json
-    exppath_gcs = os.path.join(args.job_dir, 'experiments.json')
-    exppath = os.path.join('/tmp/', 'experiments.json')
-    download_gcs_file(exppath_gcs, exppath, args.project)
-    with open(exppath, 'r') as f:
+    # load experiments.json
+    with open(args.exppath, 'r') as f:
         conf = json.load(f)
 
     # override some paths
@@ -80,21 +80,22 @@ def main():
     conf[args.experiment]['models']['global']['modelpath'] = modelpath
     conf[args.experiment]['plots']['global']['plotpath'] = plotpath
     conf = { k:v for k,v in conf.items() if k == args.experiment}
+    project = conf[args.experiment]['datasets']['global']['project']
 
     logger.info('Saving experiments file with modified paths...')
     logger.info('--- {}'.format(conf))
 
-    with open(exppath, 'w') as f:
+    with open(args.exppath, 'w') as f:
         json.dump(conf, f)
 
     from churnr.app import run
-    run(exppath=exppath, experiment=args.experiment, stage=args.stage, singlestage=args.singlestage, debug=args.debug, hddump=False)
+    run(args)
 
     # sync model outputs to gcs
     jobdir = os.path.join(args.job_dir, args.experiment)
     #upload_dir_to_gcs(procpath, jobdir, args.project)
     #upload_dir_to_gcs(plotpath, jobdir, args.project)
-    upload_dir_to_gcs(modelpath, jobdir, args.project)
+    upload_dir_to_gcs(modelpath, jobdir, project)
 
     logger.info('Done!')
 

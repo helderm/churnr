@@ -164,7 +164,6 @@ def load_data(modeltype, conf):
         # as if they were independent dimensions (GurAli 2014)
         y = np.repeat(ys, X.shape[1])
         X = np.reshape(X, (X.shape[0]*X.shape[1], X.shape[2]))
-
     return X, y
 
 
@@ -227,6 +226,8 @@ def main(exppath, experiment, dsname, modelname, debug):
         y_trpred[:,1] = y_pred
         joblib.dump(y_trpred, os.path.join(modeldir, 'y_test_true_pred.gz'))
 
+        X = None
+
         # save the metrics and config
         metrics = {}
         metrics['roc_auc'] = roc_auc_score(y, y_pred)
@@ -235,6 +236,8 @@ def main(exppath, experiment, dsname, modelname, debug):
         logger.info('-- {}'.format(str(metrics)))
         with open(os.path.join(modeldir, 'metrics.json'), 'w') as f:
             json.dump(metrics, f)
+
+        y = None
 
     except Exception as e:
         logger.exception(e)
