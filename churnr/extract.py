@@ -58,7 +58,7 @@ def main(exppath, experiment, dsname, hddump, sampleusers):
             user_table_tmp = ds.table(name='users_{}_sampled'.format(conf['experiment']))
 
         # filter features from raw sources
-        features_table_raw, jobs = join_feature_tables(user_table_tmp, ds, client, conf)
+        features_table_raw, jobs = sample_raw_features(user_table_tmp, ds, client, conf)
         wait_for_jobs(jobs)
 
         # calculate all inter timesteps features
@@ -66,8 +66,14 @@ def main(exppath, experiment, dsname, hddump, sampleusers):
         wait_for_jobs(jobs)
 
         # build feature set
-        features_table, jobs, timesplits = fetch_features(features_table_raw, ds, client, conf)
+        features_table_days, jobs, timesplits = fetch_features(features_table_raw, ds, client, conf)
         wait_for_jobs(jobs)
+
+        # join separate daily feature tables into a single one again
+        features_table, jobs = join_features(features_table_days, ds, client, conf)
+        wait_for_jobs(jobs)
+        for f in features_table_days:
+            f.delete()
 
         # calculate the churn label for each user and each timestep
         user_table, jobs = calculate_churn(user_table_tmp, features_table, ds, client, conf)
@@ -176,10 +182,8 @@ def fetch_features(ftable_raw, ds, client, conf):
     currdate = dt.datetime.strptime(conf['enddate']+'060000', '%Y%m%d%H%M%S')
 
     jobs = []
+    features_tables = []
     tsl = []
-    features_table = ds.table(name='features_{}_{}_{}'.format(conf['experiment'], conf['dsname'], conf['enddate']))
-    if features_table.exists():
-        features_table.delete()
 
     # query user features
     select_inner = ''
@@ -205,6 +209,11 @@ def fetch_features(ftable_raw, ds, client, conf):
         currtimeslot_start = get_utctimestamp(currdate)
         datestr = currdate.strftime('%Y%m%d')
 
+        features_table = ds.table(name='features_{}_{}_{}_{}'.format(conf['experiment'], conf['dsname'], datestr, conf['enddate']))
+        if features_table.exists():
+            features_table.delete()
+
+        features_tables.append(features_table)
         logger.info('Fetching features for day {}'.format(datestr))
 
         for j in range(timesplits):
@@ -214,7 +223,6 @@ def fetch_features(ftable_raw, ds, client, conf):
             else:
                 # get the remaining secs lost due to rounding on the last slot. Will it be biased?
                 currtimeslot_end = get_utctimestamp(currdate) + SECS_IN_DAY + 0.999
-
 
             query = """\
                 WITH
@@ -248,14 +256,40 @@ def fetch_features(ftable_raw, ds, client, conf):
 
             currtimeslot_start += int(math.ceil(SECS_IN_DAY / timesplits))
 
-        if (i+1) % 4 == 0:
-            wait_for_jobs(jobs)
-            jobs = []
+        #if (i+1) % 2 == 0:
+        #    wait_for_jobs(jobs)
+        #    jobs = []
 
         currdate = currdate - dt.timedelta(days=1)
 
     tsl = sorted(tsl)[:-(conf['preddays']*conf['timesplits'])]
-    return features_table, jobs, tsl
+    return features_tables, jobs, tsl
+
+
+def join_features(features_tables_days, ds, client, conf):
+    """ join daily feature tables into a single one  """
+
+    logger.info('Joining feature tables...')
+
+    features_table = ds.table(name='features_{}_{}_{}'.format(conf['experiment'], conf['dsname'], conf['enddate']))
+    if features_table.exists():
+        features_table.delete()
+
+    query = ''
+    for table in features_tables_days:
+        query += """SELECT * FROM `{project}.{dataset}.{table}`
+            UNION ALL """.format(project=conf['project'], dataset=ds.name, table=table.name)
+    query = query[:-11]
+
+    jobname = 'join_features_job_' + str(uuid.uuid4())
+    job = client.run_async_query(jobname, query)
+    job.destination = features_table
+    job.allow_large_results = True
+    job.use_legacy_sql = False
+    job.write_disposition = 'WRITE_TRUNCATE'
+    job.begin()
+
+    return features_table, [job]
 
 
 def filter_features_table(features_table, max_timesplit, ds, client, conf):
@@ -398,8 +432,8 @@ def calculate_churn(users_sampled, features_table, ds, client, conf):
     return user_table, jobs
 
 
-def join_feature_tables(users_table, ds, client, conf):
-    """ Join all feature tables into a single one for later csv exporting """
+def sample_raw_features(users_table, ds, client, conf):
+    """ Filter all feature tables into a single one for later csv exporting """
 
     logger.info('Filtering source feature tables...')
 
