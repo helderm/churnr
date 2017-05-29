@@ -1,0 +1,51 @@
+{
+  "fields" : [ {
+    "mode" : "NULLABLE",
+    "name" : "user_id",
+    "type" : "STRING"
+  }, {
+    "mode" : "NULLABLE",
+    "name" : "skipped",
+    "type" : "BOOLEAN"
+  }, {
+    "mode" : "NULLABLE",
+    "name" : "secs_played",
+    "type" : "INTEGER"
+  }, {
+    "mode" : "NULLABLE",
+    "name" : "timestampp",
+    "type" : "INTEGER"
+  }, {
+    "mode" : "NULLABLE",
+    "name" : "client_type",
+    "type" : "STRING"
+  }, {
+    "mode" : "NULLABLE",
+    "name" : "product_type",
+    "type" : "STRING"
+  }, {
+    "mode" : "NULLABLE",
+    "name" : "platform",
+    "type" : "STRING"
+  }, {
+    "mode" : "NULLABLE",
+    "name" : "hardware",
+    "type" : "STRING"
+  }, {
+    "mode" : "NULLABLE",
+    "name" : "latitude",
+    "type" : "FLOAT"
+  }, {
+    "mode" : "NULLABLE",
+    "name" : "longitude",
+    "type" : "FLOAT"
+  }, {
+    "mode" : "NULLABLE",
+    "name" : "timestr",
+    "type" : "STRING"
+  }, {
+    "mode" : "NULLABLE",
+    "name" : "play_context_decrypted",
+    "type" : "STRING"
+  } ]
+}
