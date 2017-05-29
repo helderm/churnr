@@ -15,16 +15,17 @@ SECS_IN_DAY = 86400
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('churnr.extract')
 
-FEATURES = ['skip_ratio', 'secs_played']
+FEATURES = ['unique_top_types', 'skip_ratio', 'secs_played', 'secs_played_userplaylist', 'secs_played_usercollection', 'secs_played_catalog', 'secs_played_editorialplaylist', 'secs_played_radio', 'secs_played_mix', 'secs_played_soundsof', 'secs_played_personalizedplaylist', 'secs_played_charts', 'secs_played_unknown', 'secs_played_running', 'top_type', 'platform', 'client_type', 'latitude', 'longitude']
 FEATURES_IAT = ['iat'] # intertimestep features
-FEATURES_SUM = ['sum_secs_played']
-FEATURES_COUNT = ['total_streams']
+FEATURES_SUM = ['sum_secs_played', 'sum_secs_played_userplaylist', 'sum_secs_played_usercollection', 'sum_secs_played_catalog', 'sum_secs_played_editorialplaylist', 'sum_secs_played_radio', 'sum_secs_played_mix', 'sum_secs_played_soundsof', 'sum_secs_played_personalizedplaylist', 'sum_secs_played_charts', 'sum_secs_played_unknown', 'sum_secs_played_running']
+FEATURES_COUNT = ['total_streams', 'total_streams_userplaylist', 'total_streams_usercollection', 'total_streams_catalog', 'total_streams_editorialplaylist', 'total_streams_radio', 'total_streams_mix', 'total_streams_soundsof', 'total_streams_personalizedplaylist', 'total_streams_charts', 'total_streams_unknown', 'total_streams_running']
 
-def main(exppath, experiment, dsname, hddump, sampleusers):
+
+def main(exppath, experiment, dsname):
     """ Extract data from several sources on BigQuery using intermediary tables
         and dump the final output as a file into ../data/raw
     """
-    logger.info('Starting BigQuery data extraction...')
+    logger.info('Starting extraction of dataset {}...'.format(dsname))
 
     with open(exppath) as f:
         exp = json.load(f)
@@ -48,35 +49,30 @@ def main(exppath, experiment, dsname, hddump, sampleusers):
             ds.location = 'EU'
             ds.create()
 
-        # randomly sample users who are active on the last week
-        if sampleusers:
-            user_table_tmp, jobs = fetch_user_samples(ds, client, conf)
-            wait_for_jobs(jobs)
-            user_table_tmp, jobs = add_user_info(user_table_tmp, ds, client, conf)
-            wait_for_jobs(jobs)
-        else:
-            user_table_tmp = ds.table(name='users_{}_sampled'.format(conf['experiment']))
+        features_table_p = ds.table(name='features_{}_{}_p'.format(conf['experiment'], conf['dsname']))
+        features_table = ds.table(name='features_{}_{}_e'.format(conf['experiment'], conf['dsname']))
+        user_table_tmp = ds.table(name='users_{}_sampled'.format(conf['experiment']))
+        user_table = ds.table(name='users_{}_{}'.format(conf['experiment'], conf['dsname']))
 
-        # filter features from raw sources
-        features_table_raw, jobs = sample_raw_features(user_table_tmp, ds, client, conf)
-        wait_for_jobs(jobs)
+        if features_table.exists():
+            features_table.delete()
 
         # calculate all inter timesteps features
-        features_table_raw, jobs = fetch_intertimestep_features(features_table_raw, ds, client, conf)
+        features_table, jobs = fetch_intertimestep_features(features_table, features_table_p, ds, client, conf)
         wait_for_jobs(jobs)
 
         # build feature set
-        features_table_days, jobs, timesplits = fetch_features(features_table_raw, ds, client, conf)
+        features_table_days, jobs, timesplits = fetch_features(features_table, ds, client, conf)
         wait_for_jobs(jobs)
 
         # join separate daily feature tables into a single one again
-        features_table, jobs = join_features(features_table_days, ds, client, conf)
+        features_table, jobs = join_features(features_table, features_table_days, ds, client, conf)
         wait_for_jobs(jobs)
         for f in features_table_days:
             f.delete()
 
         # calculate the churn label for each user and each timestep
-        user_table, jobs = calculate_churn(user_table_tmp, features_table, ds, client, conf)
+        user_table, jobs = calculate_churn(user_table, user_table_tmp, features_table, ds, client, conf)
         wait_for_jobs(jobs)
 
         # filter out features values in the prediction window
@@ -92,85 +88,6 @@ def main(exppath, experiment, dsname, hddump, sampleusers):
     except Exception as e:
         logger.exception(e)
         raise e
-
-
-def fetch_user_samples(ds, client, conf):
-    """ Fetch a random sample of users based on a user_id hash """
-
-    logger.info('Fetching user samples...')
-
-    if conf['obsdays'] < conf['actdays']:
-        raise Exception("Obs window smaller than activation window, this probably wont work!")
-
-    totaldays = conf['actdays'] + conf['preddays']
-
-    # CST timezone
-    currdate = dt.datetime.strptime(conf['enddate']+'060000', '%Y%m%d%H%M%S') - dt.timedelta(days=totaldays - 1)
-
-    user_table = ds.table(name='users_{}_sampled'.format(conf['experiment']))
-    if user_table.exists():
-        user_table.delete()
-
-    query = ''
-    for k in range(conf['actdays']):
-        datestr = currdate.strftime('%Y%m%d')
-        currdate_ts = get_utctimestamp(currdate)
-        currdate_end_ts = (currdate_ts + SECS_IN_DAY)
-
-        query += """\
-            SELECT DISTINCT(uss{k}.user_id)
-            FROM `royalty-reporting.reporting_end_content.reporting_end_content_{date}` as uss{k}
-                JOIN `business-critical-data.user_snapshot.user_snapshot_{date}` as usn{k}
-                ON uss{k}.user_id=usn{k}.user_id
-                WHERE uss{k}.ms_played > 30000 AND uss{k}.platform IN ("android","android-tablet")
-                    AND MOD(ABS(FARM_FINGERPRINT(uss{k}.user_id)), {share}) = 0 AND usn{k}.reporting_country IN ("BR", "US", "MX")
-                    AND DATE_DIFF(PARSE_DATE("%E4Y%m%d", "{date}"), PARSE_DATE("%E4Y-%m-%d", usn{k}.registration_date), DAY) > {obswindow}
-                    AND UNIX_SECONDS(PARSE_TIMESTAMP('%Y-%m-%d %H:%M:%E*S', uss{k}.time)) >= {startslot}
-                    AND UNIX_SECONDS(PARSE_TIMESTAMP('%Y-%m-%d %H:%M:%E*S', uss{k}.time)) < {endslot}
-                UNION DISTINCT (""".format(date=datestr, share=int(1 / conf['shareusers']), startslot=currdate_ts,
-                    endslot=currdate_end_ts, k=k, obswindow=conf['obsdays'])
-
-        currdate = currdate + dt.timedelta(days=1)
-    query = query[:-17]
-    query += ')' * (conf['actdays']-1)
-
-    jobname = 'user_ids_sampled_job_' + str(uuid.uuid4())
-    job = client.run_async_query(jobname, query)
-    job.destination = user_table
-    job.allow_large_results = True
-    job.write_disposition = 'WRITE_APPEND'
-    job.use_legacy_sql = False
-    job.begin()
-
-    return user_table, [job]
-
-
-def add_user_info(user_table, ds, client, conf):
-    """ Add some columns to the user table """
-
-    logger.info('Getting more info about sampled users...')
-
-    totaldays = conf['actdays'] + conf['preddays']
-    currdate = dt.datetime.strptime(conf['enddate']+'060000', '%Y%m%d%H%M%S') - dt.timedelta(days=totaldays - 1)
-    datestr = currdate.strftime('%Y%m%d')
-
-    query = """\
-        SELECT uss.user_id as user_id, DATE_DIFF(PARSE_DATE("%E4Y%m%d", "{date}"), PARSE_DATE("%E4Y-%m-%d", usn.registration_date), DAY) as days_since_registration,
-            usn.product as product, usn.reporting_country as reporting_country
-        FROM `{project}.{dataset}.{table}` as uss
-            JOIN `business-critical-data.user_snapshot.user_snapshot_{date}` as usn
-            ON uss.user_id=usn.user_id
-            """.format(date=datestr, project=conf['project'], dataset=ds.name, table=user_table.name)
-
-    jobname = 'users_info_job_' + str(uuid.uuid4())
-    job = client.run_async_query(jobname, query)
-    job.destination = user_table
-    job.allow_large_results = True
-    job.write_disposition = 'WRITE_TRUNCATE'
-    job.use_legacy_sql = False
-    job.begin()
-
-    return user_table, [job]
 
 
 def fetch_features(ftable_raw, ds, client, conf):
@@ -189,9 +106,35 @@ def fetch_features(ftable_raw, ds, client, conf):
     select_inner = ''
     select = ''
     for f in FEATURES + FEATURES_IAT:
-        if f == 'skip_ratio':
+        if f == 'unique_top_types':
+            select += 'COUNT(DISTINCT(r.top_type)) AS unique_top_types,'
+        elif f == 'skip_ratio':
             select += 'SUM(CAST(skipped as INT64)) / COUNT(skipped) AS skip_ratio,'
-            select_inner += 'skipped,'.format(feat=f)
+            select_inner += 'skipped,'
+        elif f in ['top_type', 'platform', 'latitude', 'longitude', 'client_type']:
+            select += 'ANY_VALUE(t.{feat}) as {feat},'.format(feat=f)
+        elif f == 'secs_played_userplaylist':
+            select += 'avg(case when r.top_type = "UserPlaylist" then secs_played else 0 end) as {feat}, ifnull(stddev(case when r.top_type = "UserPlaylist" then secs_played else 0 end),0) as {feat}_std,'.format(feat=f)
+        elif f == 'secs_played_usercollection':
+            select += 'avg(case when r.top_type = "UserCollection" then secs_played else 0 end) as {feat}, ifnull(stddev(case when r.top_type = "UserCollection" then secs_played else 0 end),0) as {feat}_std,'.format(feat=f)
+        elif f == 'secs_played_catalog':
+            select += 'avg(case when r.top_type = "Catalog" then secs_played else 0 end) as {feat}, ifnull(stddev(case when r.top_type = "Catalog" then secs_played else 0 end),0) as {feat}_std,'.format(feat=f)
+        elif f == 'secs_played_editorialplaylist':
+            select += 'avg(case when r.top_type = "EditorialPlaylist" then secs_played else 0 end) as {feat}, ifnull(stddev(case when r.top_type = "EditorialPlaylist" then secs_played else 0 end),0) as {feat}_std,'.format(feat=f)
+        elif f == 'secs_played_radio':
+            select += 'avg(case when r.top_type = "Radio" then secs_played else 0 end) as {feat}, ifnull(stddev(case when r.top_type = "Radio" then secs_played else 0 end),0) as {feat}_std,'.format(feat=f)
+        elif f == 'secs_played_mix':
+            select += 'avg(case when r.top_type = "Mix" then secs_played else 0 end) as {feat}, ifnull(stddev(case when r.top_type = "Mix" then secs_played else 0 end),0) as {feat}_std,'.format(feat=f)
+        elif f == 'secs_played_soundsof':
+            select += 'avg(case when r.top_type = "SoundsOf" then secs_played else 0 end) as {feat}, ifnull(stddev(case when r.top_type = "SoundsOf" then secs_played else 0 end),0) as {feat}_std,'.format(feat=f)
+        elif f == 'secs_played_personalizedplaylist':
+            select += 'avg(case when r.top_type = "PersonalizedPlaylist" then secs_played else 0 end) as {feat}, ifnull(stddev(case when r.top_type = "PersonalizedPlaylist" then secs_played else 0 end),0) as {feat}_std,'.format(feat=f)
+        elif f == 'secs_played_charts':
+            select += 'avg(case when r.top_type = "Charts" then secs_played else 0 end) as {feat}, ifnull(stddev(case when r.top_type = "Charts" then secs_played else 0 end),0) as {feat}_std,'.format(feat=f)
+        elif f == 'secs_played_unknown':
+            select += 'avg(case when r.top_type = "Unknown" then secs_played else 0 end) as {feat}, ifnull(stddev(case when r.top_type = "Unknown" then secs_played else 0 end),0) as {feat}_std,'.format(feat=f)
+        elif f == 'secs_played_running':
+            select += 'avg(case when r.top_type = "Running" then secs_played else 0 end) as {feat}, ifnull(stddev(case when r.top_type = "Running" then secs_played else 0 end),0) as {feat}_std,'.format(feat=f)
         else:
             select += 'avg({feat}) as {feat}, ifnull(stddev({feat}),0) as {feat}_std,'.format(feat=f)
             select_inner += '{feat},'.format(feat=f)
@@ -201,7 +144,30 @@ def fetch_features(ftable_raw, ds, client, conf):
         select_inner += '{feat},'.format(feat=f)
 
     for f in FEATURES_COUNT:
-        select += 'COUNT(user_id) as {feat},'.format(feat=f)
+        if f == 'total_streams':
+            select += 'COUNT(*) as {feat},'.format(feat=f)
+        elif f == 'total_streams_userplaylist':
+            select += 'SUM(case when r.top_type = "UserPlaylist" then 1 else 0 end) as {feat},'.format(feat=f)
+        elif f == 'total_streams_usercollection':
+            select += 'SUM(case when r.top_type = "UserCollection" then 1 else 0 end) as {feat},'.format(feat=f)
+        elif f == 'total_streams_catalog':
+            select += 'SUM(case when r.top_type = "Catalog" then 1 else 0 end) as {feat},'.format(feat=f)
+        elif f == 'total_streams_editorialplaylist':
+            select += 'SUM(case when r.top_type = "EditorialPlaylist" then 1 else 0 end) as {feat},'.format(feat=f)
+        elif f == 'total_streams_radio':
+            select += 'SUM(case when r.top_type = "Radio" then 1 else 0 end) as {feat},'.format(feat=f)
+        elif f == 'total_streams_mix':
+            select += 'SUM(case when r.top_type = "Mix" then 1 else 0 end) as {feat},'.format(feat=f)
+        elif f == 'total_streams_soundsof':
+            select += 'SUM(case when r.top_type = "SoundsOf" then 1 else 0 end) as {feat},'.format(feat=f)
+        elif f == 'total_streams_personalizedplaylist':
+            select += 'SUM(case when r.top_type = "PersonalizedPlaylist" then 1 else 0 end) as {feat},'.format(feat=f)
+        elif f == 'total_streams_charts':
+            select += 'SUM(case when r.top_type = "Charts" then 1 else 0 end) as {feat},'.format(feat=f)
+        elif f == 'total_streams_unknown':
+            select += 'SUM(case when r.top_type = "Unknown" then 1 else 0 end) as {feat},'.format(feat=f)
+        elif f == 'total_streams_running':
+            select += 'SUM(case when r.top_type = "Running" then 1 else 0 end) as {feat},'.format(feat=f)
 
     for i in range(totaldays):
 
@@ -209,7 +175,7 @@ def fetch_features(ftable_raw, ds, client, conf):
         currtimeslot_start = get_utctimestamp(currdate)
         datestr = currdate.strftime('%Y%m%d')
 
-        features_table = ds.table(name='features_{}_{}_{}_{}'.format(conf['experiment'], conf['dsname'], datestr, conf['enddate']))
+        features_table = ds.table(name='features_{}_{}_{}_tmp'.format(conf['experiment'], conf['dsname'], datestr))
         if features_table.exists():
             features_table.delete()
 
@@ -229,16 +195,39 @@ def fetch_features(ftable_raw, ds, client, conf):
                   user_raw_features AS (
                   SELECT
                     {select_inner}
-                    user_id
+                    user_id,
+                    top_type
                   FROM
                     `{project}.{dataset}.{table}`
                   WHERE
                     timestampp >= {startslot} AND
-                    timestampp < {endslot})
-
-                SELECT user_id, CAST({timesplit} AS INT64) as time, {select} false as backfill \
-                FROM user_raw_features
-                GROUP BY user_id\
+                    timestampp < {endslot}),
+		  user_top_features AS (
+		  SELECT
+		    user_id,
+		    top_type,
+		    platform,
+		    client_type,
+		    case when latitude != 999.9 then latitude else NULL end as latitude,
+		    case when longitude != 999.9 then longitude else NULL end as longitude,
+		    RANK() OVER (PARTITION BY user_id ORDER BY COUNT(*) DESC) AS rank
+		  FROM
+                    `{project}.{dataset}.{table}`
+		  WHERE
+                    timestampp >= {startslot} AND
+                    timestampp < {endslot}
+		  GROUP BY
+		    user_id,
+		    top_type,
+	            platform,
+                    client_type,
+                    latitude,
+                    longitude)
+                SELECT r.user_id, CAST({timesplit} AS INT64) as time, {select} false as backfill \
+                FROM user_raw_features r
+                JOIN user_top_features t
+                ON r.user_id=t.user_id
+                GROUP BY r.user_id\
             """.format(project=conf['project'], dataset=ds.name, table=ftable_raw.name,
                     startslot=int(currtimeslot_start), endslot=int(currtimeslot_end), select=select,
                     timesplit=currtimeslot_start, select_inner=select_inner)
@@ -266,7 +255,7 @@ def fetch_features(ftable_raw, ds, client, conf):
     return features_tables, jobs, tsl
 
 
-def join_features(features_tables_days, ds, client, conf):
+def join_features(ftable_out, ftables_days, ds, client, conf):
     """ join daily feature tables into a single one  """
 
     logger.info('Joining feature tables...')
@@ -276,20 +265,20 @@ def join_features(features_tables_days, ds, client, conf):
         features_table.delete()
 
     query = ''
-    for table in features_tables_days:
+    for table in ftables_days:
         query += """SELECT * FROM `{project}.{dataset}.{table}`
             UNION ALL """.format(project=conf['project'], dataset=ds.name, table=table.name)
     query = query[:-11]
 
     jobname = 'join_features_job_' + str(uuid.uuid4())
     job = client.run_async_query(jobname, query)
-    job.destination = features_table
+    job.destination = ftable_out
     job.allow_large_results = True
     job.use_legacy_sql = False
     job.write_disposition = 'WRITE_TRUNCATE'
     job.begin()
 
-    return features_table, [job]
+    return ftable_out, [job]
 
 
 def filter_features_table(features_table, max_timesplit, ds, client, conf):
@@ -323,6 +312,12 @@ def backfill_missing_users(users_table, features_table, timesplits, ds, client, 
     for f in FEATURES + FEATURES_IAT:
         if f == 'skip_ratio':
             select_query += '0.0 as {feat},'.format(feat=f)
+        elif f in ['top_type', 'platform', 'client_type']:
+            select_query += '"Unknown" as {feat},'.format(feat=f)
+        elif f in ['latitude', 'longitude']:
+            select_query += 'cast(null as float64) as {feat},'.format(feat=f)
+        elif f == 'unique_top_types':
+            select_query += '0 as {feat},'.format(feat=f)
         else:
             select_query += '0.0 as {feat}, 0.0 as {feat}_std,'.format(feat=f)
 
@@ -330,7 +325,30 @@ def backfill_missing_users(users_table, features_table, timesplits, ds, client, 
         select_query += '0 as {feat},'.format(feat=f)
 
     for f in FEATURES_SUM:
-        select_query += 'ifnull(MAX(countt*max_prev_sum_secs_played),0) as {feat},'.format(feat=f)
+        if f == 'sum_secs_played_userplaylist':
+            select_query += 'ifnull(MAX(countt*max_prev_sum_secs_played_userplaylist),0) as {feat},'.format(feat=f)
+        elif f == 'sum_secs_played_usercollection':
+            select_query += 'ifnull(MAX(countt*max_prev_sum_secs_played_usercollection),0) as {feat},'.format(feat=f)
+        elif f == 'sum_secs_played_catalog':
+            select_query += 'ifnull(MAX(countt*max_prev_sum_secs_played_catalog),0) as {feat},'.format(feat=f)
+        elif f == 'sum_secs_played_editorialplaylist':
+            select_query += 'ifnull(MAX(countt*max_prev_sum_secs_played_editorialplaylist),0) as {feat},'.format(feat=f)
+        elif f == 'sum_secs_played_radio':
+            select_query += 'ifnull(MAX(countt*max_prev_sum_secs_played_radio),0) as {feat},'.format(feat=f)
+        elif f == 'sum_secs_played_mix':
+            select_query += 'ifnull(MAX(countt*max_prev_sum_secs_played_mix),0) as {feat},'.format(feat=f)
+        elif f == 'sum_secs_played_soundsof':
+            select_query += 'ifnull(MAX(countt*max_prev_sum_secs_played_soundsof),0) as {feat},'.format(feat=f)
+        elif f == 'sum_secs_played_personalizedplaylist':
+            select_query += 'ifnull(MAX(countt*max_prev_sum_secs_played_personalizedplaylist),0) as {feat},'.format(feat=f)
+        elif f == 'sum_secs_played_charts':
+            select_query += 'ifnull(MAX(countt*max_prev_sum_secs_played_charts),0) as {feat},'.format(feat=f)
+        elif f == 'sum_secs_played_unknown':
+            select_query += 'ifnull(MAX(countt*max_prev_sum_secs_played_unknown),0) as {feat},'.format(feat=f)
+        elif f == 'sum_secs_played_running':
+            select_query += 'ifnull(MAX(countt*max_prev_sum_secs_played_running),0) as {feat},'.format(feat=f)
+        else:
+            select_query += 'ifnull(MAX(countt*max_prev_sum_secs_played),0) as {feat},'.format(feat=f)
 
     logger.info('Backfilling features...')
     for i, ts in enumerate(timesplits):
@@ -343,7 +361,18 @@ def backfill_missing_users(users_table, features_table, timesplits, ds, client, 
 	    FROM
               (SELECT us.user_id,
                 COUNTIF(ft.time <= {timesplit}) OVER (PARTITION BY ft.user_id ORDER BY ft.time ROWS BETWEEN 1 PRECEDING AND 1 PRECEDING) as countt,
-                MAX(ft.sum_secs_played) OVER (PARTITION BY ft.user_id ORDER BY ft.time ROWS BETWEEN 1 PRECEDING and 1 PRECEDING) as max_prev_sum_secs_played
+                MAX(ft.sum_secs_played) OVER (PARTITION BY ft.user_id ORDER BY ft.time ROWS BETWEEN 1 PRECEDING and 1 PRECEDING) as max_prev_sum_secs_played,
+                MAX(ft.sum_secs_played_userplaylist) OVER (PARTITION BY ft.user_id ORDER BY ft.time ROWS BETWEEN 1 PRECEDING and 1 PRECEDING) as max_prev_sum_secs_played_userplaylist,
+                MAX(ft.sum_secs_played_catalog) OVER (PARTITION BY ft.user_id ORDER BY ft.time ROWS BETWEEN 1 PRECEDING and 1 PRECEDING) as max_prev_sum_secs_played_catalog,
+                MAX(ft.sum_secs_played_editorialplaylist) OVER (PARTITION BY ft.user_id ORDER BY ft.time ROWS BETWEEN 1 PRECEDING and 1 PRECEDING) as max_prev_sum_secs_played_editorialplaylist,
+                MAX(ft.sum_secs_played_radio) OVER (PARTITION BY ft.user_id ORDER BY ft.time ROWS BETWEEN 1 PRECEDING and 1 PRECEDING) as max_prev_sum_secs_played_radio,
+                MAX(ft.sum_secs_played_mix) OVER (PARTITION BY ft.user_id ORDER BY ft.time ROWS BETWEEN 1 PRECEDING and 1 PRECEDING) as max_prev_sum_secs_played_mix,
+                MAX(ft.sum_secs_played_soundsof) OVER (PARTITION BY ft.user_id ORDER BY ft.time ROWS BETWEEN 1 PRECEDING and 1 PRECEDING) as max_prev_sum_secs_played_soundsof,
+                MAX(ft.sum_secs_played_personalizedplaylist) OVER (PARTITION BY ft.user_id ORDER BY ft.time ROWS BETWEEN 1 PRECEDING and 1 PRECEDING) as max_prev_sum_secs_played_personalizedplaylist,
+                MAX(ft.sum_secs_played_charts) OVER (PARTITION BY ft.user_id ORDER BY ft.time ROWS BETWEEN 1 PRECEDING and 1 PRECEDING) as max_prev_sum_secs_played_charts,
+                MAX(ft.sum_secs_played_unknown) OVER (PARTITION BY ft.user_id ORDER BY ft.time ROWS BETWEEN 1 PRECEDING and 1 PRECEDING) as max_prev_sum_secs_played_unknown,
+                MAX(ft.sum_secs_played_running) OVER (PARTITION BY ft.user_id ORDER BY ft.time ROWS BETWEEN 1 PRECEDING and 1 PRECEDING) as max_prev_sum_secs_played_running,
+                MAX(ft.sum_secs_played_usercollection) OVER (PARTITION BY ft.user_id ORDER BY ft.time ROWS BETWEEN 1 PRECEDING and 1 PRECEDING) as max_prev_sum_secs_played_usercollection
                FROM `{project}.{dataset}.{utable}` us JOIN
                  `{project}.{dataset}.{ftable}` ft ON us.user_id=ft.user_id
 	       WHERE
@@ -375,7 +404,7 @@ def backfill_missing_users(users_table, features_table, timesplits, ds, client, 
     return jobs
 
 
-def calculate_churn(users_sampled, features_table, ds, client, conf):
+def calculate_churn(utable_out, users_sampled, features_table, ds, client, conf):
     """ Calculate the users that will churn by checking the churn window """
     logger.info('Calculating churning and non-churning labels...')
 
@@ -386,9 +415,8 @@ def calculate_churn(users_sampled, features_table, ds, client, conf):
     enddate = conf['enddate']
     predstart = dt.datetime.strptime(enddate+'060000', '%Y%m%d%H%M%S') - dt.timedelta(days=preddays - 1)
 
-    user_table = ds.table(name='users_{}_{}_{}'.format(conf['experiment'], conf['dsname'], conf['enddate']))
-    if user_table.exists():
-        user_table.delete()
+    if utable_out.exists():
+        utable_out.delete()
 
     # build the query part that will join all users who had streams in the churn window
     in_query = """
@@ -406,7 +434,7 @@ def calculate_churn(users_sampled, features_table, ds, client, conf):
 
     jobname = 'retained_features_job_' + str(uuid.uuid4())
     job = client.run_async_query(jobname, query)
-    job.destination = user_table
+    job.destination = utable_out
     job.allow_large_results = True
     job.write_disposition = 'WRITE_APPEND'
     job.use_legacy_sql = False
@@ -422,82 +450,17 @@ def calculate_churn(users_sampled, features_table, ds, client, conf):
 
     jobname = 'churned_features_job_' + str(uuid.uuid4())
     job = client.run_async_query(jobname, query)
-    job.destination = user_table
+    job.destination = utable_out
     job.allow_large_results = True
     job.write_disposition = 'WRITE_APPEND'
     job.use_legacy_sql = False
     job.begin()
     jobs.append(job)
 
-    return user_table, jobs
+    return utable_out, jobs
 
 
-def sample_raw_features(users_table, ds, client, conf):
-    """ Filter all feature tables into a single one for later csv exporting """
-
-    logger.info('Filtering source feature tables...')
-
-    features_table = ds.table(name='features_{}_{}_r_{}'.format(conf['experiment'], conf['dsname'], conf['enddate']))
-    if features_table.exists():
-        features_table.delete()
-
-    currdate = dt.datetime.strptime(conf['enddate']+'060000', '%Y%m%d%H%M%S')
-    totaldays = conf['obsdays'] + conf['preddays']
-
-    select = ''
-    select_inner = ''
-    for f in FEATURES:
-        if f == 'skip_ratio':
-            select += 'skipped,'
-            select_inner += 'skipped,'
-        elif f == 'secs_played':
-            select += 'secs_played,'
-            select_inner += 'CAST(ms_played/1000 as INT64) as secs_played,'
-        else:
-            select += '{feat},'.format(feat=f)
-            select_inner += '{feat},'.format(feat=f)
-
-    jobs = []
-    for i in range(totaldays):
-        datestr = currdate.strftime('%Y%m%d')
-
-        query = """\
-            WITH filterq AS (
-              SELECT
-                user_id,
-                {select_inner}
-                UNIX_SECONDS(PARSE_TIMESTAMP('%Y-%m-%d %H:%M:%E*S', time)) AS timestampp,
-                time as timestr
-              FROM
-                `royalty-reporting.reporting_end_content.reporting_end_content_{date}`
-              WHERE
-                user_id IN (SELECT user_id FROM `{project}.{dataset}.{table}`)
-                    AND ms_played > 0.0
-            )
-            SELECT {select} user_id, timestampp, timestr FROM filterq
-
-        """.format(date=datestr, project=conf['project'], dataset=ds.name, table=users_table.name,
-                    select=select, select_inner=select_inner)
-
-        jobname = 'features_filter_job_' + str(uuid.uuid4())
-        job = client.run_async_query(jobname, query)
-        job.destination = features_table
-        job.allow_large_results = True
-        job.write_disposition = 'WRITE_APPEND'
-        job.use_legacy_sql = False
-        job.begin()
-
-        if (i+1) % 15 == 0:
-            wait_for_jobs(jobs)
-            jobs = []
-
-        jobs.append(job)
-        currdate = currdate - dt.timedelta(days=1)
-
-    return features_table, jobs
-
-
-def fetch_intertimestep_features(features_table, ds, client, conf):
+def fetch_intertimestep_features(ftable_out, ftable_in, ds, client, conf):
     """ Fetch the inter timesteps feaures """
 
     logger.info('Calculating temporal features...')
@@ -515,7 +478,29 @@ def fetch_intertimestep_features(features_table, ds, client, conf):
 
     for f in FEATURES_SUM:
         if f == 'sum_secs_played':
-            select += 'ifnull(SUM(secs_played) OVER(PARTITION BY user_id ORDER BY timestampp ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING),0) as sum_secs_played,'
+            select += 'ifnull(SUM(secs_played) OVER(PARTITION BY user_id ORDER BY timestampp ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),0) as sum_secs_played,'
+        elif f == 'sum_secs_played_userplaylist':
+            select += 'ifnull(SUM(case when top_type = "UserPlaylist" then secs_played else 0 end) OVER(PARTITION BY user_id ORDER BY timestampp ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),0) as sum_secs_played_userplaylist,'
+        elif f == 'sum_secs_played_usercollection':
+            select += 'ifnull(SUM(case when top_type = "UserCollection" then secs_played else 0 end) OVER(PARTITION BY user_id ORDER BY timestampp ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),0) as sum_secs_played_usercollection,'
+        elif f == 'sum_secs_played_catalog':
+            select += 'ifnull(SUM(case when top_type = "Catalog" then secs_played else 0 end) OVER(PARTITION BY user_id ORDER BY timestampp ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),0) as sum_secs_played_catalog,'
+        elif f == 'sum_secs_played_editorialplaylist':
+            select += 'ifnull(SUM(case when top_type = "EditorialPlaylist" then secs_played else 0 end) OVER(PARTITION BY user_id ORDER BY timestampp ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),0) as sum_secs_played_editorialplaylist,'
+        elif f == 'sum_secs_played_radio':
+            select += 'ifnull(SUM(case when top_type = "Radio" then secs_played else 0 end) OVER(PARTITION BY user_id ORDER BY timestampp ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),0) as sum_secs_played_radio,'
+        elif f == 'sum_secs_played_mix':
+            select += 'ifnull(SUM(case when top_type = "Mix" then secs_played else 0 end) OVER(PARTITION BY user_id ORDER BY timestampp ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),0) as sum_secs_played_mix,'
+        elif f == 'sum_secs_played_soundsof':
+            select += 'ifnull(SUM(case when top_type = "SoundsOf" then secs_played else 0 end) OVER(PARTITION BY user_id ORDER BY timestampp ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),0) as sum_secs_played_soundsof,'
+        elif f == 'sum_secs_played_personalizedplaylist':
+            select += 'ifnull(SUM(case when top_type = "PersonalizedPlaylist" then secs_played else 0 end) OVER(PARTITION BY user_id ORDER BY timestampp ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),0) as sum_secs_played_personalizedplaylist,'
+        elif f == 'sum_secs_played_charts':
+            select += 'ifnull(SUM(case when top_type = "Charts" then secs_played else 0 end) OVER(PARTITION BY user_id ORDER BY timestampp ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),0) as sum_secs_played_charts,'
+        elif f == 'sum_secs_played_unknown':
+            select += 'ifnull(SUM(case when top_type = "Unknown" then secs_played else 0 end) OVER(PARTITION BY user_id ORDER BY timestampp ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),0) as sum_secs_played_unknown,'
+        elif f == 'sum_secs_played_running':
+            select += 'ifnull(SUM(case when top_type = "Running" then secs_played else 0 end) OVER(PARTITION BY user_id ORDER BY timestampp ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW),0) as sum_secs_played_running,'
         else:
             raise Exception()
 
@@ -525,17 +510,17 @@ def fetch_intertimestep_features(features_table, ds, client, conf):
             *
         FROM
             `{project}.{dataset}.{table}`
-    """.format(project=conf['project'], dataset=ds.name, table=features_table.name, select=select)
+    """.format(project=conf['project'], dataset=ds.name, table=ftable_in.name, select=select)
 
     jobname = 'features_intertimestep_job_' + str(uuid.uuid4())
     job = client.run_async_query(jobname, query)
-    job.destination = features_table
+    job.destination = ftable_out
     job.allow_large_results = True
     job.use_legacy_sql = False
     job.write_disposition = 'WRITE_TRUNCATE'
     job.begin()
 
-    return features_table, [job]
+    return ftable_out, [job]
 
 
 def wait_for_jobs(jobs):
@@ -575,11 +560,9 @@ if __name__ == '__main__':
     parser.add_argument('--exppath', default='./experiments.json', help='Path to the experiments json file')
     parser.add_argument('--experiment', default='temporal_static', help='Name of the experiment being performed')
     parser.add_argument('--dsname', default='session_6030d', help='Name of the dataset being transformed')
-    parser.add_argument('--hddump', default=False, help='If True, will dump the tables to the local filesystem', action='store_true')
-    parser.add_argument('--sampleusers', default=False, help='If True, will fetch new user samples', action='store_true')
 
     args = parser.parse_args()
 
-    main(exppath=args.exppath, experiment=args.experiment, dsname=args.dsname, hddump=args.hddump, sampleusers=args.sampleusers)
+    main(exppath=args.exppath, experiment=args.experiment, dsname=args.dsname)
 
 

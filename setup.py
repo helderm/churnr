@@ -36,7 +36,7 @@ setup(
     author=pyt.__author__,
     author_email=pyt.__email__,
     url=pyt.__url__,
-    packages=find_packages(exclude=('tests')),
+    packages=find_packages(),
     platforms=['any'],
     include_package_data=True,
     install_requires=reqs,

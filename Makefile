@@ -12,6 +12,8 @@ IS_ANACONDA=$(shell python -c "import sys;t=str('anaconda' in sys.version.lower(
 VERSION=0.6.0
 NOW=`date +"%Y%m%d_%H%M%S"`
 
+EXP=coolexp
+
 #################################################################################
 # COMMANDS                                                                      #
 #################################################################################
@@ -21,8 +23,9 @@ reqs: test_environment
 	pip install -r requirements.txt
 
 ## Make Dataset
-data: requirements
-	$(PYTHON_INTERPRETER) src/data/make_dataset.py
+data: package
+	gcloud compute copy-files dist/churnr-0.6.0.tar.gz  helder-gpu-1:~/churnr --project "deep-learning-1216" --zone "us-central1-b"
+	gcloud compute ssh helder-gpu-1 --project "deep-learning-1216" --zone "us-central1-b" -- -n -f 'rm -fr ~/venv ; virtualenv ~/venv ; source ~/venv/bin/activate ; pip install ~/churnr/churnr-0.6.0.tar.gz; nohup churnr --experiment $(EXP) --stages sample parse extract > ~/job.log 2>&1 &'
 
 ## Delete all compiled Python files
 clean:
@@ -46,7 +49,7 @@ download:
 
 ## Submit a training job to CloudML
 submit: package
-	gcloud ml-engine jobs submit training job_ts_$(NOW) --config config.yaml --job-dir gs://helder/churnr/ --runtime-version 1.0 --module-name churnr.submitter --region us-east1 --packages dist/churnr-$(VERSION).tar.gz --project user-lifecycle -- --experiment temporal_static --stage train --singlestage
+	gcloud ml-engine jobs submit training helderm_$(EXP)_$(NOW) --config config.yaml --job-dir gs://helder/churnr/ --runtime-version 1.0 --module-name churnr.submitter --region us-east1 --packages dist/churnr-$(VERSION).tar.gz --project user-lifecycle -- --experiment $(EXP) --stages train
 
 ## Set up python interpreter environment
 env:

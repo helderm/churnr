@@ -1,0 +1,3 @@
+include requirements.txt
+include churnr/experiments.json
+recursive-include churnr/scala *
