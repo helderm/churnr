@@ -12,7 +12,7 @@ import churnr as pyt
 def get_requirements(file_name='requirements.txt'):
     try:
         filename = open(file_name)
-        lines = [i.strip() for i in filename.readlines() if len(i.rstrip()) > 0]
+        lines = [i.strip() for i in filename.readlines() if len(i.rstrip()) > 0 and 'libs' not in i]
         filename.close()
     except:
         return []

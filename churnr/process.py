@@ -14,12 +14,11 @@ import json
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('churnr.process')
 
-FEATURES = ['skip_ratio', 'secs_played']
-FEATURES_IAT = ['iat'] # intertimestep features
-FEATURES_SUM = ['sum_secs_played']
-FEATURES_COUNT = ['total_streams']
+FEATURES = ['secs_played', 'secs_played_userplaylist', 'secs_played_usercollection', 'secs_played_catalog', 'secs_played_editorialplaylist', 'secs_played_radio', 'secs_played_mix', 'secs_played_soundsof', 'secs_played_personalizedplaylist', 'secs_played_charts', 'secs_played_unknown', 'secs_played_running', 'iat']
+FEATURES_SUM = ['sum_secs_played', 'sum_secs_played_userplaylist', 'sum_secs_played_usercollection', 'sum_secs_played_catalog', 'sum_secs_played_editorialplaylist', 'sum_secs_played_radio', 'sum_secs_played_mix', 'sum_secs_played_soundsof', 'sum_secs_played_personalizedplaylist', 'sum_secs_played_charts', 'sum_secs_played_unknown', 'sum_secs_played_running']
+FEATURES_COUNT = ['skip_ratio', 'unique_top_types', 'total_streams', 'total_streams_userplaylist', 'total_streams_usercollection', 'total_streams_catalog', 'total_streams_editorialplaylist', 'total_streams_radio', 'total_streams_mix', 'total_streams_soundsof', 'total_streams_personalizedplaylist', 'total_streams_charts', 'total_streams_unknown', 'total_streams_running']
 
-FEATURES_ALL = FEATURES + FEATURES_IAT + FEATURES_SUM + FEATURES_COUNT
+FEATURES_ALL = FEATURES + FEATURES_SUM + FEATURES_COUNT
 
 def main(exppath, experiment, dsname):
     """ Process the data in a format suitable for training """
@@ -49,11 +48,15 @@ def main(exppath, experiment, dsname):
             ds.location = 'EU'
             ds.create()
 
-        features_table = ds.table(name='features_{}_{}_{}'.format(conf['experiment'], conf['dsname'], conf['enddate']))
-        users_table = ds.table(name='users_{}_{}_{}'.format(conf['experiment'], conf['dsname'], conf['enddate']))
+        features_table = ds.table(name='features_{}_{}_n'.format(conf['experiment'], conf['dsname']))
+        features_table_e = ds.table(name='features_{}_{}_e'.format(conf['experiment'], conf['dsname']))
+        users_table = ds.table(name='users_{}_{}'.format(conf['experiment'], conf['dsname']))
+
+        if features_table.exists():
+            features_table.delete()
 
         # normalize feature values
-        features_table, jobs = normalize_features(features_table, ds, client, conf)
+        features_table, jobs = normalize_features(features_table, features_table_e, ds, client, conf)
         wait_for_jobs(jobs)
 
         # aggregate the rows into one per user with all its timesteps
@@ -71,7 +74,7 @@ def main(exppath, experiment, dsname):
         # export to gcs
         tables = [train_features_table, train_us_features_table, test_features_table, val_features_table]
         jobs = dump_features_to_gcs(tables, gspath, conf['project'], client)
-        wait_for_jobs(jobs)
+        #wait_for_jobs(jobs)
 
         logger.info('Data processing of dataset {} done!'.format(dsname))
 
@@ -80,7 +83,7 @@ def main(exppath, experiment, dsname):
         raise e
 
 
-def normalize_features(ftable, ds, client, conf):
+def normalize_features(ftable, ftable_e, ds, client, conf):
     """ Normalize the feature tables with a zero mean and unit variance """
     logger.info('Normalizing features...')
 
@@ -88,13 +91,15 @@ def normalize_features(ftable, ds, client, conf):
     select = ''
     select_union = ''
     for f in FEATURES_ALL:
-        select_with += 'AVG({feat}) AS {feat}_avg, STDDEV_POP({feat}) AS {feat}_stddev,'.format(feat=f)
-        select += '( ({feat} - {feat}_avg ) / {feat}_stddev ) AS {feat},'.format(feat=f)
-        select_union += '{feat},'.format(feat=f if f != 'sum_secs_played' else '( ({feat} - (SELECT {feat}_avg FROM avgs_stdvs)) / (SELECT {feat}_stddev FROM avgs_stdvs) ) AS {feat}'.format(feat=f))
-
-    nftable = ds.table(name='features_{}_{}_n_{}'.format(conf['experiment'], conf['dsname'], conf['enddate']))
-    if nftable.exists():
-        nftable.delete()
+        if f in FEATURES:
+            select_with += 'AVG({feat}) AS {feat}_avg, STDDEV_POP({feat}) AS {feat}_stddev, AVG({feat}_std) AS {feat}_std_avg, STDDEV_POP({feat}_std) AS {feat}_std_stddev,'.format(feat=f)
+            select += '( ({feat} - {feat}_avg ) / {feat}_stddev ) AS {feat}, ( ({feat}_std - {feat}_std_avg ) / {feat}_std_stddev ) AS {feat}_std,'.format(feat=f)
+            select_union += '{feat}, {feat}_std,'.format(feat=f)
+        else:
+            select_with += 'AVG({feat}) AS {feat}_avg, STDDEV_POP({feat}) AS {feat}_stddev,'.format(feat=f)
+            select += '( ({feat} - {feat}_avg ) / {feat}_stddev ) AS {feat},'.format(feat=f)
+            #select_union += '{feat},'.format(feat=f if f not in FEATURES_SUM else '( ({feat} - {feat}_avg ) / {feat}_stddev ) AS {feat}'.format(feat=f))
+            select_union += '{feat},'.format(feat=f)
 
     query = """\
      WITH
@@ -123,30 +128,29 @@ def normalize_features(ftable, ds, client, conf):
        avgs_stdvs
      WHERE
          backfill = TRUE
-    """.format(select_with=select_with, select=select, select_union=select_union, table=ftable.name, project=conf['project'], dataset=ds.name)
+    """.format(select_with=select_with, select=select, select_union=select_union, table=ftable_e.name, project=conf['project'], dataset=ds.name)
 
     jobname = 'features_norm_job_' + str(uuid.uuid4())
     job = client.run_async_query(jobname, query)
-    job.destination = nftable
+    job.destination = ftable
     job.allow_large_results = True
     job.write_disposition = 'WRITE_TRUNCATE'
     job.use_legacy_sql = False
     job.begin()
 
-    return nftable, [job]
+    return ftable, [job]
 
 
 def aggregate_features(ftable, utable, ds, client, conf):
     """ """
     logger.info('Aggregating features...')
 
-    agftable = ds.table(name='features_{}_{}_a_{}'.format(conf['experiment'], conf['dsname'], conf['enddate']))
-    if agftable.exists():
-        agftable.delete()
-
     select = ''
     for f in FEATURES_ALL:
-        select += 'ARRAY_AGG(n.{feat}) as {feat},'.format(feat=f)
+        if f in FEATURES:
+            select += 'ARRAY_AGG(n.{feat}) as {feat}, ARRAY_AGG(n.{feat}_std) as {feat}_std,'.format(feat=f)
+        else:
+            select += 'ARRAY_AGG(n.{feat}) as {feat},'.format(feat=f)
 
     query = """
         SELECT
@@ -166,13 +170,13 @@ def aggregate_features(ftable, utable, ds, client, conf):
 
     jobname = 'features_agg_job_' + str(uuid.uuid4())
     job = client.run_async_query(jobname, query)
-    job.destination = agftable
+    job.destination = ftable
     job.allow_large_results = True
     job.write_disposition = 'WRITE_TRUNCATE'
     job.use_legacy_sql = False
     job.begin()
 
-    return agftable, [job]
+    return ftable, [job]
 
 
 def train_test_val_split(ftable, ds, client, conf):
@@ -182,7 +186,7 @@ def train_test_val_split(ftable, ds, client, conf):
     share = conf['testsize']
     jobs = []
 
-    testft = ds.table(name='features_{}_{}_te_{}'.format(conf['experiment'], conf['dsname'], conf['enddate']))
+    testft = ds.table(name='features_{}_{}_te'.format(conf['experiment'], conf['dsname']))
     if testft.exists():
         testft.delete()
 
@@ -206,7 +210,7 @@ def train_test_val_split(ftable, ds, client, conf):
 
     jobs.append(job)
 
-    valft = ds.table(name='features_{}_{}_val_{}'.format(conf['experiment'], conf['dsname'], conf['enddate']))
+    valft = ds.table(name='features_{}_{}_val'.format(conf['experiment'], conf['dsname']))
     if valft.exists():
         valft.delete()
 
@@ -230,7 +234,7 @@ def train_test_val_split(ftable, ds, client, conf):
 
     jobs.append(job)
 
-    trft = ds.table(name='features_{}_{}_tr_{}'.format(conf['experiment'], conf['dsname'], conf['enddate']))
+    trft = ds.table(name='features_{}_{}_tr'.format(conf['experiment'], conf['dsname']))
     if trft.exists():
         trft.delete()
 
@@ -262,7 +266,7 @@ def undersample_features(ftable, ds, client, conf):
     logger.info('Undersampling...')
     share = conf['retainedshare']
 
-    usft = ds.table(name='features_{}_{}_trus_{}'.format(conf['experiment'], conf['dsname'], conf['enddate']))
+    usft = ds.table(name='features_{}_{}_trus'.format(conf['experiment'], conf['dsname']))
     if usft.exists():
         usft.delete()
 

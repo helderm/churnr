@@ -57,6 +57,14 @@ def main(exppath, experiment, dsname):
         if features_table.exists():
             features_table.delete()
 
+        if dsname != '56_30d':
+            if features_table_p.exists():
+                features_table_p.delete()
+
+            features_table_p_in = ds.table(name='features_{}_56_30d_p'.format(conf['experiment']))
+            features_table_p, jobs = filter_time_windows(features_table_p, features_table_p_in, ds, client, conf)
+            wait_for_jobs(jobs)
+
         # calculate all inter timesteps features
         features_table, jobs = fetch_intertimestep_features(features_table, features_table_p, ds, client, conf)
         wait_for_jobs(jobs)
@@ -90,8 +98,37 @@ def main(exppath, experiment, dsname):
         raise e
 
 
+def filter_time_windows(ftable, ftable_in, ds, client, conf):
+    totaldays = conf['obsdays'] + conf['preddays']
+
+    enddate = dt.datetime.strptime(conf['enddate']+'060000', '%Y%m%d%H%M%S')
+    totaldays = conf['obsdays'] + conf['preddays']
+
+    startdate = enddate - dt.timedelta(days=totaldays)
+    starttime = get_utctimestamp(startdate)
+    endtime = get_utctimestamp(enddate)
+
+    query = """ \
+        SELECT
+            *
+        FROM
+            `{project}.{dataset}.{table}`
+        where timestampp >= {starttime} and timestampp <= {endtime}
+    """.format(project=conf['project'], dataset=ds.name, table=ftable_in.name, starttime=starttime, endtime=endtime)
+
+    jobname = 'features_filterobs_job_' + str(uuid.uuid4())
+    job = client.run_async_query(jobname, query)
+    job.destination = ftable
+    job.allow_large_results = True
+    job.use_legacy_sql = False
+    job.write_disposition = 'WRITE_TRUNCATE'
+    job.begin()
+
+    return ftable, [job]
+
+
 def fetch_features(ftable_raw, ds, client, conf):
-    """ Fetch the features for each user session, splsum_secs_playeding into timesplits """
+    """ Fetch the features for each user session, spliting into timesplits """
 
     totaldays = conf['obsdays'] + conf['preddays']
     timesplits = conf['timesplits']
@@ -245,13 +282,14 @@ def fetch_features(ftable_raw, ds, client, conf):
 
             currtimeslot_start += int(math.ceil(SECS_IN_DAY / timesplits))
 
-        #if (i+1) % 2 == 0:
-        #    wait_for_jobs(jobs)
-        #    jobs = []
+        if (i+1) % 15 == 0:
+            wait_for_jobs(jobs)
+            jobs = []
 
         currdate = currdate - dt.timedelta(days=1)
 
-    tsl = sorted(tsl)[:-(conf['preddays']*conf['timesplits'])]
+    # return the timesplits that will be used for training
+    tsl = sorted(tsl)[:-((conf['actdays']+conf['preddays'])*conf['timesplits'])]
     return features_tables, jobs, tsl
 
 
@@ -325,6 +363,9 @@ def backfill_missing_users(users_table, features_table, timesplits, ds, client, 
         select_query += '0 as {feat},'.format(feat=f)
 
     for f in FEATURES_SUM:
+        select_query += '0 as {feat},'.format(feat=f)
+
+    """for f in FEATURES_SUM:
         if f == 'sum_secs_played_userplaylist':
             select_query += 'ifnull(MAX(countt*max_prev_sum_secs_played_userplaylist),0) as {feat},'.format(feat=f)
         elif f == 'sum_secs_played_usercollection':
@@ -349,7 +390,7 @@ def backfill_missing_users(users_table, features_table, timesplits, ds, client, 
             select_query += 'ifnull(MAX(countt*max_prev_sum_secs_played_running),0) as {feat},'.format(feat=f)
         else:
             select_query += 'ifnull(MAX(countt*max_prev_sum_secs_played),0) as {feat},'.format(feat=f)
-
+    """
     logger.info('Backfilling features...')
     for i, ts in enumerate(timesplits):
         query = """
@@ -359,22 +400,8 @@ def backfill_missing_users(users_table, features_table, timesplits, ds, client, 
               CAST({timesplit} as INT64) as time,
               TRUE as backfill
 	    FROM
-              (SELECT us.user_id,
-                COUNTIF(ft.time <= {timesplit}) OVER (PARTITION BY ft.user_id ORDER BY ft.time ROWS BETWEEN 1 PRECEDING AND 1 PRECEDING) as countt,
-                MAX(ft.sum_secs_played) OVER (PARTITION BY ft.user_id ORDER BY ft.time ROWS BETWEEN 1 PRECEDING and 1 PRECEDING) as max_prev_sum_secs_played,
-                MAX(ft.sum_secs_played_userplaylist) OVER (PARTITION BY ft.user_id ORDER BY ft.time ROWS BETWEEN 1 PRECEDING and 1 PRECEDING) as max_prev_sum_secs_played_userplaylist,
-                MAX(ft.sum_secs_played_catalog) OVER (PARTITION BY ft.user_id ORDER BY ft.time ROWS BETWEEN 1 PRECEDING and 1 PRECEDING) as max_prev_sum_secs_played_catalog,
-                MAX(ft.sum_secs_played_editorialplaylist) OVER (PARTITION BY ft.user_id ORDER BY ft.time ROWS BETWEEN 1 PRECEDING and 1 PRECEDING) as max_prev_sum_secs_played_editorialplaylist,
-                MAX(ft.sum_secs_played_radio) OVER (PARTITION BY ft.user_id ORDER BY ft.time ROWS BETWEEN 1 PRECEDING and 1 PRECEDING) as max_prev_sum_secs_played_radio,
-                MAX(ft.sum_secs_played_mix) OVER (PARTITION BY ft.user_id ORDER BY ft.time ROWS BETWEEN 1 PRECEDING and 1 PRECEDING) as max_prev_sum_secs_played_mix,
-                MAX(ft.sum_secs_played_soundsof) OVER (PARTITION BY ft.user_id ORDER BY ft.time ROWS BETWEEN 1 PRECEDING and 1 PRECEDING) as max_prev_sum_secs_played_soundsof,
-                MAX(ft.sum_secs_played_personalizedplaylist) OVER (PARTITION BY ft.user_id ORDER BY ft.time ROWS BETWEEN 1 PRECEDING and 1 PRECEDING) as max_prev_sum_secs_played_personalizedplaylist,
-                MAX(ft.sum_secs_played_charts) OVER (PARTITION BY ft.user_id ORDER BY ft.time ROWS BETWEEN 1 PRECEDING and 1 PRECEDING) as max_prev_sum_secs_played_charts,
-                MAX(ft.sum_secs_played_unknown) OVER (PARTITION BY ft.user_id ORDER BY ft.time ROWS BETWEEN 1 PRECEDING and 1 PRECEDING) as max_prev_sum_secs_played_unknown,
-                MAX(ft.sum_secs_played_running) OVER (PARTITION BY ft.user_id ORDER BY ft.time ROWS BETWEEN 1 PRECEDING and 1 PRECEDING) as max_prev_sum_secs_played_running,
-                MAX(ft.sum_secs_played_usercollection) OVER (PARTITION BY ft.user_id ORDER BY ft.time ROWS BETWEEN 1 PRECEDING and 1 PRECEDING) as max_prev_sum_secs_played_usercollection
-               FROM `{project}.{dataset}.{utable}` us JOIN
-                 `{project}.{dataset}.{ftable}` ft ON us.user_id=ft.user_id
+              (SELECT us.user_id
+               FROM `{project}.{dataset}.{utable}` us
 	       WHERE
 		us.user_id NOT IN (
 		  SELECT
@@ -397,7 +424,7 @@ def backfill_missing_users(users_table, features_table, timesplits, ds, client, 
 
         jobs.append(job)
 
-        if (i+1) % 15 == 0:
+        if (i+1) % 2 == 0:
             wait_for_jobs(jobs)
             jobs = []
 

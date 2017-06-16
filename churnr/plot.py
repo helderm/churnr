@@ -179,7 +179,7 @@ def main(exppath, experiment, plotname):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='ROC curve plotter')
-    parser.add_argument('--exppath', default='../experiments.json', help='Path to the experiments json file')
+    parser.add_argument('--exppath', default='./experiments.json', help='Path to the experiments json file')
     parser.add_argument('--experiment', default='temporal_static', help='Name of the experiment being performed')
     parser.add_argument('--plotname', default='line', help='Name of the plot')
 

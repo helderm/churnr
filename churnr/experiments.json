@@ -2,25 +2,77 @@
     "temporal_static": {
         "datasets": {
             "global": { 
-                "obsdays": 56, 
+                "obsdays": 59, 
                 "preddays": 30,
-                "actdays": 5,
+                "actdays": 3,
                 "gsoutput": "gs://helder/churnr/data/", 
                 "timesplits": 3, 
-                "shareusers": 0.02, 
-                "enddate": "20170502", 
-                "dataset": "helder", 
+                "shareusers": 0.05, 
+                "enddate": "20170529", 
+                "dataset": "helderm", 
                 "project": "user-lifecycle", 
                 "rawpath": "/Users/helderm/Documents/churnr/data/raw", 
                 "procpath":"/Users/helderm/Documents/churnr/data/processed", 
-                "testsize": 0.005
+                "testsize": 0.1,
+                "valsize": 0.1,
+                "retainedshare": 1
             },
-            "session_56_30d_bl" : {}
+            "56_30d" : {}
         },
         "models":{
             "global": {
                 "modelpath": "/Users/helderm/Documents/churnr/models",
-                "classbalance": 1.0
+                "classbalance": 1.0,
+                "dimred": 0
+            },
+            "lr": {
+                "prettyname": "Logistic Regression"
+            },
+            "abdt": {
+                "prettyname": "AdaBoost DT"
+            },
+            "lstm": {
+                "prettyname": "LSTM"
+            },
+            "rf": {
+                "prettyname": "Random Forest"
+            }
+        },
+        "plots":{
+            "global": {
+                "plotpath": "/Users/helderm/Documents/churnr/plots",
+                "dslabel": 0
+            },
+            "roc": {},
+            "precrec": {},
+            "confusion": {}
+        }
+    },
+    "temporal_static_small": {
+        "datasets": {
+            "global": { 
+                "obsdays": 59, 
+                "preddays": 30,
+                "actdays": 3,
+                "gsoutput": "gs://helder/churnr/data/", 
+                "timesplits": 3, 
+                "shareusers": 0.02, 
+                "enddate": "20170530", 
+                "dataset": "helderm", 
+                "project": "user-lifecycle", 
+                "rawpath": "/Users/helderm/Documents/churnr/data/raw", 
+                "procpath":"/Users/helderm/Documents/churnr/data/processed", 
+                "testsize": 0.1,
+                "valsize": 0.1,
+                "retainedshare": 1
+            },
+            "56_30d" : {}
+        },
+        "models":{
+            "global": {
+                "modelpath": "/Users/helderm/Documents/churnr/models",
+                "classbalance": 1.0,
+                "dimred": 0
             },
             "lr": {
                 "prettyname": "Logistic Regression"
@@ -52,54 +104,57 @@
         "datasets": {
             "global": {
                 "preddays": 30,
-                "actdays": 5,
+                "actdays": 3,
                 "gsoutput": "gs://helder/churnr/data/",
                 "timesplits": 3,
-                "shareusers": 0.02,
-                "enddate": "20170502",
-                "dataset": "helder",
+                "shareusers": 0.05,
+                "enddate": "20170529",
+                "dataset": "helderm",
                 "project": "user-lifecycle",
                 "rawpath": "/Users/helderm/Documents/churnr/data/raw",
                 "procpath":"/Users/helderm/Documents/churnr/data/processed",
-                "testsize": 0.005
+                "testsize": 0.1,
+                "valsize": 0.1,
+                "retainedshare": 1
             },
-            "session_7_30d" :  {
-                 "obsdays": 7,
+            "7_30d" :  {
+                 "obsdays": 10,
                  "prettyname": "7"
             },
-            "session_14_30d" :  {
-                 "obsdays": 14,
+            "14_30d" :  {
+                 "obsdays": 17,
                  "prettyname": "14"
             },
-            "session_21_30d" :  {
-                 "obsdays": 21,
+            "21_30d" :  {
+                 "obsdays": 24,
                  "prettyname": "21"
             },
-            "session_28_30d" :  {
-                 "obsdays": 28,
+            "28_30d" :  {
+                 "obsdays": 31,
                  "prettyname": "28"
             },
-            "session_35_30d" :  {
-                 "obsdays": 35,
+            "35_30d" :  {
+                 "obsdays": 38,
                  "prettyname": "35"
             },
-            "session_42_30d" :  {
-                 "obsdays": 42,
+            "42_30d" :  {
+                 "obsdays": 45,
                  "prettyname": "42"
             },
-            "session_49_30d" :  {
-                 "obsdays": 49,
+            "49_30d" :  {
+                 "obsdays": 52,
                  "prettyname": "49"
             },
-            "session_56_30d_bl" :  {
-                 "obsdays": 56,
+            "56_30d" :  {
+                 "obsdays": 59,
                  "prettyname": "56"
             }
         },
         "models":{
             "global": {
                 "modelpath": "/Users/helderm/Documents/churnr/models",
-                "classbalance": 1.0
+                "classbalance": 1.0,
+                "dimred": 0
             },
             "lstm": {}
         },
@@ -119,52 +174,45 @@
    "pred_window": {
         "datasets": {
             "global": {
-                "obsdays": 56,
-                "actdays": 5,
+                "obsdays": 59,
+                "actdays": 3,
                 "gsoutput": "gs://helder/churnr/data/",
                 "timesplits": 3,
-                "shareusers": 0.02,
-                "dataset": "helder",
+                "shareusers": 0.05,
+                "dataset": "helderm",
                 "project": "user-lifecycle",
                 "rawpath": "/Users/helderm/Documents/churnr/data/raw",
                 "procpath":"/Users/helderm/Documents/churnr/data/processed",
-                "testsize": 0.005
+                "testsize": 0.1,
+                "valsize": 0.1,
+                "retainedshare": 1
             },
-            "session_56_1d" :  {
-                 "preddays": 1,
-                 "enddate": "20170403",
-                 "prettyname": "1"
-            },
-            "session_56_6d" :  {
-                 "preddays": 6,
-                 "enddate": "20170408",
+            "56_7d" :  {
+                 "preddays": 7,
+                 "enddate": "20170506",
                  "prettyname": "7"
             },
-            "session_56_12d" :  {
-                 "preddays": 12,
-                 "enddate": "20170414",
-                 "prettyname": "13"
+            "56_14d" :  {
+                 "preddays": 14,
+                 "enddate": "20170513",
+                 "prettyname": "14"
             },
-            "session_56_18d" :  {
-                 "preddays": 18,
-                 "enddate": "20170420",
-                 "prettyname": 18
+            "56_21d" :  {
+                 "preddays": 21,
+                 "enddate": "20170520",
+                 "prettyname": 21
             },
-            "session_56_24d" :  {
-                 "preddays": 24,
-                 "enddate": "20170426",
-                 "prettyname": "24"
-            },
-            "session_56_30d_bl" :  {
-                 "preddays": 30,
-                 "enddate": "20170502",
-                 "prettyname": "30"
+            "56_28d" :  {
+                 "preddays": 28,
+                 "enddate": "20170527",
+                 "prettyname": "28"
             }
         },
         "models":{
             "global": {
                 "modelpath": "/Users/helderm/Documents/churnr/models",
-                "classbalance": 1.0
+                "classbalance": 1.0,
+                "dimred": 0
             },
             "lstm": {}
         },
@@ -189,26 +237,26 @@
                 "gsoutput": "gs://helder/churnr/data/", 
                 "timesplits": 3, 
                 "shareusers": 0.01, 
-                "enddate": "yesterday", 
-                "dataset": "helder", 
+                "enddate": "20170507", 
+                "dataset": "helderm", 
                 "project": "user-lifecycle", 
                 "rawpath": "/Users/helderm/Documents/churnr/data/raw", 
                 "procpath":"/Users/helderm/Documents/churnr/data/processed", 
                 "testsize": 0.1,
-                "preddays": 3,
-                "actdays": 2
+                "valsize": 0.1,
+                "preddays": 7,
+                "actdays": 1,
+                "retainedshare": 1
             },
-            "session_6_3d":  {
-                "obsdays": 6 
-            },
-            "session_3_3d":  {
-                "obsdays": 3 
+            "14_7d":  {
+                "obsdays": 14 
             }
         },
         "models":{
             "global": {
                 "modelpath": "/Users/helderm/Documents/churnr/models",
-                "classbalance": 1.0
+                "classbalance": 1.0,
+                "dimred": 3
             },
             "lr": {
                 "prettyname": "Logistic Regression"
@@ -216,9 +264,10 @@
             "rf": {
                 "prettyname": "Random Forest"
             },
-            "gnb": {
-                "prettyname": "Gaussian Naive Bayes"
+            "lstm": {
+                "prettyname": "LSTM"
             }
+
         },
         "plots":{
             "global": {
@@ -234,20 +283,23 @@
     "class_balance": {
         "datasets": {
             "global": {
-                "preddays": 56,
+                "preddays": 59,
                 "obsdays": 30,
-                "actdays": 5,
+                "actdays": 3,
                 "gsoutput": "gs://helder/churnr/data/",
                 "timesplits": 3,
-                "shareusers": 0.02,
-                "enddate": "20170502",
+                "shareusers": 0.05,
+                "enddate": "20170529",
                 "dataset": "helder",
                 "project": "user-lifecycle",
                 "rawpath": "/Users/helderm/Documents/churnr/data/raw",
                 "procpath":"/Users/helderm/Documents/churnr/data/processed",
-                "testsize": 0.005
+                "testsize": 0.1,
+                "valsize": 0.1,
+                "retainedshare": 1
+
             },
-            "session_56_30d_bl": { }
+            "56_30d": { }
         },
         "models": {
             "global": {
@@ -300,7 +352,57 @@
             "line": {
                 "xlabel": "Share of churners (%)",
                 "title": "Class ratio"
-            }
+            },
+            "confusion": {}
         }
-   }
+   },
+   "dim_reduction": {
+        "datasets": {
+            "global": { 
+                "obsdays": 59, 
+                "preddays": 30,
+                "actdays": 3,
+                "gsoutput": "gs://helder/churnr/data/", 
+                "timesplits": 3, 
+                "shareusers": 0.05, 
+                "enddate": "20170529", 
+                "dataset": "helderm", 
+                "project": "user-lifecycle", 
+                "rawpath": "/Users/helderm/Documents/churnr/data/raw", 
+                "procpath":"/Users/helderm/Documents/churnr/data/processed", 
+                "testsize": 0.1,
+                "valsize": 0.1,
+                "retainedshare": 1
+            },
+            "56_30d" : {}
+        },
+        "models":{
+            "global": {
+                "modelpath": "/Users/helderm/Documents/churnr/models",
+                "classbalance": 1.0,
+                "dimred": 3
+            },
+            "lr": {
+                "prettyname": "Logistic Regression"
+            },
+            "abdt": {
+                "prettyname": "AdaBoost DT"
+            },
+            "lstm": {
+                "prettyname": "LSTM"
+            },
+            "rf": {
+                "prettyname": "Random Forest"
+            }
+        },
+        "plots":{
+            "global": {
+                "plotpath": "/Users/helderm/Documents/churnr/plots",
+                "dslabel": 0
+            },
+            "roc": {},
+            "precrec": {},
+            "confusion": {}
+        }
+    }
 }

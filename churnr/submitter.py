@@ -63,6 +63,9 @@ def main():
     parser.add_argument('--exppath', default=exppath, help='Path to the experiments json file')
     parser.add_argument('--experiment', default='temporal_static', help='Name of the experiment being performed')
     parser.add_argument('--stages', default=['extract','process','train', 'plot'], help='Stages that will be executed', nargs='*')
+    parser.add_argument('--models', default=[], help='Model that will be trained', nargs='*')
+    parser.add_argument('--datasets', default=[], help='Datasets that will be processed', nargs='*')
+
     parser.add_argument('--debug', default=False, help='Debug flag that sped up some stages', action='store_true')
 
     args = parser.parse_args()

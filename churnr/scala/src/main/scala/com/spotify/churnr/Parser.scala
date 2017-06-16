@@ -28,8 +28,11 @@ object Parser {
   @BigQueryType.fromTable("helderm.features_coolexp_14_7d_s")
   class Coolexp_14_7d
 
-  @BigQueryType.fromTable("helderm.features_temporal_static_60_30d_s")
-  class TemporalStatic_60_30d
+  @BigQueryType.fromTable("helderm.features_temporal_static_56_30d_s")
+  class TemporalStatic_56_30d
+
+  @BigQueryType.fromTable("helderm.features_temporal_static_small_56_30d_s")
+  class TemporalStaticSmall_56_30d
 
   @BigQueryType.toTable
   case class Result(user_id: String, timestampp: Long, skipped:Boolean, secs_played: Long, play_context_decrypted: String,
@@ -62,8 +65,18 @@ object Parser {
           kv._6.getOrElse(new ContentType("", TopType.Unknown)).subType.toString, kv._7.getOrElse(null),
           kv._8.getOrElse(999.9), kv._9.getOrElse(999.9), kv._10.getOrElse(null)))
         .saveAsTypedBigQuery(args("output"), WRITE_TRUNCATE, CREATE_IF_NEEDED)
-    } else if (args("output").endsWith("temporal_static_60_30d_p")) {
-      sc.typedBigQuery[TemporalStatic_60_30d]()
+    } else if (args("output").endsWith("temporal_static_56_30d_p")) {
+      sc.typedBigQuery[TemporalStatic_56_30d]()
+        .map(r => (r.user_id, r.timestampp, r.skipped, r.secs_played, r.play_context_decrypted,
+          PlayContextParser.parse(r.play_context_decrypted.getOrElse(null)),
+          r.platform, r.latitude, r.longitude, r.client_type))
+        .map(kv => Result(kv._1.getOrElse(null), kv._2.getOrElse(0L), kv._3.getOrElse(false), kv._4.getOrElse(0L),
+          kv._5.getOrElse(null), kv._6.getOrElse(new ContentType("", TopType.Unknown)).topType.toString,
+          kv._6.getOrElse(new ContentType("", TopType.Unknown)).subType.toString, kv._7.getOrElse(null),
+          kv._8.getOrElse(999.9), kv._9.getOrElse(999.9), kv._10.getOrElse(null)))
+        .saveAsTypedBigQuery(args("output"), WRITE_TRUNCATE, CREATE_IF_NEEDED)
+    } else if (args("output").endsWith("temporal_static_small_56_30d_p")) {
+      sc.typedBigQuery[TemporalStaticSmall_56_30d]()
         .map(r => (r.user_id, r.timestampp, r.skipped, r.secs_played, r.play_context_decrypted,
           PlayContextParser.parse(r.play_context_decrypted.getOrElse(null)),
           r.platform, r.latitude, r.longitude, r.client_type))

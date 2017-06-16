@@ -9,7 +9,7 @@ PROJECT_NAME = churnr
 PYTHON_INTERPRETER = python
 IS_ANACONDA=$(shell python -c "import sys;t=str('anaconda' in sys.version.lower() or 'continuum' in sys.version.lower());sys.stdout.write(t)")
 #VERSION=$(shell grep "__version__" churnr/__init__.py | sed 's/[^0-9.]*\([0-9.]*\).*/\1/') 
-VERSION=0.6.0
+VERSION=1.0.0
 NOW=`date +"%Y%m%d_%H%M%S"`
 
 EXP=coolexp
@@ -24,8 +24,8 @@ reqs: test_environment
 
 ## Make Dataset
 data: package
-	gcloud compute copy-files dist/churnr-0.6.0.tar.gz  helder-gpu-1:~/churnr --project "deep-learning-1216" --zone "us-central1-b"
-	gcloud compute ssh helder-gpu-1 --project "deep-learning-1216" --zone "us-central1-b" -- -n -f 'rm -fr ~/venv ; virtualenv ~/venv ; source ~/venv/bin/activate ; pip install ~/churnr/churnr-0.6.0.tar.gz; nohup churnr --experiment $(EXP) --stages sample parse extract > ~/job.log 2>&1 &'
+	gcloud compute copy-files dist/churnr-$(VERSION).tar.gz  helder-gpu-1:~/churnr --project "deep-learning-1216" --zone "us-central1-b"
+	gcloud compute ssh helder-gpu-1 --project "deep-learning-1216" --zone "us-central1-b" -- -n -f 'rm -fr ~/venv > ~/job.log 2>&1; virtualenv ~/venv > ~/job.log 2>&1; source ~/venv/bin/activate > ~/job.log 2>&1; pip install ~/churnr/churnr-$(VERSION).tar.gz > ~/job.log 2>&1; nohup churnr --experiment $(EXP) --stages process > ~/job.log 2>&1 &'
 
 ## Delete all compiled Python files
 clean:
@@ -45,11 +45,12 @@ upload:
 
 ## Download Data from GCS
 download:
-	gsutil -m cp -r gs://helder/churnr/data/* data/proce
+	mkdir -p models/$(EXP)
+	gsutil -m cp -n -r gs://helder/churnr/$(EXP)/* models/$(EXP)
 
 ## Submit a training job to CloudML
 submit: package
-	gcloud ml-engine jobs submit training helderm_$(EXP)_$(NOW) --config config.yaml --job-dir gs://helder/churnr/ --runtime-version 1.0 --module-name churnr.submitter --region us-east1 --packages dist/churnr-$(VERSION).tar.gz --project user-lifecycle -- --experiment $(EXP) --stages train
+	gcloud ml-engine jobs submit training helderm_$(EXP)_28d_$(NOW) --config config.yaml --job-dir gs://helder/churnr/ --runtime-version 1.0 --module-name churnr.submitter --region us-east1 --packages dist/churnr-$(VERSION).tar.gz,libs/imbalanced-learn-0.3.0.dev0.tar.gz --project user-lifecycle -- --experiment $(EXP) --stages train --datasets 56_28d
 
 ## Set up python interpreter environment
 env:
