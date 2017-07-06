@@ -1,4 +1,4 @@
-\begin{thebibliography}{30}
+\begin{thebibliography}{64}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -66,14 +66,174 @@ David~R Cox.
 \newblock \emph{Journal of the Royal Statistical Society. Series B
   (Methodological)}, pages 215--242, 1958.
 
-\bibitem[Burez and {Van den Poel}(2009)]{Burez2009}
-J.~Burez and D.~{Van den Poel}.
-\newblock {Handling class imbalance in customer churn prediction}.
-\newblock \emph{Expert Systems with Applications}, 36\penalty0 (3 PART
-  1):\penalty0 4626--4636, 2009.
+\bibitem[Pudipeddi et~al.(2014)Pudipeddi, Akoglu, and Tong]{Pudipeddi2014}
+Jagat Pudipeddi, Leman Akoglu, and Hanghang Tong.
+\newblock {User Churn in Focused Question Answering Sites: Characterizations
+  and Prediction}.
+\newblock pages 469--474, 2014.
+
+\bibitem[Ballings and {Van Den Poel}(2012)]{Ballings2012}
+Michel Ballings and Dirk {Van Den Poel}.
+\newblock {Customer event history for churn prediction: How long is long
+  enough?}
+\newblock \emph{Expert Systems with Applications}, 39\penalty0 (18):\penalty0
+  13517--13522, 2012.
 \newblock ISSN 09574174.
-\newblock \doi{10.1016/j.eswa.2008.05.027}.
-\newblock URL \url{http://dx.doi.org/10.1016/j.eswa.2008.05.027}.
+\newblock \doi{10.1016/j.eswa.2012.07.006}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.eswa.2012.07.006}.
+
+\bibitem[Breiman et~al.(1984)Breiman, Friedman, Stone, and
+  Olshen]{breiman1984classification}
+Leo Breiman, Jerome Friedman, Charles~J Stone, and Richard~A Olshen.
+\newblock \emph{Classification and regression trees}.
+\newblock CRC press, 1984.
+
+\bibitem[Breiman(2001)]{breiman2001random}
+Leo Breiman.
+\newblock Random forests.
+\newblock \emph{Machine learning}, 45\penalty0 (1):\penalty0 5--32, 2001.
+
+\bibitem[Coussement and De~Bock(2013)]{coussement2013customer}
+Kristof Coussement and Koen~W De~Bock.
+\newblock Customer churn prediction in the online gambling industry: The
+  beneficial effect of ensemble learning.
+\newblock \emph{Journal of Business Research}, 66\penalty0 (9):\penalty0
+  1629--1636, 2013.
+
+\bibitem[Burez and Van~den Poel(2008)]{burez2008separating}
+Jonathan Burez and Dirk Van~den Poel.
+\newblock Separating financial from commercial customer churn: A modeling step
+  towards resolving the conflict between the sales and credit department.
+\newblock \emph{Expert Systems with Applications}, 35\penalty0 (1):\penalty0
+  497--514, 2008.
+
+\bibitem[Glorot and Bengio(2010)]{glorot2010understanding}
+Xavier Glorot and Yoshua Bengio.
+\newblock Understanding the difficulty of training deep feedforward neural
+  networks.
+\newblock In \emph{Proceedings of the Thirteenth International Conference on
+  Artificial Intelligence and Statistics}, pages 249--256, 2010.
+
+\bibitem[Saxe et~al.(2013)Saxe, McClelland, and Ganguli]{saxe2013exact}
+Andrew~M Saxe, James~L McClelland, and Surya Ganguli.
+\newblock Exact solutions to the nonlinear dynamics of learning in deep linear
+  neural networks.
+\newblock \emph{arXiv preprint arXiv:1312.6120}, 2013.
+
+\bibitem[Phaisangittisagul(2016)]{phaisangittisagul2016analysis}
+Ekachai Phaisangittisagul.
+\newblock An analysis of the regularization between l2 and dropout in single
+  hidden layer neural network.
+\newblock In \emph{Intelligent Systems, Modelling and Simulation (ISMS), 2016
+  7th International Conference on}, pages 174--179. IEEE, 2016.
+
+\bibitem[Srivastava et~al.(2014)Srivastava, Hinton, Krizhevsky, Sutskever, and
+  Salakhutdinov]{srivastava2014dropout}
+Nitish Srivastava, Geoffrey~E Hinton, Alex Krizhevsky, Ilya Sutskever, and
+  Ruslan Salakhutdinov.
+\newblock Dropout: a simple way to prevent neural networks from overfitting.
+\newblock \emph{Journal of Machine Learning Research}, 15\penalty0
+  (1):\penalty0 1929--1958, 2014.
+
+\bibitem[Zaremba et~al.(2014)Zaremba, Sutskever, and
+  Vinyals]{zaremba2014recurrent}
+Wojciech Zaremba, Ilya Sutskever, and Oriol Vinyals.
+\newblock Recurrent neural network regularization.
+\newblock \emph{arXiv preprint arXiv:1409.2329}, 2014.
+
+\bibitem[Duchi et~al.(2011)Duchi, Hazan, and Singer]{duchi2011adaptive}
+John Duchi, Elad Hazan, and Yoram Singer.
+\newblock Adaptive subgradient methods for online learning and stochastic
+  optimization.
+\newblock \emph{Journal of Machine Learning Research}, 12\penalty0
+  (Jul):\penalty0 2121--2159, 2011.
+
+\bibitem[Zeiler(2012)]{zeiler2012adadelta}
+Matthew~D Zeiler.
+\newblock Adadelta: an adaptive learning rate method.
+\newblock \emph{arXiv preprint arXiv:1212.5701}, 2012.
+
+\bibitem[Hinton(2012)]{hinton2012rmsprop}
+Geoffrey Hinton.
+\newblock Neural networks for machine learning.
+\newblock
+  \url{http://www.cs.toronto.edu/~tijmen/csc321/slides/lecture_slides_lec6.pdf},
+  2012.
+\newblock [Online; accessed 01-July-2017].
+
+\bibitem[Werbos(1990)]{werbos1990backpropagation}
+Paul~J Werbos.
+\newblock Backpropagation through time: what it does and how to do it.
+\newblock \emph{Proceedings of the IEEE}, 78\penalty0 (10):\penalty0
+  1550--1560, 1990.
+
+\bibitem[Bengio et~al.(1994)Bengio, Simard, and Frasconi]{bengio1994learning}
+Yoshua Bengio, Patrice Simard, and Paolo Frasconi.
+\newblock Learning long-term dependencies with gradient descent is difficult.
+\newblock \emph{IEEE transactions on neural networks}, 5\penalty0 (2):\penalty0
+  157--166, 1994.
+
+\bibitem[Hochreiter et~al.(2001)Hochreiter, Bengio, Frasconi, Schmidhuber,
+  et~al.]{hochreiter2001gradient}
+Sepp Hochreiter, Yoshua Bengio, Paolo Frasconi, J{\"u}rgen Schmidhuber, et~al.
+\newblock Gradient flow in recurrent nets: the difficulty of learning long-term
+  dependencies, 2001.
+
+\bibitem[Williams and Zipser(1989)]{williams1989learning}
+Ronald~J Williams and David Zipser.
+\newblock A learning algorithm for continually running fully recurrent neural
+  networks.
+\newblock \emph{Neural computation}, 1\penalty0 (2):\penalty0 270--280, 1989.
+
+\bibitem[Hochreiter and Schmidhuber(1997)]{hochreiter1997long}
+Sepp Hochreiter and J{\"u}rgen Schmidhuber.
+\newblock Long short-term memory.
+\newblock \emph{Neural computation}, 9\penalty0 (8):\penalty0 1735--1780, 1997.
+
+\bibitem[Gers et~al.(1999)Gers, Schmidhuber, and Cummins]{gers1999learning}
+Felix~A Gers, J{\"u}rgen Schmidhuber, and Fred Cummins.
+\newblock Learning to forget: Continual prediction with lstm.
+\newblock 1999.
+
+\bibitem[Graves et~al.(2013)Graves, Mohamed, and Hinton]{graves2013speech}
+Alex Graves, Abdel-rahman Mohamed, and Geoffrey Hinton.
+\newblock Speech recognition with deep recurrent neural networks.
+\newblock In \emph{Acoustics, speech and signal processing (icassp), 2013 ieee
+  international conference on}, pages 6645--6649. IEEE, 2013.
+
+\bibitem[Yue-Hei~Ng et~al.(2015)Yue-Hei~Ng, Hausknecht, Vijayanarasimhan,
+  Vinyals, Monga, and Toderici]{yue2015beyond}
+Joe Yue-Hei~Ng, Matthew Hausknecht, Sudheendra Vijayanarasimhan, Oriol Vinyals,
+  Rajat Monga, and George Toderici.
+\newblock Beyond short snippets: Deep networks for video classification.
+\newblock In \emph{Proceedings of the IEEE conference on computer vision and
+  pattern recognition}, pages 4694--4702, 2015.
+
+\bibitem[Zaremba and Sutskever(2014)]{zaremba2014learning}
+Wojciech Zaremba and Ilya Sutskever.
+\newblock Learning to execute.
+\newblock \emph{arXiv preprint arXiv:1410.4615}, 2014.
+
+\bibitem[Sutskever et~al.(2014)Sutskever, Vinyals, and
+  Le]{sutskever2014sequence}
+Ilya Sutskever, Oriol Vinyals, and Quoc~V Le.
+\newblock Sequence to sequence learning with neural networks.
+\newblock In \emph{Advances in neural information processing systems}, pages
+  3104--3112, 2014.
+
+\bibitem[Pearson(1901)]{pearson1901liii}
+Karl Pearson.
+\newblock Liii. on lines and planes of closest fit to systems of points in
+  space.
+\newblock \emph{The London, Edinburgh, and Dublin Philosophical Magazine and
+  Journal of Science}, 2\penalty0 (11):\penalty0 559--572, 1901.
+
+\bibitem[Hotelling(1933)]{hotelling1933analysis}
+Harold Hotelling.
+\newblock Analysis of a complex of statistical variables into principal
+  components.
+\newblock \emph{Journal of educational psychology}, 24\penalty0 (6):\penalty0
+  417, 1933.
 
 \bibitem[Borbora et~al.(2011)Borbora, Srivastava, Hsu, and Iams]{Borbora2011}
 Zoheb Borbora, Jaideep Srivastava, Kuo~Wei Hsu, and Dmitri~Wil Iams.
@@ -91,12 +251,6 @@ Julian Runge, Peng Gao, Florent Garcin, and Boi Faltings.
   2014.
 \newblock ISSN 23254289.
 \newblock \doi{10.1109/CIG.2014.6932875}.
-
-\bibitem[Pudipeddi et~al.(2014)Pudipeddi, Akoglu, and Tong]{Pudipeddi2014}
-Jagat Pudipeddi, Leman Akoglu, and Hanghang Tong.
-\newblock {User Churn in Focused Question Answering Sites: Characterizations
-  and Prediction}.
-\newblock pages 469--474, 2014.
 
 \bibitem[Dror et~al.(2012)Dror, Pelleg, Rokhlenko, and Szpektor]{Dror2012}
 Gideon Dror, Dan Pelleg, Oleg Rokhlenko, and Idan Szpektor.
@@ -116,16 +270,6 @@ Anders Drachen, Eric~Thurston Lundquist, Yungjen Kung, Pranav~Simha Rao, Diego
 \newblock Rapid prediction of player retention in free-to-play mobile games.
 \newblock \emph{CoRR}, abs/1607.03202, 2016.
 
-\bibitem[Ballings and {Van Den Poel}(2012)]{Ballings2012}
-Michel Ballings and Dirk {Van Den Poel}.
-\newblock {Customer event history for churn prediction: How long is long
-  enough?}
-\newblock \emph{Expert Systems with Applications}, 39\penalty0 (18):\penalty0
-  13517--13522, 2012.
-\newblock ISSN 09574174.
-\newblock \doi{10.1016/j.eswa.2012.07.006}.
-\newblock URL \url{http://dx.doi.org/10.1016/j.eswa.2012.07.006}.
-
 \bibitem[Wangperawong et~al.(2016)Wangperawong, Brun, Laudy, and
   Pavasuthipaisit]{Wangperawong2016}
 Artit Wangperawong, Cyrille Brun, Dr.~Olav Laudy, and Rujikorn Pavasuthipaisit.
@@ -139,6 +283,15 @@ Kristof Coussement and Dirk Van~den Poel.
   vector machines while comparing two parameter-selection techniques.
 \newblock \emph{Expert systems with applications}, 34\penalty0 (1):\penalty0
   313--327, 2008.
+
+\bibitem[Burez and {Van den Poel}(2009)]{Burez2009}
+J.~Burez and D.~{Van den Poel}.
+\newblock {Handling class imbalance in customer churn prediction}.
+\newblock \emph{Expert Systems with Applications}, 36\penalty0 (3 PART
+  1):\penalty0 4626--4636, 2009.
+\newblock ISSN 09574174.
+\newblock \doi{10.1016/j.eswa.2008.05.027}.
+\newblock URL \url{http://dx.doi.org/10.1016/j.eswa.2008.05.027}.
 
 \bibitem[Auon et~al.(2015)Auon, Kazmi, Malhotra, Vig, Agarwal, and
   Shroff]{Auon2015}
@@ -156,20 +309,6 @@ Martin Längkvist, Lars Karlsson, and Amy Loutfi.
   2014.
 \newblock ISSN 01678655.
 \newblock \doi{10.1016/j.patrec.2014.01.008}.
-
-\bibitem[Graves et~al.(2013)Graves, Mohamed, and Hinton]{graves2013speech}
-Alex Graves, Abdel-rahman Mohamed, and Geoffrey Hinton.
-\newblock Speech recognition with deep recurrent neural networks.
-\newblock In \emph{Acoustics, speech and signal processing (icassp), 2013 ieee
-  international conference on}, pages 6645--6649. IEEE, 2013.
-
-\bibitem[Yue-Hei~Ng et~al.(2015)Yue-Hei~Ng, Hausknecht, Vijayanarasimhan,
-  Vinyals, Monga, and Toderici]{yue2015beyond}
-Joe Yue-Hei~Ng, Matthew Hausknecht, Sudheendra Vijayanarasimhan, Oriol Vinyals,
-  Rajat Monga, and George Toderici.
-\newblock Beyond short snippets: Deep networks for video classification.
-\newblock In \emph{Proceedings of the IEEE conference on computer vision and
-  pattern recognition}, pages 4694--4702, 2015.
 
 \bibitem[Tax et~al.(2016)Tax, Verenich, {La Rosa}, and Dumas]{Tax2016}
 Niek Tax, Ilya Verenich, Marcello {La Rosa}, and Marlon Dumas.
@@ -207,6 +346,12 @@ Boxun Zhang, Gunnar Kreitz, Marcus Isaksson, Javier Ubillos, Guido Urdaneta,
 \newblock URL
   \url{http://ieeexplore.ieee.org/lpdocs/epic03/wrapper.htm?arnumber=6566767}.
 
+\bibitem[Sato(2012)]{sato2012inside}
+Kazunori Sato.
+\newblock An inside look at google bigquery.
+\newblock \emph{White paper, URL: https://cloud. google.
+  com/files/BigQueryTechnicalWP. pdf}, 2012.
+
 \bibitem[LeCun et~al.(2012)LeCun, Bottou, Orr, and
   M{\"u}ller]{lecun2012efficient}
 Yann~A LeCun, L{\'e}on Bottou, Genevieve~B Orr, and Klaus-Robert M{\"u}ller.
@@ -214,9 +359,90 @@ Yann~A LeCun, L{\'e}on Bottou, Genevieve~B Orr, and Klaus-Robert M{\"u}ller.
 \newblock In \emph{Neural networks: Tricks of the trade}, pages 9--48.
   Springer, 2012.
 
+\bibitem[Spotify(2015)]{scio}
+Spotify.
+\newblock {Scio: A Scala API for Apache Beam and Google Cloud Dataflow}.
+\newblock \url{http://spotify.github.io/scio}, 2015.
+\newblock [Online; accessed 01-July-2017].
+
 \bibitem[Ling and Li(1998)]{ling1998data}
 Charles~X Ling and Chenghui Li.
 \newblock Data mining for direct marketing: Problems and solutions.
 \newblock In \emph{KDD}, volume~98, pages 73--79, 1998.
+
+\bibitem[Stone(1974)]{stone1974cross}
+Mervyn Stone.
+\newblock Cross-validatory choice and assessment of statistical predictions.
+\newblock \emph{Journal of the royal statistical society. Series B
+  (Methodological)}, pages 111--147, 1974.
+
+\bibitem[Cawley and Talbot(2010)]{cawley2010over}
+Gavin~C Cawley and Nicola~LC Talbot.
+\newblock On over-fitting in model selection and subsequent selection bias in
+  performance evaluation.
+\newblock \emph{Journal of Machine Learning Research}, 11\penalty0
+  (Jul):\penalty0 2079--2107, 2010.
+
+\bibitem[Larochelle et~al.(2007)Larochelle, Erhan, Courville, Bergstra, and
+  Bengio]{larochelle2007empirical}
+Hugo Larochelle, Dumitru Erhan, Aaron Courville, James Bergstra, and Yoshua
+  Bengio.
+\newblock An empirical evaluation of deep architectures on problems with many
+  factors of variation.
+\newblock In \emph{Proceedings of the 24th international conference on Machine
+  learning}, pages 473--480. ACM, 2007.
+
+\bibitem[Bergstra and Bengio(2012)]{bergstra2012random}
+James Bergstra and Yoshua Bengio.
+\newblock Random search for hyper-parameter optimization.
+\newblock \emph{Journal of Machine Learning Research}, 13\penalty0
+  (Feb):\penalty0 281--305, 2012.
+
+\bibitem[Bulu{\c{c}} et~al.(2009)Bulu{\c{c}}, Fineman, Frigo, Gilbert, and
+  Leiserson]{bulucc2009parallel}
+Aydin Bulu{\c{c}}, Jeremy~T Fineman, Matteo Frigo, John~R Gilbert, and
+  Charles~E Leiserson.
+\newblock Parallel sparse matrix-vector and matrix-transpose-vector
+  multiplication using compressed sparse blocks.
+\newblock In \emph{Proceedings of the twenty-first annual symposium on
+  Parallelism in algorithms and architectures}, pages 233--244. ACM, 2009.
+
+\bibitem[Adams(1995)]{adams1995hitchhikers}
+Douglas Adams.
+\newblock The hitchhiker's guide to the galaxy.
+\newblock 1995.
+
+\bibitem[Chollet et~al.(2015)]{chollet2015keras}
+Fran\c{c}ois Chollet et~al.
+\newblock Keras.
+\newblock \url{https://github.com/fchollet/keras}, 2015.
+\newblock [Online; accessed 01-July-2017].
+
+\bibitem[Abadi et~al.(2016)Abadi, Agarwal, Barham, Brevdo, Chen, Citro,
+  Corrado, Davis, Dean, Devin, et~al.]{abadi2016tensorflow}
+Mart{\'\i}n Abadi, Ashish Agarwal, Paul Barham, Eugene Brevdo, Zhifeng Chen,
+  Craig Citro, Greg~S Corrado, Andy Davis, Jeffrey Dean, Matthieu Devin, et~al.
+\newblock Tensorflow: Large-scale machine learning on heterogeneous distributed
+  systems.
+\newblock \emph{arXiv preprint arXiv:1603.04467}, 2016.
+
+\bibitem[Pedregosa et~al.(2011)Pedregosa, Varoquaux, Gramfort, Michel, Thirion,
+  Grisel, Blondel, Prettenhofer, Weiss, Dubourg, Vanderplas, Passos,
+  Cournapeau, Brucher, Perrot, and Duchesnay]{scikit-learn}
+F.~Pedregosa, G.~Varoquaux, A.~Gramfort, V.~Michel, B.~Thirion, O.~Grisel,
+  M.~Blondel, P.~Prettenhofer, R.~Weiss, V.~Dubourg, J.~Vanderplas, A.~Passos,
+  D.~Cournapeau, M.~Brucher, M.~Perrot, and E.~Duchesnay.
+\newblock Scikit-learn: Machine learning in {P}ython.
+\newblock \emph{Journal of Machine Learning Research}, 12:\penalty0 2825--2830,
+  2011.
+
+\bibitem[Lema{{\^i}}tre et~al.(2017)Lema{{\^i}}tre, Nogueira, and
+  Aridas]{lema2017imbalanced}
+Guillaume Lema{{\^i}}tre, Fernando Nogueira, and Christos~K. Aridas.
+\newblock Imbalanced-learn: A python toolbox to tackle the curse of imbalanced
+  datasets in machine learning.
+\newblock \emph{Journal of Machine Learning Research}, 18\penalty0
+  (17):\penalty0 1--5, 2017.
+\newblock URL \url{http://jmlr.org/papers/v18/16-365.html}.
 
 \end{thebibliography}

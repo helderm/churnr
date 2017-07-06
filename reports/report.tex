@@ -7,6 +7,13 @@
 \usepackage{hyperref}
 \usepackage{todo}
 \usepackage{subcaption}
+\usepackage{float}
+\usepackage[chapter]{algorithm}
+\usepackage{algorithmic}
+\usepackage{amsmath}
+\usepackage{multirow}
+\usepackage{booktabs}
+\usepackage{adjustbox}
 
 % remove this if you are using XeLaTeX or LuaLaTeX
 \usepackage[utf8]{inputenc}
@@ -65,16 +72,16 @@
 	
 	The rise of streaming services has in recent years revolutionized the way customers get access to digital content. The traditional model of media ownership, even though it still represents a significant share of revenue, is continuously losing ground to a new right-of-access model where users get access to content ether by paying a monthly subscription or by being exposed to advertisement. The customer base of said services is steadily growing, and with it the amount data collected tracking how they interact with the provided digital media. This information is of high-value to any provider who expects improve the user experience, increase its total number of clients and also avoid losing the current ones to the competition.
 	
-	One application of a data set like this that has received attention from the industry is to predict the clients that are more likely to leave the service in the near future and anticipate it by performing a set of actions with the goal of avoiding it from happening. It is predicted that there is a set of features which are highly correlated with their desire of abandoning the application, and thus a model could be trained to leverage this information and classify users based on the probability of that event occurring. Such models are called \emph{churn predictors}, and will be a central subject on this thesis project. Another interest will be to evaluate which set of features among the available ones actually correlates with churn and extract from it actionable insights that can be suggested to the provider as a form of improvement to their application, a task made harder by the extremely large number of attributes that is commonly captured.
+	One application of a data set based on historical user behaviour that has received attention from the industry is to predict the clients that are more likely to leave the service in the near future and anticipate it by performing a set of actions with the goal of avoiding it from happening. It is predicted that there is a set of features which are highly correlated with their desire of abandoning the application, and thus a model could be trained to leverage this information and classify users based on the probability of that event occurring. Such models are called \emph{churn predictors}, and will be a central subject on this thesis project. Another interest will be to evaluate which set of features among the available ones actually correlates with churn and extract from it actionable insights that can be suggested to the provider as a form of improvement to their application, a task made harder by the extremely large number of attributes that is commonly captured.
 	 
-	\Todo{Add temporal features paragraph}
+	Predicting whether a user is going to leave the service provider in the near future is a subject that has received some attention in the academia in the past few years \Todo{add ref}. Most of them share however a common trait regarding the way the data is represented before being used for model training: the data is split into \emph{time windows} spanning different time ranges (usually one after the other), where an older time window used for model training and a time window closer to the present date to verify whether the observed user is going to churn or not. The common approach for dealing with the user data that is by nature sequential is by aggregating the feature values into a single representation for each user, normally through a mean function. Even though this approach simplifies the task of training the predictor models, latent temporal factors hidden in the sequence that could prove useful for increasing the performance of models are inherently lost in this process. One of the hypothesis that is going to be explored in this project is if using the raw sequential data and also a predictor model that knows how to leverage this property, a significant performance gain can be achieved when comparing to a state-of-the-art baseline model.
 	 
 	The user behaviour data and the required computational resources were provided by \emph{Spotify}, a well known music streaming service that joined this project in a tutoring partnership with the student and the university. Creating a suitable data set for training our proposed models is also part of the project, and it was performed by first exploring the data at our disposal and identifying the features that highly correlates with churn. While the available data is mostly related to the music domain, the methodology of this project and the conclusions reached can also be extended to other domains like video streaming with minor modifications.
 	
 	
 	\section{Streaming services}
 
-	The last decade has witnessed an overwhelming increase in popularity in all kinds of streaming services around the globe. Applications like Netflix and Spotify have changed the industry by offering a legal and affordable way of accessing content through a subscription-like contract instead of the classical pay-by-content commonly used by traditional media providers. This change in business model has proven to be successful by the sheer amount of customers that the most popular service providers have nowadays. Netflix for instance has reported to its shareholders a user base of 93 million worldwide at the end of 2016 \citep{netflixsh}, while Spotify recently reached the amazing feat of 50 million paying subscribers, 20 million of that only in one year \citep{spotifypress}. Even though bureaucratic challenges like the dispute between the service providers and the labels regarding the value of licenses are still on debate, the adoption of this new model by consumers indicates no interest of going back to the old ways of getting access to digital content, like through physical or downloadable pay-by-content media.
+	The last decade has witnessed an overwhelming increase in popularity in all kinds of streaming services around the globe. Applications like Netflix and Spotify have changed the industry by offering a legal and affordable way of accessing content through a subscription-like contract instead of the classical pay-by-content commonly used by traditional media providers. This change in business model has proven to be successful by the sheer amount of customers that the most popular service providers have nowadays. Netflix for instance has reported to its shareholders a user base of 93 million worldwide at the end of 2016 \citep{netflixsh}, while Spotify recently reached the amazing feat of 50 millions paying subscribers, 20 millions of that only in one year \citep{spotifypress}. Even though bureaucratic challenges like the dispute between the service providers and the labels regarding the value of licenses are still on debate, the adoption of this new model by consumers indicates no interest of going back to the old ways of getting access to digital content, like through physical or downloadable pay-by-content media.
 
 	\begin{figure}[h]
     \centering
@@ -83,7 +90,7 @@
     \label{fig:ifpi-growth-report}
 \end{figure}
 
-	Music streaming follows this trend of growth on the latest economical reports. Over the five year period to 2015, the observed revenue from the industry grew four times to US \$2.89 billion as can be seen in Figure \ref{fig:ifpi-growth-report} from the IFPI organisation \citep{ifpi}. The increase in the number of paying subscribers is also of notice, seeing an increase from 8 to 68 million people over the same period. This new model also helped bring some countries where licensed music market was losing ground to piracy like China and Mexico, and it corresponds to around 20\% of the industry's revenue in the top five markets in the world. 
+	Music streaming follows this trend of growth on the latest economical reports. Over the five year period to 2015, the observed revenue from the industry grew four times to US \$2.89 billion as can be seen in Figure \ref{fig:ifpi-growth-report} from the IFPI organisation \citep{ifpi}. The increase in the number of paying subscribers is also of notice, seeing an increase from 8 to 68 millions people over the same period. This new model also helped bring some countries where licensed music market was losing ground to piracy like China and Mexico, and it corresponds to around 20\% of the industry's revenue in the top five markets in the world. 
 	
 	\section{Spotify and the growing competition}	
 	
@@ -94,7 +101,7 @@
     \label{fig:spotify-screenshot}
 \end{figure}
 		
-	Spotify is the top music streaming service globally in terms of number of users, totalling 100 million of which 50 million are Premium paid subscriptions \citep{spotifypress}. The content is delivered through applications available on several different operating systems like Windows, macOS and Linux, as well as devices like iOS and Android tablets and smartphones, an example is shown in Figure \ref{fig:spotify-screenshot}. Users may access over 30 million songs available in its catalog through two methods: a free membership where the client is exposed to advertisement, and a Premium paid subscription with additional features like offline downloads, increased music quality and unlimited number of song skips. Spotify also is well known for its music recommendation subsystems like Discover Weekly and Daily Mix that provides playlists tailored to each user based on their listening history. The service is available in most of Europe, as well as in Australia, New Zealand, most of the Americas and several Asian countries.	
+	Spotify is the top music streaming service globally in terms of number of users, totalling 100 millions of which 50 millions are Premium paid subscriptions \citep{spotifypress}. The content is delivered through applications available on several different operating systems like Windows, macOS and Linux, as well as devices like iOS and Android tablets and smartphones, an example is shown in Figure \ref{fig:spotify-screenshot}. Users may access over 30 millions songs available in its catalog through two methods: a free membership where the client is exposed to advertisement, and a Premium paid subscription with additional features like offline downloads, increased music quality and unlimited number of song skips. Spotify also is well known for its music recommendation subsystems like Discover Weekly and Daily Mix that provides playlists tailored to each user based on their listening history. The service is available in most of Europe, as well as in Australia, New Zealand, most of the Americas and several Asian countries.	
 	
 	The promise of growth in the area however has attracted well known brands to the dispute like Apple and Google, and their growth, while still not up to par with the top players, has been steady and may be significant in the following years \citep{ifpi}. The market is becoming saturated with competition, and any contender to the top position in the music streaming area must strive to keep its current user base at all costs. The loss of a customer, be it for the competition or not, is called in the industry as \emph{churn} and is commonly seen as a metric that should be minimized in a customer relations framework (CRM) of a service provider. For that goal, an important step is to identify prematurely the candidate churning customers and to leverage actions that may avoid them from leaving, and this is commonly achieved by making use of the wealth of historical information that digital providers have about their users. 
 	
@@ -102,15 +109,23 @@
 	
 	\emph{Churn prediction}, the task of identifying the most probable churning customers of a service provider, is an established topic in the literature and has seen a considerable amount of research specially on the mobile telecom industry \citep{Hassouna2015} \citep{Lu2014} \citep{Khan2015}.  Several classical techniques for predicting churn like decision trees and logistic regression have been used on recent work \citep{mahajan2015review}, however most of them make use of user behaviour data at a single point in time, normally the most recent one when the dataset was created. The user is commonly represented by summarizing or aggregating his behavioural feature values over a fixed time window, thus losing any latent sequential information that might be contained in the data set. This is a simplification that eases the burden of training a predictor model since the customer data is commonly high-dimensional and difficult to work with, nonetheless latent attributes, when used properly, have been shown to improve significantly a predictor's performance for industries like mobile telecom \citep{GurAli2014}.
     
-    Intuitively one can think that latent factors hidden in the temporal axis of the user behaviour data could yield a better prediction accuracy when comparing to a model which leverage a single and static point in time. For instance, a user that is gradually reducing its consumption of the service over time can be easily thought of a prospect churner. While this intuition is trivial to come up with, we are also interested in learning strong correlations between temporal aspects of the data and the churn rate which are not as clear to the eye. Our hypothesis is that making use of the properties hidden on user behaviour data over time, a churn rate predictor could improve its accuracy greatly when compared to methods which are static on time.
+    Intuitively one can think that latent factors hidden in the temporal axis of the user behaviour data could yield a better prediction accuracy when comparing to a model which leverage a single and static point in time. For instance, a user that is gradually reducing its consumption of the service over time can be easily thought of a prospect churner. While this intuition is trivial to come up with, we are also interested in learning strong correlations between temporal aspects of the data and the churn rate which are not as clear to the eye. Our hypothesis is that making use of the properties hidden on user behaviour data over time, a churn rate predictor could improve its accuracy greatly when compared to methods which are static on time. \Todo{Add this paragraph somewhere else maybe? It seems strange here}
     
 \section{User retention}    
     
 A churn rate predictor which can identify possible churners accurately is just a trigger on the user retention process that can span several different stages. One of these stages is to identify what actions can be taken by the service provider as to avoid the user abandoning the service. An important problem to solve beforehand is to identify which features of the data have a strong statistical correlation with the churn rate. With that information, the providers could for example set up automated actions as to influence the value on these features. Learning which are the most important features is also of relevance for the task of choosing what data to use for training the predictor models, since commonly service providers have a vast amount of data about the user but only a fraction of that is of importance for predicting churn: training models with a full dataset will commonly introduce error on the system and take a large amount of computing resources to train.
 	
-\section{Objective}	
+\section{Research Question}	
 	
-The goal of this project will be to research different models for churn prediction that can make use of the temporal aspect of user behaviour data at its fullest. Our hypothesis is that latent factors hidden on usage patterns may increase the accuracy of state-of-art predictors which considers only the state of the data at a single point in time. We shall experiment on different models that are known to perform well on time series data and compare their accuracy using different evaluation methods. Detecting possible churners, while important, does not improve user retention without an associated action performed by the service provider. To derive insights on what can done to improve this metric, a deep data exploration and feature analysis is also a goal of this project. Features shall be correlated to their influence on the churn rate, and feature selection techniques shall be researched and implemented in an attempt to reduce bias on the churn classifiers.    
+The goal of this project will be to research different models for churn prediction that can make use of the temporal aspect of user behaviour data at its fullest. Our hypothesis is that latent factors hidden on usage patterns may increase the accuracy of state-of-art predictors which considers only the state of the data at a single point in time. We shall experiment on different models that are known to perform well on time series data and compare their accuracy using different evaluation methods. Detecting possible churners, while important, does not improve user retention without an associated action performed by the service provider. To derive insights on what can done to improve this metric, a deep data exploration and feature analysis is also a goal of this project. Features shall be correlated to their influence on the churn rate, and feature selection techniques shall be researched and implemented in an attempt to reduce bias on the churn classifiers.  \Todo{Improve the research question section, add some bullet points}  
+
+\section{Ethical and Social Aspects}
+
+This thesis... \Todo{Write ethics section}
+
+\section{Outline}
+
+This thesis is organized as follows... \Todo{Write the Outline}
 
 \chapter{Background}
 
@@ -128,32 +143,78 @@ To build up the exact definition of what churn is for Spotify, some concepts nee
 \newtheorem{definition}{Definition}
 
 \begin{definition}
-A \emph{session} is defined as the time period the user is engaged into the application, be it to stream music or to navigate through the available content. A session starts when a user interaction trigger is captured (eg. a button click), and the session ends when no such trigger is captured and no continuous activity is being performed (eg. listening to a song) for at least 15 minutes.
+The action of a user listening to a song through any of the provider's supported platforms is called a \emph{stream}, also sometimes called \emph{playback}. A stream is initiated when the user starts listening to a song (either by explicitly selecting it through the application or passively by being the next song in a list), and the stream ends when the user listen to a song until it finishes, when he actively skips it by the press of a button, or other technical reasons.
 \end{definition}
 
-The session is the basic measurement of activity of the user on the service. It incorporates not only the user music streaming behavior but also his interactions with other features of the application like playlist creation and social interactions between other users. Since Spotify is mainly interested in evaluating the user based on its main feature of content streaming, other user interactions were deemed by the service provider as a weak predictor of churn. 
+The playback is the basic measurement of activity of the user on the service. It incorporates the user music streaming behavior, and it is also source of key metrics for the company's financial health. Since Spotify is mainly interested in evaluating the user based on its main feature of content streaming, other user interactions (eg. following another user or artist) are out of the scope for this project. 
 
 \begin{definition}
-The \emph{consumption time} of a user is the time within a session that he is streaming any service-provided content. A user session is considered \emph{active} if its consumption time is greater that zero, and \emph{inactive} otherwise.
+A user is considered to be \emph{active} during a time period if he possesses one or more streams of at least 30 seconds in length, and \emph{inactive} otherwise.
 \end{definition}
 
-Active and inactive sessions are more constrained definitions that better reflect the goals of the service provider. Even though there may be a highly engaged user that makes use of a wide range of features on the application, every session of his will be considered inactive if no content is streamed.
+The definition of an active user will be important during the sampling phase: there is no interesting information that can be gathered from customers that churned a long time before the first day of behaviour observation. More details about the sampling process will be thoroughly explored in \autoref{sec:sampling}.
 
-Before we arrive in the definition of churn, a brief introduction to time windows will be given to understand further concepts in this section. These definitions will be thoroughly explored on \autoref{chap:method}.
+Before we arrive in the definition of churn, a brief introduction to time windows will be given to understand further concepts in this section. These definitions will be thoroughly explored on \autoref{sec:timewindows}.
 
 \begin{definition}
-The \emph{observation window} is the time span used to observe user behavior and to train the predictor models. It is always followed by the \emph{prediction window} which is exclusively used to predict whether a user in the observation window is going to churn in the future or not. 
+The \emph{observation window} is the time span used to observe user behavior and to train the predictor models. It is always followed by the \emph{prediction window} which is exclusively used to predict whether a user in the observation window is going to churn in the future or not. The last few time steps of the observation period is called \emph{activity window}, and is mainly used for fetching user samples.
 \end{definition}
 
 \begin{definition}
-A user is defined to have \emph{churned} if he has at least one active session in the observation window and no active session in the prediction window.
+\label{def:churn}
+A user is defined to have \emph{churned} if he is active during the activity window and inactive during the prediction window. 
 \end{definition}
 
 Note that as mentioned before this definition is not concerned whether the user is a paying customer or not, but only if he is actually making use of the service. For example, a user may be subscribed to a Premium paid account and still be considered to have churned if no activity was registered in the prediction window. However, it should be noted that empirical observations by the service provider suggest that there is a significant behavioral difference between the two classes of users that will be taken into consideration when the experiments are performed. 
 
-\section{Feature Selection}
+\section{Time Series and Aggregated Data}
+\label{sec:timewindows}
 
-\Todo{add feature selection techniques (Information gain, L1-norm, Recursive Feature Elimination, Variance Threshold...)}
+In this section we introduce some concepts that explores the sequential nature of user data. Consider $\mathbf{x}_{nt}$ as the $D$-dimensional vector representing the features of user $n=1,...,N$ at time step $t = t_0,...,t_{\alpha+\beta}$, with $t$ being an equally spaced and discrete time interval. Now consider that the intervals are split into two sequential and non-overlapping time windows: an \emph{observation window} where $t = t_0,...,t_\alpha$ which is going to be used for observing user behavior, and a \emph{prediction window} where $t = t_{\alpha+1},...,t_{\alpha+\beta}$ used solely for predicting whether the user is going to churn in the future or not, with $\alpha$ and $\beta$ being the size of each of the respective windows. A third \emph{activity window} where $t=t_{\alpha-\gamma},...,t_\alpha$ overlaps with the last $\gamma$ time steps of the observation window and it is used for sampling active users. The time windows can be better seen in \autoref{fig:timewindows}.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.7\textwidth,keepaspectratio]{figures/timewindows.pdf}
+    \caption{The time windows}
+    \label{fig:timewindows}
+\end{figure}
+
+Being $\mathbf{x}_n$ a sampled user who is active in the activity window, $y_{n}$ is the variable specifying if customer $n$ has churned between time steps $t_{\alpha+1}$ and $t_{\alpha+\beta}$ of the prediction window, such as
+
+\begin{equation}
+y_n = \\ 
+\begin{cases}
+  \text{0 if user $n$ is active between $t_{\alpha+1}$ and $t_{\alpha+\beta}$} \\    
+  \text{1 otherwise}    
+\end{cases}
+\end{equation}
+
+which assigns one label per customer in our dataset. This definition follows business metrics originated from the service provider, where the counting of active users over a predetermined time span is one of the key metrics indicating business health. For instance, choosing a $\beta$ sized at the number of time periods over 30 days would yield whether the customer will be a monthly active user the following month after being observed for $\alpha$ time steps. 
+
+The literature on churn prediction commonly describes the user features as a single point over the whole observation period, ignoring the time component of the data by transforming it through an aggregation function like the mean. As to train our non-sequential predictor models, we need a similar representation of the data which summarizes all information that we posses of a user over time into a single $D$-dimensional vector. Following the works by \citep{GurAli2014}, we define a \emph{single period training data (SPTD)} as the dataset consisting of one observation per customer who is active during the sampling period. In this approach, the dataset is 
+
+\begin{equation}
+\text{SPTD}_{t_0 \rightarrow t_\alpha} = [\mathbf{X}_{t_0 \rightarrow t_\alpha}, \mathbf{y}]
+\end{equation}
+
+where $\mathbf{X}_{t_0\rightarrow t_\alpha}$ is a $N \times D$ matrix consisting of the constructed features $f(\mathbf{X})$, $f()$ is a feature aggregation function that maps all $\alpha$ user vectors over the observation window to a single one with the same number of $D$ features, and  $\mathbf{X}$ as the $N \times \alpha \times D$ matrix containing information about all users over the whole observation period. $\mathbf{y}$ is a $1 \times N$ column vector containing churn labels for all samples. 
+
+While the simple format of SPTD can be used for training most types of predictor models, it is unsuitable when the goal is to leverage the properties of the time component of the data since it is destroyed after the aggregation function. Thus, we define a \emph{multiple period training data (MPTD)} as
+
+\begin{equation}
+\text{MPTD} = \\
+\left [  
+  \begin{tabular}{c c}
+   $\mathbf{X}_{t_0}$   & \multirow{4}{*}{y} \\
+   $\mathbf{X}_{t_1}$ \\
+   ... \\
+  $\mathbf{X}_{t_\alpha}$ \\
+  \end{tabular}
+\right ]
+= [\mathbf{X}, \mathbf{y}]
+\end{equation}
+
+which contains a single representation of a user at each time step during the observation period.
 
 \section{Predictor Models}
 
@@ -161,10 +222,10 @@ Note that as mentioned before this definition is not concerned whether the user 
 
 Logistic regression is a linear regression model used to predict the probability of occurrence of a categorical variable, like the churning and non-churning labels. First developed by mathematician David Cox \citep{cox1958regression}, this technique has been used in wide range of domains like medical fields, marketing and economics \Todo{add refs}, and is as of today one of the most used models for predicting the churn rate of customers on the telecom industry \citep{mahajan2015review}. Despite its name, logistic regression is used mostly as a classification algorithm, since its output is a probability score that together with a threshold can map the input to one of the supplied labels (churn and no-churn, for example).
 
-The premise of logistic regression is that the output variable $y$ can be modeled as a linear probability function dependent on a set of input feature values  $\bm{x} = [x_1, x_2, ..., x_n]$ through a set of equations that follows:
+The premise of logistic regression is that the output variable $y$ can be modeled as a linear probability function dependent on a set of input feature values  $\mathbf{x} = [x_1, x_2, ..., x_n]$ through a set of equations that follows:
 
 \begin{equation}
-p(y = 1|\bm{x}) = f(t)
+p(y = 1|\mathbf{x}) = f(t)
 \end{equation}
 
 \begin{equation}
@@ -172,86 +233,270 @@ f(t) = \frac{1}{(1+e^{-t})}
 \end{equation}
 
 \begin{equation}
-t = w_0 + w_1x_1 + ... + w_nx_n = \bm{w}^T\bm{x}
+t = w_0 + w_1x_1 + ... + w_nx_n = \mathbf{w}^T\mathbf{x}
 \end{equation}
 
-where $y$ is the true output variable that can take the values 0 or 1 in a binary classification problem. $t$ is a linear combination of the input $\bm{x}$ with a trainable weight vector $\bm{w}$. $f(t)$ is the logistic function that gives name to the model. This function has the property of "squashing" any real input to a value between 0 and 1, and thus it can be interpreted as a probability.
+where $y$ is the true output variable that can take the values 0 or 1 in a binary classification problem. $t$ is a linear combination of the input $\bm{x}$ with a trainable weight vector $\mathbf{w}$. $f(t)$ is the logistic function that gives name to the model. This function has the property of "squashing" any real input to a value between 0 and 1, and thus it can be interpreted as a probability. \Todo{Add logistic function}
 
-\Todo{improve LR description}
+The likelihood of the logistic regression function can be written as follows:
+
+\begin{equation}
+p(\mathbf{y}|\mathbf{w}) = \prod_{i=1}^{n}  p(y_i=1|\mathbf{x})^{y_i} (1-p(y_i=1|\mathbf{x}))^{1-y_i}
+\end{equation}
+
+An error function can be usually be defined by taking the negative logarithm of the likelihood function, which follows:
+
+\begin{equation}
+E(\mathbf{w}) = -\ln p(\mathbf{y}|\mathbf{w}) = - \sum_{i=0}^{n} y_i \ln p(y_i=1|\mathbf{w}) + (1-y_i) \ln (1 - p(y_i=1|\mathbf{w}))
+\end{equation}
+
+Thus, we can pose logistic regression as an optimization problem where the goal is to minimize the error function $E(\mathbf{w})$ 
+
+\begin{equation}
+\displaystyle{\min_w} E(\mathbf{w}) + R(\mathbf{w})
+\end{equation}
+
+where $R(\mathbf{w})$ is a regularization term, commonly either L1 or L2 norms.
+
+\subsection{Decision Trees}
+Decision trees are a class of learning algorithms where the prediction is accomplished by dividing the input space into a series of cuboid regions and then assigning a label (for example "retained" and "churned" for a classification problem) into each one of them. Although simple in nature, it is a widely used method in the in academia, also present in several different papers on churn prediction \citep{Pudipeddi2014}\citep{Hassouna2015} \citep{Ballings2012} \citep{Khan2015}. While there are several different frameworks for implementing a decision tree, this project will focus on the \emph{classification and regression trees (CART)} popularized by Breiman \emph{et al.} \citep{breiman1984classification}. \autoref{fig:dectree} shows an example a decision tree splitting a 2-dimensional input space.  
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\textwidth,keepaspectratio]{figures/dectree.pdf}
+    \caption{Visualization of a 2-dimensional input space being partitioned into 4 regions by a decision tree with its assigned binary labels in each region}
+    \label{fig:dectree}
+\end{figure}
+
+In this example, the first partition divides the input space into two regions by verifying whether the value for attribute $x_0$ is smaller or greater than $\theta_0$, being $\theta_0$ a parameter learned by the model during training. These two regions are independent after splitting, and thus can be further divided efficiently in parallel. For instance, the region $x_0 <= \theta_0$ is partitioned by comparing if the value of $x_1$ is smaller or greater than $\theta_1$, and since there are no more partitions in this subregion the labels can be assigned. The process is similarly repeated for the region  $x_0 > \theta_0$, where $\theta_2$ was chosen as the splitting point for attribute $x_1$.
+ 
+After the model is trained, it can be easily visualized as a binary tree where each partition corresponds to a node in the tree, and where the leaves contains the identifying labels, which can be seen in \autoref{fig:dectree_bin}. Whenever a new input vector $\mathbf{x}$ is fed to the model, traversing the tree starting from its root will yield a class label in one of its leaves by sequentially navigating through the set of if-else clauses contained at each one of the nodes.  
+ 
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.6\textwidth,keepaspectratio]{figures/dectree_bin.pdf}
+    \caption{Resulting binary tree corresponding to the partitioning performed in \autoref{fig:dectree}}
+    \label{fig:dectree_bin}
+\end{figure}
+ 
+The learning process of a decision tree corresponds to constructing a binary tree that minimizes the misclassification rate of its training data. That includes finding the optimal number of splits which will define the structure of the tree, and also the values for the splitting coefficients $\theta_i$. To understand how such a tree can be learned, consider a classification problem where $\mathbf{x}$ is a $D$-dimensional vector and $y$ its corresponding class label. The training data is composed of $N$ user vectors forming the $N \times D$ matrix $\mathbf{X} = \{\mathbf{x}_0, \mathbf{x}_1, ..., \mathbf{x}_N,\}$. A tree can be grown by starting at its root and adding nodes sequentially, greedily selecting an attribute and a value to partition the data that minimizes a predefined error function $H(\mathbf{X})$, which can be performed through an exhaustive search. The set of leaf nodes indexed by $\tau$ represent regions $\mathcal{R}_\tau$ where the prediction labels are assigned.
+
+When decision trees are used for classification, a popular cost function is the \emph{Gini coefficient}, a metric commonly used to measure the statistical dispersion of a population. Let $N_\tau$ be the total number of data points assigned to region $\mathcal{R}_\tau$,  the proportion $p_{\tau k}$ of data points in region $\mathcal{R}_\tau$ assigned to class $k = 0,...,K-1$ such as 
+
+\begin{equation}
+p_{\tau k} = \frac{1}{N_\tau} \sum_{\mathbf{x}_n \in \mathcal{R}_\tau} \mathcal{I}(y_n = k)
+\end{equation}
+ 
+ where $\mathcal{I}$ is the indicator function. The Gini coefficient can be defined as 
+ 
+ \begin{equation}
+ H(\mathbf{X}) = \sum_{k=0}^{K-1} p_{\tau k} (1-p_{\tau k})
+ \end{equation}
+ 
+which is minimized whether $p_{\tau k}=0$ or $p_{\tau k}=1$. The Gini coefficient favors grouping high proportions of data points that belong to a single class into each region. The splits are chosen to be the ones that minimize $H(\mathbf{X})$ at each node of the tree, which is why decision trees are considered "greedy" algorithms. The tree can be grown until the reduction of the associated error falls below a predetermined threshold. Empirical observations have shown that pruning back some nodes of the tree after the expansion has finished can improve the performance of the predictor.
+ 
+The decision tree algorithm posses a key property which is one of the reasons why it is so popular: the model can be easily interpreted. The ability to visualize the decision process of the predictor model as a binary tree linked together by a simple set of rules is of great value, and is sometimes deemed crucial in fields like medical science for example. However its largest drawback lies in the fact that decision trees are commonly tightly fitted to the data which they were trained on, and small changes in the input may yield radically different models. This problem, which is known in machine learning as high \emph{variance}, is one the reasons for the creation of the ensemble method in the following section.
+ 
+\subsection{Random Forests}
+
+Random forest is an algorithm mainly used for classification and regression which utilizes an ensemble method for prediction: by training several different and independent classifiers, the predicted class or value can be interpreted as the resulting majority vote from all learners, through a mode or mean function for classification and regression, respectively.
+
+Popularized by Breiman \citep{breiman2001random}, random forests have been used in several different domains, specially for the task of predicting user churn \citep{coussement2013customer} \citep{burez2008separating}. The main principle behind the method is that a group of "weak" learners can achieve a better performance when compared to a single "strong" learner, which can also be interpreted as an implementation of the "wisdow of the crowd". 
+
+In this context, a "weak" learner is a decision tree trained with a subset of the samples and features of the original data. No single tree has access to all input variables, however they predict by casting votes on a class, and the final prediction is the class label which has the majority of the votes.
+
+Each one of the trees is grown as follows:
+
+\begin{enumerate}
+\item For a dataset of size $N$, sample $N$ examples from the original dataset with replacement, also known as \emph{bootstraping}.
+\item For a dataset containing $M$ features, select $m<<M$ which are the number of features selected at random for building each tree.
+\item Grow every tree to its maximum extent, without any pruning.
+\end{enumerate}
+
+Suppose that we generate $M$ bootstrap data sets and use each one to train a decision tree $y_m(\mathbf{x})$ where $m=1,...,M$. For a classification problem, $y_m(\mathbf{x})$ outputs the most likely class label $k$, that is the highest $p(k|\mathbf{x})$, for every $k=1,...,K$. The final prediction of the ensemble can be defined as the majority vote of every classifier which is given by
+
+\begin{equation}
+y_\textit{RF}(\mathbf{x}) = \underset{k \in K}{\arg\max} \{y_m(\mathbf{x})\}
+\end{equation}
+
+\subsection{Recurrent Neural Networks}
+
+Recurrent neural networks (RNNs) are a class of artificial neural networks well suited for dealing with data which is sequential in nature. Traditional feed-forward neural networks assume that all input data points are independent of each other, however this can lead to spurious results if this assumption does not hold. For instance, predicting the next word in a text document is tightly correlated with the words that appeared before it. 
+
+Unlike feed-forward neural networks, RNNs allows connections between hidden units, more specifically between the units that are contiguous in time. Updates in a hidden unit in a time step depends on the values in the hidden unit immediately before, and so on until the start of the sequence. While this seems to be a trivial modification over the classical multilayer perceptron, an important property is obtained in the process: RNNs can in theory map the entire history of previous inputs to each output. 
+
+The memory structure that holds this historical data, hereby called \emph{state}, is the main engine that gives RNNs its predictive power. Consider $\mathbf{h}_t$ and $\mathbf{x}_t$ as the values of the state and input at time step $t$, respectively. The value of state $\mathbf{h}_t$ depends both on the current input $\mathbf{x}_t$ and also the previous state $\mathbf{h}_{t-1}$ as follows:
+
+\begin{equation}
+\mathbf{h}_t = \sigma(\mathbf{W}^{xh}\mathbf{x}_t + \mathbf{W}^{hh}\mathbf{h}_{t-1} + \mathbf{b}_h)
+\end{equation}
+
+where $\mathbf{W}^{xh}$ is the weight matrix connecting the input to the hidden units, $\mathbf{W}^{hh}$ the weights connecting states time steps $t$ and $t-1$, $b_h$ the bias vector for hidden unit $h$, and $\sigma()$ the activation function, commonly the sigmoid or the hyperbolic tangent. Values for state $h_{t-1}$ can be calculated in a similar fashion, until the initial state $h_0$ which is only dependent on the input. This recursive dependence means that an RNN can be "unrolled" through time as to better visualize the interactions between units of the network, which can be seen in \autoref{fig:rnn}.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.7\textwidth,keepaspectratio]{figures/rnn.pdf}
+    \caption{A recurrent neural network unfolded through time}
+    \label{fig:rnn}
+\end{figure}
+
+In a classification problem, the predicted output $\hat{\mathbf{y}_t}$ is a $K$-dimensional vector with the normalized probabilities of input $\mathbf{x}_t$ belonging to the classes $k=1,...,K$, which can be calculated through the following equation:
+
+\begin{equation}
+\hat{\mathbf{y}_t} = \phi(\mathbf{W}^{hy}\mathbf{h}_t + b_y)
+\end{equation}
+
+where $\mathbf{W}^{hy}$ are the weights connecting the hidden layer to the output, $\phi()$ the softmax function that normalizes its input into probability values, and $b_y$ the bias vector for the output layer. 
+
+\subsubsection{Loss function}
+
+To calculate how effective our prediction is comparing to true labels of the training data, a loss function $\mathcal{L}()$ that computes the distance between true values and the prediction is needed. A common function for a discrete classification problem is \emph{cross entropy} which calculates the amount of information needed to distinguish one distribution from the other, here the predictions $\hat{\mathbf{y}}$ and the true labels $\mathbf{y}$. The equation follows:
+
+\begin{equation}
+\mathcal{L}(\hat{\mathbf{Y}}, \mathbf{Y}) = - \sum_k \mathbf{y}_k \log \hat{\mathbf{y}}_k
+\end{equation}
+
+\subsubsection{Initializers}
+
+Any neural network requires a method to initialize its weight matrices $\mathbf{W}$. A common practice is set it to small random numbers centered around zero so the weights can independently learn patterns from the data, which is a better approach when compared to naively setting all values to zero. 
+
+Glorot and Bengio\citep{glorot2010understanding} proposed a method to initialize the weights which has widely adopted in academia, and it goes by the name of \emph{Xavier initialization}. In this method, the values are sampled from a uniform distribution such as
+
+\begin{equation}
+\mathbf{W} = \mathit{U}[-\frac{\sqrt{6}}{\sqrt{n_\text{in}+n_\text{out}}}, \frac{\sqrt{6}}{\sqrt{n_\text{in}+n_\text{out}}}] 
+\end{equation}
+
+where $n_\text{in}, n_\text{out}$ is the size of input and output layers, respectively. 
+
+Another method to initialize the weights was proposed by Saxe \emph{et al.}\citep{saxe2013exact} by choosing $\mathbf{W}$ to be a random orthogonal matrix such as 
+
+\begin{equation}
+\mathbf{W}^T\mathbf{W} = \mathbf{I}
+\end{equation}
+
+where $\mathbf{I}$ is the identity matrix. This is called \emph{orthogonal initialization}, and it is a commonly used method for initializing the weights of the recurrent state in a recurrent neural network.
+
+\subsubsection{Regularizers}
+
+A machine learning model is judged to be of good quality if it can generalize well to unseen data. When a model shows good performance during training but fails to achieve the same using test data, the model may have fit all its parameters perfectly to the training set instead of finding a function that explains the data well, a problem which is called \emph{overfitting}. 
+
+A common approach to avoid this complication is to add a term in the loss function that penalizes large values of parameters, which is called \emph{weight decay}. This method favors simplicity by avoiding models that overly complex, which can be considered an application of Occam's razor which states that "among competing hypotheses, the one with the fewest assumptions should be selected". A $L_2$-norm is a regularization that penalizes the parameters by adding the square of the magnitude of the weights to the loss function that we aim to minimize\citep{phaisangittisagul2016analysis}, as follows:
+
+\begin{equation}
+\mathcal{L}_r(\hat{\mathbf{Y}}, \mathbf{Y}) = \mathcal{L}(\hat{\mathbf{Y}}, \mathbf{Y}) + \lambda \sum_i |w_i|^2
+\end{equation}
+ 
+where $i$ iterates over all available parameters and $\lambda$ controls the fraction of the regularization term that will be added to the loss function.
+
+Another common approach is \emph{dropout}\citep{srivastava2014dropout}, which randomly drop hidden units along their connections during training. This technique acts as a regularization method by removing the units with a probability $p$, avoiding the weights of co-adapting too much. Recurrent neural networks however requires a special implementation of dropout as for it be effective, a topic fully explored by Zaremba and Sutskever\citep{zaremba2014recurrent}.
+
+\subsubsection{Optimizers}
+
+The learning process in an RNN involves finding the set of parameters $\mathbf{W}$ that minimizes the loss function $\mathcal{L}()$. This is accomplished by an \emph{optimizer}, an algorithm that iteratively applies small updates to the weights in the direction where loss function is minimal. A classic optimization algorithm is \emph{gradient descent}, which updates the parameters by computing the gradient of the cost function w.r.t the weights for the entire dataset and moving it in the opposite direction, such as
+
+\begin{equation}
+\mathbf{W} = \mathbf{W} - \eta \nabla_W \mathcal{L}(\mathbf{W}) 
+\end{equation}
+
+where $\eta$ is the learning rate that controls how much of the gradient will be applied to the weights and $\nabla_W \mathcal{L}$ the gradients. Reading the whole dataset to apply one update to the weights is commonly not feasible due to its computing resources requirements. A more popular approach is to apply updates by looking at a subset of the training samples instead, a process  called \emph{mini-batch gradient descent}.
+
+\begin{equation}
+\mathbf{W} = \mathbf{W} - \eta \nabla_W \mathcal{L}(\mathbf{W}; \mathbf{x}^{(i:i+n)},\mathbf{y}^{(i:i+n)}) 
+\end{equation}
+
+While mini-batch gradient descent is suitable when the dataset is too large to fit into the memory of a single machine, it has its own set of challenges to solve. First, choosing a proper value for the learning rate might be difficult: low values slows down greatly the convergence process, while large values makes the loss function fluctuate around the local minimum and sometimes even diverging from it. Also, a single learning rate regulates the updates of all parameters, not taking into consideration how sparse the data is and how frequent the features are. It is intuitive to think that weights applied to features that rarely ever are different than zero could have a larger update than the ones that are present in every sample.
+
+To address these problems, new optimizers have been recently introduced. \emph{Adagrad} \citep{duchi2011adaptive} is a gradient-based optimization algorithm that adapts the learning rate dynamically based on the frequency of the parameters. Instead of having a single global learning rate, Adagrad instead has a different learning rate for every parameter of the model, making it suitable for datasets that are sparse in nature. Adagrad updates the learning rate for every weight $w_i$ at time step $t$ by looking into the previous gradients that have been calculated for it, as follows
+
+\begin{equation}
+w_{i,t} = w_{i,t-1} - \frac{\eta}{\sqrt{\mathbf{G}_{ii, t-1} + \epsilon}} \nabla_w \mathcal{L}(w_{i,t-1})
+\end{equation}
+
+where $\mathbf{G}_{t-1}$ is a diagonal matrix containing the sum of squares of the gradients for parameter $w_i$ up until time step $t-1$, and $\epsilon$ a smoothing parameter.
+
+Another optimization algorithm that aims to smartly adjust the learning rate based on the parameters is called \emph{Adadelta}\citep{zeiler2012adadelta}, which is an extension of Adagrad that more efficiently makes use of the stored past gradients. Instead of storing every gradient into matrix $\mathbf{G}$, a fixed sized time window is set, which is used alongside a decaying average function over the past squared gradients in the window, such as
+
+\begin{equation}
+\begin{aligned}
+\mathbf{E}[g^2]_t &= \gamma \mathbf{E}[g^2]_{t-1} + (1-\gamma)g^2_t\\
+w_{i,t} &= w_{i,t-1} - \frac{\eta}{\sqrt{\mathbf{E}[g^2]_t + \epsilon}} \nabla_w \mathcal{L}(w_{i,t-1}) \\
+\end{aligned}
+\end{equation}
+
+where the running average $\mathbf{E}[g^2]_t$ depends on a fraction of the previous average and the current gradients. A similar unpublished approach that was developed independently and presented in a Coursera lecture by Hinton is \emph{RMSProp}\citep{hinton2012rmsprop}, which will also be used in this project. 
+
+But how are the gradients calculated in a recurrent neural network? This is accomplished through the \emph{backpropagation through time} (BPTT) algorithm introduced by Werbos \citep{werbos1990backpropagation}. The method is an extension of the standard backpropagation algorithm of feed-forward neural networks, where the gradient calculated at time step $t$ is propagated back to the previous time steps until the start of the sequence $t_0$. The reader is invited to refer to Werbos' paper for details of its implementation.
+
+\subsubsection{Vanishing and exploding gradients}
+
+Even though theoretically RNNs can be used to map input and output sequences of an arbitrary size, in practice learning from long-range dependencies poses a challenge that is difficult to overcome. This is due to a problem called \emph{vanishing and exploding gradients} explored by Bengio \emph{et al.} \citep{bengio1994learning} and extended by Hochreiter \emph{et al.} \citep{hochreiter2001gradient}. Neural networks learn by updating the parameters by a proportion of the gradient of the error function w.r.t the current weights, and this process can be made difficult either if the gradients go to zero (no learning at all) or explode to large numbers (missing the local optima at every turn). In RNNs and also other deep architectures, the top layers may fail to learn in an adequate pace since its update is backpropagated through the bottom layers by multiplying the intermediate gradients through the \emph{chain rule}. If those gradients are consistently between -1 and 1, which is the case of the most common activation functions, through the chained multiplication of the derivatives the weight update of previous layers will quickly approach zero. Other activation functions like the Rectified Linear Unit $max(0,x)$ may instead make the gradients increase rapidly due to its constant derivative of 1 w.r.t $x$ for every value greater than 0.
+
+Some solutions have been proposed to tackle this complication. A well-known variant of the learning algorithm of RNNs is the \emph{truncated backpropagation through time} (TBPTT) which aims to solve the exploding gradient problem for continuously running networks \citep{williams1989learning}. In it, one can set a maximum number of time steps alongside which error can be propagated. Using a small cutoff value would alleviate the problem of gradients increasing too fast, however at the cost of learning long-range dependencies. A more modern approach however carefully design the nodes as to avoid the vanishing and exploding gradients problem while also being able to learn from information hidden long back in the input sequence, which shall be explored in the following section.
 
 \subsection{Long Short-Term Memory}
 
-\Todo{add models (Decision Trees, Random Forests, LSTMs, CNNs...)}
+The Long short-term memory network is an extension of a RNN that can extract long-range dependencies from the sequential input without suffering from the negative consequence of the vanishing and exploding gradients common in deep architectures. Firstly proposed by Hochreiter and Schmidhuber \citep{hochreiter1997long} and further extended by Gers and Schmidhuber \citep{gers1999learning}, this technique has recently been applied successfully for domains like speech recognition \citep{graves2013speech} and video classification \citep{yue2015beyond}.
 
-\section{Evaluation Metrics}
-
-\subsection{Confusion Matrix}
-
-A \emph{confusion matrix} (also called contingency table) is a table layout representing the performance of a classifier's output, judging by its predictions against the actual true values. In a binary classification problem, the confusion matrix is a 2 x 2 table where commonly the rows represent the true labels while the columns the predicted classes. Each cell contains a count of how many samples were classified on that category, and the values in the diagonal represent the correctly classified samples (if the features are ordered). Figure \ref{fig:confusion_example} depicts a sample confusion matrix for a binary classifier.
+The main property that differentiates LSTMs with its classic counterpart is its \emph{memory cell} which controls the flow of information that goes from the input $\mathbf{x}_t$ to the hidden states $\mathbf{h}_t$. This is accomplished by using a unique \emph{cell state} variable $\mathbf{s}_t$ which contains the global information that the network currently has about the input sequence, which can be seen as its "memory". A visualization of the memory cell and its traversing state variable can be seen in \autoref{fig:lstm}.
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.4\textwidth, natwidth=50bp, natheight=50bp]{figures/confusion_example.png}
-    \caption{An example of a normalized confusion matrix}
-    \label{fig:confusion_example}
+    \includegraphics[width=0.7\textwidth,keepaspectratio]{figures/lstm.pdf}
+    \caption{A LSTM network unfolded through time, with the oval shaped structure as the memory cell}
+    \label{fig:lstm}
 \end{figure}
 
-The confusion matrix is an excellent visualization tool to estimate the performance of a model. The values that should be maximized, the \emph{true positives} (TP) and \emph{true negatives} (TN), represent the samples that were correctly labeled as possessing the feature of interest or not, respectively. On the other hand, the \emph{false positives} (FP) and \emph{false negatives} (FN) are the misclassified samples where the algorithm predicted that the feature was present while in truth it was not and vice-versa. In this work, the positive class will always represent a churning user, and it follows that the negative class represents the non-churners.
-
-\subsection{Classification Accuracy}
-
-Several different metrics can be derived from the confusion matrix table. The \emph{classification accuracy} (CA) of a model is a common metric that corresponds to the fraction of the correctly classified samples on the test set, and can be calculated as follows:
+The memory cell structure of a LSTM is responsible for updating the cell state at each time step. This is accomplished by a set of so called \emph{gates} that controls how the information will get in and out of the cell state. A modern LSTM architecture is composed of three of these gates, hereby called \emph{input}, \emph{output} and \emph{forget gates}, alongside the \emph{input node} which is a transformation over the raw input sequence. A LSTM memory cell at time step $t$ is fully described by the following set of equations:
 
 \begin{equation}
-CA = \frac{TP + TN}{TP + TN + FP + FN} 
+\begin{aligned} 
+\mathbf{g}_t &= \sigma_g(\mathbf{W}^{xg}\mathbf{x}_t + \mathbf{W}^{gh}\mathbf{h}_{t-1}+\mathbf{b}_g) \\ 
+\mathbf{i}_t &= \sigma_i(\mathbf{W}^{xi}\mathbf{x}_t + \mathbf{W}^{ih}\mathbf{h}_{t-1}+\mathbf{b}_i) \\
+\mathbf{f}_t &= \sigma_f(\mathbf{W}^{xf}\mathbf{x}_t + \mathbf{W}^{fh}\mathbf{h}_{t-1}+\mathbf{b}_f) \\
+\mathbf{o}_t &= \sigma_o(\mathbf{W}^{xo}\mathbf{x}_t + \mathbf{W}^{oh}\mathbf{h}_{t-1}+\mathbf{b}_o) \\
+\mathbf{s}_t &= \mathbf{g}_t \odot \mathbf{i}_t + \mathbf{s}_{t-1} \odot \mathbf{f}_t \\
+\mathbf{h}_t &=  \sigma_h(\mathbf{s}_t) \odot \mathbf{o}_t
+\end{aligned}
 \end{equation}
 
-While trivial to understand, this metric may lead to erroneous conclusions when class imbalance is present in the test set, which is a common occurrence on the churn prediction domain. For example, if 9 out of 10 users of a dataset are non-churners, any classifier that simply outputs a negative class for all samples will result in an accuracy of 90\%, however its ability of detecting churners is non-existent. For a service provider, detecting churn cases is always more important than detecting the loyal users, and this metric by itself cannot represent this goal \citep{Burez2009} \citep{Hassouna2015}.
+where $\mathbf{i}_t, \mathbf{o}_t, \mathbf{f}_t$ are the input, output and forget gates, respectively. $\mathbf{x}_t, \mathbf{h}_{t-1}, \mathbf{s}_{t-1}$ are the input vector at the current time, and the hidden units and cell state from the previous time step, which are the inputs to the memory cell. $\mathbf{W}, \mathbf{b}$ are the weight matrices and the bias vectors for each gate and node. $\mathbf{g}_t$ is the input node. $\sigma$ are the activation functions: modern architectures use $\sigma_g,\sigma_h$ as the hyperbolic tangent function, whereas $\sigma_i,\sigma_f,\sigma_o$ as the sigmoid \citep{zaremba2014learning}. The output of the memory cell are the updated cell state $\mathbf{s}_t$ and hidden units $\mathbf{h}_t$.
 
-\subsection{Precision, Recall, Fall-out and False Alarm}
+One can intuitively think of LSTM gates as controllers whether the activation for a given unit is let in and out of the cell state at each time step, which can be learned during network training. During the forward pass, if the input gate is zero, no activation can get into the cell state. Similarly, the output gate learns when it should let the activation leak out of it. The forget gate being equal to zero erases all the memory previously stored on the cell state, basically forgetting what was learned in the past. During the backward pass phase, the gradient may propagate several time steps in the past without exploding or vanishing due to its constant error carousel. Through this angle the memory cell learns as to when it should let the error in and out of the cell state.
 
-To address the class imbalance problem of the classification accuracy, others metrics are also commonly used. The \emph{positive predictive value} (PPV, also known as precision) is the proportion of the samples labeled as positive which are true positives, and describes the performance of the algorithm. The \emph{true positive rate} (TPR, also called sensitivity and recall) of a model corresponds to the number of correctly predicted positive samples divided by all positive samples. \emph{True negative rate} (TNR, also called specificity and fall-out) is the number of correctly predicted negatives divided by all true negatives. The \emph{false positive rate} (FPR, also called false alarm ratio) is the probability of receiving a false positive as output of an experiment, and is calculated by dividing the number of false positives by the total number of positive samples. The \emph{F1 score} (F1, also called F-score or F-measure) builds upon precision and recall by returning an harmonic mean between these two metrics.
+Networks that makes use of the memory cell structure of an LSTM have been shown to outperform classical recurrent networks by being able to learn long-term dependencies from the sequence in a more efficient way. Positive results were obtained both in artificial datasets carefully designed to test the ability of the network learning long-term dependencies \citep{bengio1994learning} and more recently in demanding sequence processing tasks \citep{graves2013speech}\citep{sutskever2014sequence}.
 
-\begin{equation}
-PPV = \frac{TP}{TP + FP}
-\end{equation}
+\section{Dimensionality Reduction}
 
-\begin{equation}
-TPR = \frac{TP}{TP + FN}
-\end{equation}
+\subsection{Principal Component Analysis}
 
-\begin{equation}
-TNR = \frac{TN}{TN + FP}
-\end{equation}
+Principal component analysis (PCA) is a widely used method for applications like data compression, dimensionality reduction and data visualization. Initially invented by Pearson\citep{pearson1901liii} and later independently developed and named by Hotelling\citep{hotelling1933analysis}, PCA strives to find an orthogonal projection of the original data into a lower dimensional space (also known as the principal subspace) where the variance of the projected data is maximized.
 
-\begin{equation}
-FPR = \frac{FP}{TN + FP} = 1 - TNR
-\end{equation}
-
-\begin{equation}
-F1 = 2 \times \frac{PPV \times TPR}{PPV + TPR}
-\end{equation}
-
-Depending on the distribution of classes of the dataset, it is often difficult (although desirable) to maximize both metrics at the same time. A compromise must be reached that achieves the best trade-off between the two, which is commonly a business decision. For a music streaming service like Spotify, maximizing sensitivity is preferred due to the costs associated with a churning user, however a reasonable specificity is also a metric that should be strived for. \Todo{Check with Sahar}
-
-\subsection{Receiver Operating Characteristic}
-
-The \emph{receiver operating characteristic} (ROC) is a visualization tool that plots the relationship between the true positive rate (commonly the y-axis) and the false positive rate (the x-axis) of a binary classifier system. The curve is drawn by selecting different parameters of a model or levels of threshold for the decision boundary between the positive and negative classes. For example, when the output of a classifier is a probability value (like in logistic regression), different thresholds can be chosen to decide whether a user is a churner or not, depending if the goal is to minimize FPR or maximize TPR. An example of a ROC curve can be seen in Figure \ref{fig:roc_example}.
+Consider a dataset composed of $N$ samples, each one being $D$-dimensional vector $\mathbf{x}_n$, and also a $D$-dimensional unit vector $\mathbf{u}$ where the samples are going to be projected on. The goal of PCA is to find a projection into a $M$-dimensional space where $M < D$ and where the variance of the projected observations are maximized, which can better be visualized in \autoref{fig:pca}.
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.6\textwidth, natwidth=300bp, natheight=200bp]{figures/roc_example.png}
-    \caption{An example of a ROC curve}
-    \label{fig:roc_example}
+    \includegraphics[width=0.5\textwidth,keepaspectratio]{figures/pca.pdf}
+    \caption{An example of PCA reducing the dimensionality of the data}
+    \label{fig:pca}
 \end{figure}
 
-A good classifier would score values close to the upper-left corner of the plot, where the point (0,1) represents a perfect classifier with 100\% TPR and 0\% FPR. On the other hand, an algorithm that outputs a curve alongside the diagonal where TPR and FPR are almost the same at different threshold levels can be considered close to a random guess, like the flip of a coin. A classifier would underperform if its scores are closer to the bottom-right corner of the plot, however this result can always be mirrored by updating the model to simply invert the positive and negative labels of the classified samples.
+After projecting the observations into the unit vector previously defined and obtaining $\mathbf{u}^T\mathbf{x}_n$, the variance of the projected data can be calculated with the following set of equations:
 
-ROC curves can be used to compare the performance of different models by measuring the \emph{area under the curve} (AUC) of its plotted scores, which ranges from 0.0 to 1.0. The greater this area, the better the algorithm is to find a specific feature. Moreover, models with an area close to 0.5 can be assumed to perform not much better than random guess, since this is the total area under the diagonal line.
+\begin{equation}
+\begin{aligned}
+\mu &= \frac{1}{N}\sum_{n=1}^N \mathbf{x}_n \\
+\Sigma &= \frac{1}{N}\sum_{n=1}^N (\mathbf{x}_n - \mu)(\mathbf{x}_n - \mu)^T \\
+\mathbf{V} &= \frac{1}{N}\sum_{n=1}^N (\mathbf{u}^T\mathbf{x}_n - \mathbf{u}^T\mu) = \mathbf{u}^T\Sigma\mathbf{u}
+\end{aligned}
+\end{equation}
 
-\Todo{Add eval methods (Lift chart, Top Decile Lift (TDL)...)}
+where $\mu$ and $\Sigma$ are the mean and the covariance matrix of the sampled data, respectively. Maximizing the value of the variance $\mathbf{V}$ with respect to $\mathbf{u}$ is an optimization problem constrained by $\mathbf{u}^T \mathbf{u}=1$. Hotelling\citep{hotelling1933analysis} shows that by introducing a Lagrange multiplier $\lambda$, this can be turned into an unconstrained optimization where
 
-\Todo{Talk about precision-recall curves and PR AUC}
+\begin{equation}
+\mathbf{u}\Sigma\mathbf{u} = \lambda_1
+\end{equation}
+	
+and so the variance will be maximized by picking the eigenvector corresponding the largest eigenvalue $\lambda_1$, which is known as the first \emph{principal component}. The following $M-1$ principal components can then be chosen sequentially by picking the vector which is orthogonal to all other principal components already considered, which is equivalent to choosing the eigenvectors corresponding to the largest $M-1$ eigenvalues $\lambda_2,..., \lambda_M$.
 
 \chapter{Related Work}
 
@@ -313,114 +558,123 @@ Current data sets from service providers have no lack of user historical informa
 
 Churn prediction has been explored in different kind of applications on recent literature, however music streaming services are as of today a quite under-researched area, even though there is a prominent feature that makes it significantly different from other more researched and similar areas like video streaming, which would be the absence of the constant attention factor that video demands. Studying the user behaviour in each application can possibly help optimizing parameters that are difficult to tune without expert knowledge on how the interaction between costumer and application occurs. The work by \citep{Zhang2013} aims to fill that gap by analysing patterns of usage of Spotify's Premium subscribers on features like session and playback arrival patterns, user behavior on single and multiple devices and favorite times of day for streaming. The main contributions of the study can be summarized as follows: First, daily patterns can be observed on features like session arrival, playback arrivals and session length. Second, there is a high probability of users to continue on the same device for consecutive sessions. Third, users have their unique times of day when they prefer to stream music on the platform. Fourth, a session length can be used as a good indicator of the next session length and also downtime.
 
-\chapter{Methodology}
-\label{chap:method}
+\chapter{Dataset creation and exploration}
+\label{chap:dataset}
 
 \epigraph{In God we trust: all others bring data.}{\textit{William Edwards Deming}}
 
-\section{The Dataset}
+Creating a dataset that is suitable for predicting churn is far from being a trivial task. Spotify has at their disposal an enormous amount of data that tracks every user interaction with the application, reaching terabytes in size every single day. This chapter will be dedicated to delving into details on how the dataset used for training our models was generated, how the sampling was performed, which features were chosen and engineered, and also exploring it in details.
 
+\section{Infrastructure and Data Sources}
 
-Every experiment on this projects relies exclusively on the data provided by Spotify. Each day hundreds of terabytes of streaming information are collected through the provider's data pipelines, aggregating customer usage of the application over several different platforms and countries. Since it is technically impossible to train a single model with the data at its entirety, one of the challenges of this project will be to understand the information that is available to us and to choose a subset of features that are most likely to the probability of the user churning.  This task can be extremely daunting by itself, so this project will make use of previous private studies performed by the service provider as a guidance on which features to choose.
+Every time a user streams content on Spotify, be it through the mobile application, desktop, web or any other platform, it generates a log entry with information regarding details on what has occurred in this interaction. This information can be the feature of the application used on this stream, its length in miliseconds, the context in the app where this stream originated from, to cite a few. Through a complex data pipeline, all the log data from different clients is aggregated into a massive dataset hosted in a cloud provider, and is externalized through Google's fully-managed query service called BigQuery \citep{sato2012inside}. 
 
-\subsection{Data description}
+After processing and cleaning procedures, a set of tables, named by the provider as \emph{ReportingEndContent}, are generated one for each day, and it serves as the main source of data for this project. The tables have an average of 2.8 billions of rows with 38 columns, occupying up to 1.7 TB of storage in disk each, one of the largest datasets currently stored in Google Cloud platform. These tables are further joined with other tables as to gather a more detailed information about the stream, which are capped to a limit of 90 days due to privacy rules established by the provider.
 
-The provider's dataset that is going to serve as a source for the creation of our own transformed data is called \emph{Sessions} and contains for each row a set of features for one session and one user.  To limit the influence of time cycles in the learning process, users were sampled from three countries which share a similar timezone between each other and encompass a large share of Spotify's userbase, that is Brazil, Mexico and United States.
+\section{Dataset creation}
 
-The Spotify service is provided through a wide range of platforms like through Apple's iPhone or a desktop PC. To minimize the influence that different platforms may have on predicting churn, and also due to higher reliability on collected metrics, the dataset shall be filtered on streams performed on the Android platform, be it on a smartphone or tablet device.
+Creating a dataset that realistically represents the target population of this is by no mean an easy feat to accomplish. While it is desirable to train models with all the data that is available to us, doing so is an engineering feat by itself that could span the entirety of a project. Thus, we need to make smart decisions as to create a dataset that is representative of the audience while also avoiding scalability pitfalls that eventually occurs when working with big data.
 
-\subsection{Features description}
-
-The \emph{session length} feature is the time in seconds the session lasted. \emph{Consumption time} is the time in seconds the user is streaming content, for example by listening to a song. Since this action is always encompassed by a session, this feature is always at most as large as the session length. \emph{Skip ratio} is the percentage of streams the user skipped by for example pressing the Next button on the app, and \emph{unique pages} is the number of unique pages like Artist, Album and Discover Weekly the user visited in his streams.
-
-Using the above features as source, 8 features were derived by taking the mean and the standard deviation of each one of them. The correlation matrix between these features can be seen in Figure \ref{fig:correlation}.
+In this section, the \emph{data pipeline} used for building the data used for model training and evaluation will be presented, which can be seen in \autoref{fig:pipeline}. Each subsection corresponds to a sequential stage in the pipeline, while the source are the raw stream information provided by the table \emph{ReportingEndContent} and the output is the dataset in a format suitable for model training.
 
 	\begin{figure}[h]
     \centering
-    \includegraphics[width=0.7\textwidth, natwidth=580bp, natheight=313bp]{figures/correlation.png}
+    \includegraphics[width=0.9\textwidth,keepaspectratio]{figures/pipeline.pdf}
+    \caption{Dataset creation pipeline}
+    \label{fig:pipeline}
+	\end{figure}
+
+\subsection{Sampling}
+\label{sec:sampling}
+
+Each day hundreds of terabytes of streaming information are collected through the provider's data pipelines, aggregating customer usage of the application over several different platforms and countries. Since it is out of the scope of this project to train models with the data in its entirety, one of the challenges will be to understand the information that is available to us and to choose a subset of samples that are representative of the target population that we intend to focus on in this study. This task can be extremely daunting by itself, so this project will make use of previous private studies performed by the service provider as a guidance on which features to choose.
+
+The main rule applied for sampling users is by filtering those who have at least one stream of significant length during the activity window described in \autoref{sec:timewindows}. The minimum length of the stream is set to be 30 seconds, which follows rules of royalty payments from the service provider. By applying this filter, we make sure that the users were active right before the period of prediction. Thus, users marked as churning did so between the period of observation and prediction, and we guarantee that we are not choosing samples who churned a long time ago.
+
+Selecting users that created accounts any time during the observation period might skew our models towards a level of inactivity that does not corresponds to reality. For example, if a new account was created right by the end of the observation window, we might erroneously assume that the user was inactive for all days before the registration date. To avoid this, only users that registered into the service any time before the observation starts are sampled into our dataset. 
+
+Spotify is a service provided to countries all around the world, and we must be aware of the influence that seasonality plays into user behaviour if we intend to avoid overbiasing our samples. To limit the influence of day-night cycles in the learning process, users were sampled from three countries which share a similar timezone between each other and encompass a large share of Spotify's userbase, that is Brazil, Mexico and United States. \Todo{Review the paragraph about countries}
+
+The Spotify service is provided through a wide range of platforms like through Apple's iPhone or a desktop PC. To minimize the influence that different platforms may have on predicting churn, and also due to higher reliability on collected metrics, the dataset shall be filtered on streams performed on the Android platform, be it on a smartphone or tablet device. \Todo{Check Sahar: This is only for sampling, so will this be true?}
+
+Even after all the previously mentioned filters, we are still left with a large amount of users which is more than any single machine could handle. While randomly selecting samples is a common performed method, for reproducibilty reasons we instead choose to deterministically select samples by applying a hash function over the user ID followed by a modulo operator over the desired fraction of users. Through this method we guarantee that the same users will be sampled, as long as the fraction does not change.
+
+Through the application of all aforementioned rules, a grand total if \emph{518.233 users} were sampled, and their streams were gathered through the course of 86 days (the standard size of the time windows), summing up to \emph{1.8 billion} playbacks. This was only made possible by making use of the vast amount of computational resources available for this project, and also through well-known distributed frameworks like Spark and BigQuery. 
+
+\subsection{Parsing}
+
+A playback may originate from several different contexts in Spotify. For example, a user may stream a song from a playlist manually created by an editorial team or personalized to his tastes based on his listening history (eg. 'Discover Weekly'), from the top charts of a genre, from an artist or album page on the app, and so on. These are called \emph{play contexts} by Spotify, and they provide a great deal of information about the playback. Previous studies from the provider indicates that there is a non-zero relationship between the most commonly used context that a user's streams originates from and its probability to churn, and to leverage it we classify streams into 11 different contexts, called by the provider as \emph{set types}. A sample of set types available follows:
+
+\begin{itemize}
+  \item \verb|personalized_playlist| A stream from a playlist personalized to the user's taste, like Discover Weekly and Year in Music.	
+  \item \verb|user_playlist| A playback from a playlist manually created by the user.
+  \item \verb|user_collection| A stream from a set of artists, tracks, albums that were marked as favorite by the user.
+  \item \verb|catalog| A playback from a page manually searched by a user, like an specific artist or album.
+   \item \verb|editorial_playlist| A playback from a playlist created manually by Spotify's editors.
+\end{itemize}
+
+While the play context contains information that we would like to use in our models, its raw format is unsuitable for feature creation: it is basically a string value with hardcoded rules which indicates which set type the stream belongs to. A parsing method is available though, but due to the sheer amount of data available in our dataset it is unfeasible to iterate over the streams and apply the parser sequentially over the streams. Thus, we instead make use of a bath-processing programming model called Apache Beam \Todo{add ref} executed on top of the managed service Google Cloud Dataflow \Todo{add ref}. By using a table in BigQuery with the sampled data as a source, we create a pipeline that maps every play context string to its correspondent set type, saving the results back into a BigQuery table. An example of a successfully executed parsing job can be seen in \autoref{fig:dataflow}.
+
+	\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\textwidth,height=0.5\textheight,keepaspectratio]{figures/dataflow.pdf}
+    \caption{A parsing job in Cloud Dataflow}
+    \label{fig:dataflow}
+	\end{figure}
+
+\subsection{Feature Extraction}
+
+After filtering the group of streams from the users that we are interested on and parsing the play context information, the process of extracting and engineering the features can be started. The main goal of this stage is to create the sequential dataset that is going to be used for training the temporal models, while also calculating the binary labels that will indicate whether the users are going to churn or not. Before introducing the resulting features however, understanding how the time range was divided into different windows is utmost importance as to better comprehend how these features are generated.
+
+\subsubsection{Time windows}
+
+In order to predict whether a user is going to churn in the future or not and generate the churn binary labels, the time sequence is split into two time windows. The \emph{observation window} is the time span where the user behavior is tracked, data which will be used for training the predictor models. It is sequentially followed by a \emph{prediction window} that is exclusively used for generating the churn label. The windows can be better visualized in \autoref{fig:timewindows}. In order to make sure that selected users did not churn a long time before being observed, the last few days of the observation window are used for sampling users who are active, a time span called \emph{activity window}. 
+
+The size of each window is a parameter that shall be experimented on, but a standard length of \emph{56 days} for the observation window, \emph{30 days} for the prediction window and \emph{3 days} for the activity window were chosen by the provider as values that are suitable for the task at hand. This encompass user information gathered from March 5th until May 29th, 2017. Unless otherwise stated, there are going to be the values in use for our experiments.
+
+The user is considered to have churned if he has at least one active stream during the activity window, but no stream during the prediction window, which follows the definition of "churn" from Definition \autoref{def:churn}. An important factor that should be mentioned is that every user will have a single label for the whole sequence, and not a different label per point in time. This can be considered a simplification that reduces the complexity of our predictor models, however it fails to capture users that change between "churned" and "retained" states often: a user that churned may return to the service given more time. Changing the labeling method will be briefly explored in Future Works. \Todo{Add this Future Work}
+
+Our source dataset is sequential by nature. Every interaction is logged and stored in tables representing all streams of users in any given day. However, taking this data as it is is unsuitable to be used for training since commonly temporal models requires that (a) the time step between events to be constant and (b) it possess the same number of samples in every time step. Since there is no control as to when any given user will interact with the application, some data transformations must be performed. 
+
+First, a constantly-sized \emph{time step} was chosen as to split the observations equally across time. To capture the routine of users between every day-night cycles, a time step of 8 hours was deemed to be a suitable value. The features of users are then aggregated over this time range through a mean function. 
+
+Second, the features of users that have no streams in any single time step are set to zero as to keep the number of samples constant through time. This processing will result in a dataset which is quite sparse, since rarely ever a user streams content in all 8 hours time spans over the course of 56 days of observation. An example of this processing can be seen in Figure \ref{fig:zerofill}.
+
+	\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.7\textwidth, natwidth=580bp, natheight=313bp]{figures/zero_fill.png}
+    \caption{Zero-filling 4 time steps for 3 different users}
+    \label{fig:zerofill}
+	\end{figure}
+
+After applying the previously mentioned transformations, the number of rows of the dataset is severely reduced to \emph{87 million}, mainly due to the 8 hours aggregation procedure.
+
+\Todo{improve the zero-filling figure}
+
+\subsubsection{Features Description}
+
+No dataset would be fully described without a detailed explanation of the features within. This section will be dedicated to exposing the features extracted and engineered from the data sources described in previous sections.
+
+The most basic feature of every stream is its duration in seconds, hereby called \verb|sec_played|, which calculates how long the user playback lasted. Higher values may indicate that users are listening to a song in its entirety, while smaller values may indicate that the user skipped a song or an error occurred, for example. They are not normalized by the duration of the song however, so it may indicate that the song is just shorter in length. The \verb|skip_ratio| indicates the percentage of streams the user skipped comparing to all of his streams, commonly by pressing the "Forward" button on the player. Inter-arrival time (hereby called \verb|iat|) is the time between streams: lower values indicates an user that is constantly using the app, and higher values a user that streams a song every now and then. \verb|total_streams| is simply the count of streams the user had in the current time period, and \verb|sum_sec_played| is an accumulating sum of the feature \verb|sec_played| since the beginning of the observation period. 
+
+After parsing the play context from each stream, we engineer new features by combining them with three of the aforementioned basic ones, which are called \verb|sec_played_<set_type>|, \verb|sum_sec_played_<set_type>| and \verb|total_streams_<set_type>|. Also, the number of unique set types is calculated and aggregated in the feature \verb|unique_top_types|: a previous internal study by the service provider indicates that there is a non-zero relationship between the quantity of features being utilized by the user and its probability of churning, so we engineer and add it to our dataset.
+
+All continuous feature values are aggregated by taking the mean over  each time step period of 8 hours. For the \verb|sec_played| group of features, the standard deviation is also calculated, and it corresponds to the features with the \verb|_std| suffix.
+
+By extracting and combining the features using the methods above, a grand total of 52 features were generated. The correlation matrix between these features can be seen in \autoref{fig:correlation}.
+
+	\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.9\textwidth,height=0.9\textheight,keepaspectratio]{figures/corr.pdf}
     \caption{Pearson correlation matrix between features}
     \label{fig:correlation}
 \end{figure}
 
-\subsection{Time windows}
+\subsection{Data Pre-processing}
 
-In order to predict whether a user is going to churn in the future or not and generate the churn binary labels, the time sequence is split into two time windows. The \emph{observation window} is the time span where the user behavior is tracked, data which will be used for training the predictor models. It is sequentially followed by a \emph{prediction window} that is exclusively used for generating the churn label. The windows can be better visualized in Figure \ref{fig:timewindows}. The size of each window is a parameter that shall be experimented on, but a standard length of 60 days for the observation window and 30 days for the prediction window were chosen by the provider as values that are suitable for the task at hand.
+The goal of the final stage of the pipeline is to transform the data into a format which is suitable to be used for training and that also improves convergence time of the learning algorithms. This is achieved by two main steps: normalization of the feature values and exporting the data into compressed files.
 
-The user is considered to have churned if he has at least one active session during the observation window, but no session during the prediction window. This means that every user will have a single label for the whole sequence instead of one label per time step. 
-
-	\begin{figure}[h]
-    \centering
-    \includegraphics[width=0.7\textwidth, natwidth=580bp, natheight=313bp]{figures/obs_pred_windows.png}
-    \caption{Observation and prediction windows}
-    \label{fig:timewindows}
-	\end{figure}
-
-\Todo{Read \citep{GurAli2014}, \citep{Hassouna2015}, \citep{Wangperawong2016}, \citep{Lu2014}, improve this section}
-
-\subsection{Sequential and Aggregated Datasets}
-
-Our source dataset is sequential by nature. Every interaction is logged and stored in tables representing all sessions of users in any given day. However, taking this data as it is is unsuitable to be used for training since most temporal models \Todo{check this claim} requires (a) that the time step between events to be constant and (b) the it possess the same number of samples in every time step. Since there is no control as to when any given user will interact with the application, some data transformations must be performed.
-
-To address these concerns, the work by \citep{GurAli2014} and its Multiple Period Training Data (MPTD) were the main focus of inspiration for the creation of our dataset. \Todo{write about his approach}
-
-First, a constant \emph{time step length} was chosen as to split the observations equally across time. To capture the routine of users between every day-night cycles, a time step of 8 hours was deemed to be a suitable value. Second, the features of users that have no session in any single time step are set to zero as to keep the number of samples constant through time. \Todo{Important! Go into more details here, maybe add a figure}
-
-In order to train our time-invariant models, another dataset was generated where each user is represented by a single sample with its features aggregated over the whole observation window. The source data is exactly the same as the sequential dataset, however the features are aggregated by taking the mean of values over the window instead of splitting it into smaller time steps.
-
-\subsection{Data Exploration}
-
-(NOTE TO THE READER!! The Y axis values were intentionally hidden in the following plots due to the Non-Disclosure Agreement signed by me. Proper plots will be placed here after the internal review is performed by the company)
-
-\subsubsection{Class Distribution}
-
-A recurring problem in churn prediction is how the non-churning class dominates over the churners for almost all applications, a problem properly examined by \citep{Burez2009}. Figure \ref{fig:classdist} plots the distribution of classes in our generated dataset. In it we can observe that indeed the non-churning class has approximately 5 times more samples than the churners, and even though the difference is significant users abandoning the service can hardly be considered as a "rare" event.
-
-	\begin{figure}[h]
-    \centering
-    \includegraphics[width=0.7\textwidth, natwidth=400bp, natheight=200bp]{figures/class_count.png}
-    \caption{Count of users distributed in the churn and non-churn classes}
-    \label{fig:classdist}
-	\end{figure}
-
-\subsubsection{User Behavior through Time}
-
-Humans are creatures of habits. Our daily routines follow distinguishable patterns mainly influenced by day-night cycles that are far from being random. To better visualize these patterns, Figure \ref{fig:featstime} plots the feature values for churning and non-churning users over the course of the observation window sized at 60 days. 
-The first pattern that can be noticed is that users that are labeled as churning have lower feature values for unique pages, consumption time and session length, and that it gradually decreases over time as users abandon the service.
-
-The second trait that can be observed is that skip ratio values are way more intertwined between the classes when comparing to other features. This is due to the fact that churning users exhibits a higher skip ratio as was shown by empirical studies from the service provider, however since we fill with zeroes the feature values for the sessions where the user did not stream any content we end up conveying the exact opposite: that churning users have a low skip ratio. This suggests that if we want to make use of this feature properly, transforming this feature through a function like the negative logarithm might be beneficial.
-	
-	\begin{figure}[h]
-    \centering
-    \includegraphics[width=0.7\textwidth, natwidth=500bp, natheight=250bp]{figures/features_vs_time.png}
-    \caption{Mean and standard deviation of features through the observation window}
-    \label{fig:featstime}
-	\end{figure}
-
-Even though plotting the features over the whole observation window let us visualize the overall tendency between the churning and non-churning classes, this representation does not emphasize daily and weekly routines that are present in the data. To address that, the mean and standard deviation of features were plotted by clusters of week days and day-night periods, and this visualization can be seen in Figure \ref{fig:featsweekday}. As expected, higher values can be seen during day time (8h-16h CST) for all features, and also a slightly lower mean on Sundays related to lower usage on this day.
-
-	\begin{figure}[b]
-	\centering
-\begin{subfigure}{0.8\textwidth}
-  \centering
-    \includegraphics[width=1.0\textwidth, natwidth=580bp, natheight=313bp]{figures/sessionlength_vs_weekdays.png}
-\end{subfigure}
-\begin{subfigure}{0.8\textwidth}
-  \centering
-    \includegraphics[width=1.0\textwidth, natwidth=580bp, natheight=313bp]{figures/consumption_vs_weekdays.png}
-\end{subfigure}    
-\begin{subfigure}{0.8\textwidth}
-  \centering
-    \includegraphics[width=1.0\textwidth, natwidth=580bp, natheight=313bp]{figures/uniquepages_vs_weekdays.png}
-\end{subfigure}  
-\begin{subfigure}{0.8\textwidth}
-  \centering
-    \includegraphics[width=1.0\textwidth, natwidth=580bp, natheight=313bp]{figures/skipratio_vs_weekdays.png}
-\end{subfigure}  
-    \caption{Mean and standard deviation of features through different weekdays and periods}
-    \label{fig:featsweekday}
-	\end{figure}
-
-\section{Feature Preprocessing}
+\subsubsection{Normalization}
 
 While it is possible to use raw features as input to train predictor models, often there is a benefit on normalizing the values using some standard technique. \citep{lecun2012efficient} argues that for the backpropagation algorithm commonly used in neural networks, well-behaved features centered around and with unit variance usually provides a faster convergence time. This is mainly due to the way weights are updated in the network: if the input vector has all features with the same sign, the weights can only be increased or decreased together for a single input, zigzagging the values back and forth which turns to be extremely inefficient. In deep architectures, the output a network layer is used as input to the next layers, and for the same reasons it is also desirable that this input is centered around zero. Inputs with unit variance will keep the layer's output well behaved and thus speed up convergence.
 
@@ -440,9 +694,132 @@ x_n^i = \frac{x_n^i - \mu_i}{\sigma_i^2}
 
 where $N$ is the total number of samples, $x_n^i$ is a scalar value representing the feature $i$ of the training sample $n$, feature which has mean $\mu_i$ and variance $\sigma^2_i$.
 
+\subsubsection{Aggregating and Exporting}
+
+After normalization, the feature values are in the desired format for training our predictor models, however they are still stored in an unsuitable location to be used as a source since all data is still stored as a table in BigQuery. Streaming the data directly from a cloud provider into the training algorithms, while is possible, depends heavily on the choice of programming language and the available distributed frameworks, and it also susceptible to engineering problems like the network connection between the cloud provider and the host where the models are going be trained on.
+
+For this project, we decided to take a simpler approach and use compressed JSON line-delimited files as a data source for the training procedures. This format can be exported to through Google's web interface and also programatically through BigQuery's API, and be easily loaded using standard libraries in the most popular programming languages. The rows are processed and exported to files in parallel, greatly accelerating the procedure.
+
+We need to take some precautions for the export process to work flawlessly, however. The source table containing all the training data is stored in a long format, that is one row per user per time step. Since the export procedure is performed in parallel, the entries for a single user might end up spread into different files. To avoid having to fix this in the training functions, we apply a simple aggregation by user ID as to group all time steps belonging to a user into a single row. This can easily be accomplished using a query clause and functions in BigQuery.
+
+\section{Data Exploration}
+
+"Get to know your data" is a common jargon in the data science field, and for a good reason: even the smartest learning algorithms may fail to perform well if the data used as source is of questionable quality. Understanding how the data is distributed is of utmost importance, not only to gather insightful information that may be used in our advantage for training our predictor models, but also to validate that our dataset creation algorithm is free of mistakes and is representative of the target audience. This section will be dedicated to visualizing the data created through the pipeline described in the previous sections.
+
+The large amount of rows in the dataset makes it difficult to plot it using standard well-known visualization libraries. Therefore, a sample of 1\% of users was selected for the following plots by applying the same hash plus modulo operator described in \autoref{sec:sampling}, totaling 5.125 unique users and 861.000 rows of data corresponding to the 56 days of observation time.
+
+Due to privacy concerns and the signed non-disclosure agreement between the interested parties in this project, some of the tick labels in the graphs may have been intentionally hidden as to not reveal important business information of Spotify.
+
+\subsection{User Distribution}
+
+A recurring problem in churn prediction is how the non-churning class dominates over the churners for almost all applications, a problem properly examined by \citep{Burez2009}. \autoref{fig:classdist} plots the distribution of classes in our generated dataset. In it we can observe that indeed the churning class is the overwhelming minority of our samples, composing approximately 2.4\% of the data. This heavily imbalanced dataset may pose several challenges when training our models, since learning algorithms may fail to capture the nuances of user churning behaviour with a lack of representative samples.
+
+	\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth,height=0.9\textheight,keepaspectratio]{figures/class_dist.pdf}
+    \caption{Count of users distributed in the churn and non-churn classes}
+    \label{fig:classdist}
+	\end{figure}
+
+Spotify has several different product types in its catalog. They can however be aggregated into two main categories with minimum loss of information, and that would be the ad-supported \emph{free} version and all the different subscription-based paid versions called as \emph{direct} by the provider. Visualizing the data by plotting against the different product types can be seen in \autoref{fig:proddist} and it reveals something interesting, albeit predictable: the majority of the churning users belong to the free tier, which is understandable due in parts to how easy it is to abandon the service without a formal contract attached, and also by the negative ad-filled experience that users are exposed to. \Todo{add a ref here from pilot study}
+
+	\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.99\linewidth,height=0.9\textheight,keepaspectratio]{figures/dist_product_type.pdf}
+    \caption{Users distribution per product type and churn label}
+    \label{fig:proddist}
+	\end{figure}
+
+In this project, three different markets were the focus of the study, so it would sensible to visualize how the distribution of the data differs for each single country. In \autoref{fig:countrydist} we can distinguish how the majority of sampled account belongs to users from US. Brazil and Mexico have a similar distribution for the retained class, however there is significantly more churning users in Brazil. \Todo{Ask Sahar why is that}.
+
+	\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth,height=0.9\textheight,keepaspectratio]{figures/dist_reporting_country.pdf}
+    \caption{Users distribution per country and churn label}
+    \label{fig:countrydist}
+	\end{figure}
+
+Users in Spotify possess different behaviors whether they registered for a long time or if they just created their accounts. Internal studies showed that long-term users reveal a more stable behavior on application usage when comparing to recent arrivals. Also, activating new users into the platform is a challenge in itself, since the service is unknown they are more susceptible to abandoning if they dislike the features they were exposed to. \autoref{fig:dayssinceregdist} plots the number of days since registration between the churning and retained classes, it can be visualized how churning users are concentrated on the range of new users, while the retaining class is more uniformly distributed along the x-axis.
+
+	\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.9\textwidth,height=0.9\textheight,keepaspectratio]{figures/dist_dayssincereg.pdf}
+    \caption{Users distribution over days since registration and churn label}
+    \label{fig:dayssinceregdist}
+	\end{figure}
+
+\subsection{User Behavior through Time}
+
+Humans are creatures of habits. Our daily routines follow distinguishable patterns mainly influenced by day-night cycles that are far from being random. To better visualize these patterns, \autoref{fig:featstime} plots the feature values for churning and retaining users over the course of the observation window sized at 56 days. 
+
+The first pattern that can be noticed is that users that are labeled as churning have lower values for features when to those who are retained in the service. This difference can greatly be perceived in the \verb|sec_played| (the average number of seconds in all streams in the time step), \verb|total_streams| (the count of streams in each time step) and \verb|sum_sec_played| (the accumulating sum of seconds played in streams. These are all features that indicate usage: users that interact with the application more often and for more time are more likely to be retained.
+
+The second trait that can be observed is that the gap between the classes for the \verb|skip_ratio| feature is smaller than others. A previous study from the service provider suggests that users who churn have higher skip ratio values, however this is counter-balanced by the fact that free users have an artificial limit for skips in the application, currently limited at 5 per hour \Todo{Check with Sahar}. This may be the root cause for this behavior, since free accounts are the majority of the churning class, as could be seen in \autoref{fig:proddist}.
+	
+	\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.9\textwidth,height=0.9\textheight,keepaspectratio]{figures/feats_time.pdf}
+    \caption{Mean values of features throughout the observation window}
+    \label{fig:featstime}
+	\end{figure}
+
+\subsection{Feature Correlation to Churn}
+
+One question that can be answered is how does any of the generated features correlates to the churn label. Do they exhibit a positive or negative association? Even though it is known that correlation does not necessarily implies a causal relationship, it may still be interesting to observe what is the overall tendency of the features when they are associated with churn. To accomplish this, a \emph{point biserial correlation coefficient} is the correct tool to use when one of the variable is continuous and the other dichotomous, and its plot can be seen in \autoref{fig:corr_pbs}.
+
+Some interesting relationships can be observed. First, the plot shows that \verb|iat| features (inter-arrival time between streams) are the ones with the strongest association to the positive churning label, which is understandable: users that do not come back to the application as often are not making use of the service at its fullest and are more likely to abandon it. Second, the \verb|sum_sec_played| group of features are in its majority negatively correlated with churn, which strengthens our hypothesis that customers who use the service more often are less likely to abandon it. 
+
+Another interesting fact is that not all set types have the same association with our label: while \verb|user_playlist| and \verb|personalized_playlist| have the strongest negative association with churn of all available set types, while users that have longer streams of \verb|editorial_playlist| are more correlated with a positive value churn. Again, this does not imply that there is a causal relationship between the two, but may be a good tip towards investigating how this feature is delivered to the user.
+
+Lastly, a rather surprising result is that the number of unique set types have a positive association with churn. Our hypothesis is that users who are new in the platform posses a more explorative behavior by trying several different features when compared to users who are in the platform for a long time. As could be seen in \autoref{fig:dayssinceregdist}, churning users are commonly younger in the service when compared to retained ones. 
+
+	\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\textwidth,keepaspectratio]{figures/corr_pbs.pdf}
+    \caption{Point-biserial correlation between features and the churn label}
+    \label{fig:corr_pbs}
+	\end{figure}
+
+\subsection{Dimensionality Reduction}
+
+Although the features generated through our data pipeline encompasses different aspects of the users behavior in the platform, it may pose a challenge regarding the high dimensionality of our dataset: machine learning models may have trouble extracting the latent information from feature values if data is not sufficient. Since our dataset is heavily imbalanced, the number of available samples for the churning class may be insufficient, and using a more compact representation of the data may prove fruitful when the goal is to maximize the score of our predictor models.
+
+Principal Component Analysis (PCA) is popular technique that strives to find a lower dimension representation by keeping most of the variability of the data, or as described by Hotelling \citep{hotelling1933analysis}, it is, for a given set of data vectors, the $d$ orthonormal axes onto which the variance retained under projection is maximal.
+
+In \autoref{fig:pca_data} we can visualize the data distribution when its dimensionality is reduced to its two principal components through PCA for both retained and churned classes. It can be seen that even though the overall shape of the distributions are clearly different, their center points are not that close to each other, which may result in difficulties when trying to find a hyperplane that bests separates both retained and churning classes.
+
+	\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.9\textwidth,keepaspectratio]{figures/pca_data.pdf}
+    \caption{Data distribution after reducing to 2 principal components through PCA}
+    \label{fig:pca_data}
+	\end{figure}
+
+\section{Software and libraries}
+
+Manipulating large quantities of data is a task that cannot be performed easily using standard libraries of a programming language. The pipeline creation was only made possible in the scope of this project by making use of frameworks for massive data manipulation available at Spotify.
+
+The sampling, extraction and pre-processing steps of the data pipeline were performed using Big Query\citep{sato2012inside}, a fully-managed and cloud-based interactive query service for massive datasets created by Google. The parsing step that extracted the type of the stream from its play context was performed in Scio\citep{scio}, a Scala API for Apache Beam and Google Cloud Dataflow.
+
+\chapter{Methodology}
+
+Creating experiments that are reliable, reproducible and as unbiased as realistically possible is a challenge for any researcher interested in obtaining results that can safely be reasoned on. It is made harder by the complexity of our own source dataset: human behavior is far from being a process easily predictable due to the sheer amount of latent variables that may influence the outcome of the experimentation process.
+
+This chapter is dedicated to present to the reader a detailed picture how the experiments were performed, the choices of classifiers, the way they were optimized to the best set of parameters, and how the final score for each model was obtained.
+
 \section{Handling the Class Imbalance Problem}
 
-For any relatively successful company the non-churning class heavily outweigh the amount of churners in the dataset. Depending on the estimator, this property can have a negative impact in performance where the models only can only learn how to distinguish the majority class and failing to detect the class of interest. However empirical observations have shown that a better performance can be achieved if the class ratio difference is reduced \citep{Burez2009} \citep{ling1998data}. Unless otherwise stated, the experiments in this project will be \emph{randomly undersampled} to a class ratio of 1-to-1. This technique, while easy to implement, throws away several samples from the majority class that could be used for learning. Testing different ratios for the class distribution is however one of the experiments that will be performed in this project.
+For any relatively successful company the non-churning class heavily outweigh the amount of churners in the dataset. Depending on the estimator, this property can have a negative impact in performance where the models only can only learn how to distinguish the majority class and failing to detect the class of interest. However empirical observations have shown that a better performance can be achieved if the class ratio difference is reduced \citep{Burez2009} \citep{ling1998data}. 
+
+There are three commonly used sampling techniques for dealing with heavily skewed datasets: 
+
+\begin{itemize}
+\item Undersampling by removing samples from the majority class using a pre-defined selection technique
+\item Oversampling by creating artificial samples that closely mimics the true data present in the minority class
+\item A combination of over and undersampling, commonly oversampling the minority class first and reducing the data in the majority class second.
+\end{itemize}
+
+Unless otherwise stated, the experiments in this project will be \emph{randomly undersampled} to a class ratio of 1-to-1. This technique, while easy to implement, throws away several samples from the majority class that could be used for learning. Testing different ratios for the class distribution is however one of the experiments that will be performed in this project. Different methods for under and oversampling will be further discussed in Future Works \Todo{add over undersampling talk in future works}.
 
 \section{Cross-Validation}
 
@@ -450,31 +827,270 @@ It is a common  practice in supervised machine learning experiments to split the
 
 Almost all machine learning predictor models have arguments that needs to be chosen even before the training process starts, values that are commonly called \emph{hyperparameters}. To fine tune these parameters, we need a method to evaluate how good a set of values are against all other (or a reasonably sized subset of) available options, and for that purpose we need a set of unseen data for the same reasons mentioned before. If the test set were used for such an evaluation, it could not be considered as unseen data anymore since it was used for the purpose of choosing the best model, thus our bias may have "leaked" to the prediction score. Therefore another set is needed to tune the hyperparameters, which is commonly called the \emph{validation set} in the machine learning domain.
 
-Dividing the dataset into three splits however drastically reduces the number of samples that are available for model learning. Another concern is that if the sets are unique, the overall performance metric will depend in a seemingly random split of validation and test sets. To mitigate this problem, a technique called \emph{cross-validation} can be applied. In its most basic approach, instead of having a single validation set, the training set is instead divided into $k$ folds, and at each hyperparameter tuning round the model is trained on $k-1$ folds and validated on the fold that was left out. For each set of parameters, $k$ models are generated, and the final metric can then be an aggregation function over all estimators performance, like the mean. An example of this procedure can be seen in Figure \ref{fig:crossval}.
+Dividing the dataset into three splits however drastically reduces the number of samples that ares available for model learning. Another concern is that if the sets are unique, the overall performance metric will depend in a seemingly random split of validation and test sets. To mitigate this problem, a technique called \emph{cross-validation} can be applied\citep{stone1974cross}. In its most basic approach, instead of having a single validation set, the training set is instead divided into $k$ folds, and at each hyperparameter tuning round the model is trained on $k-1$ folds and validated on the fold that was left out. For each set of parameters, $k$ models are generated, and the final metric can then be an aggregation function over all estimators performance, like the mean. After selecting the best set of parameters, another training session can be made with the union of the data available in all folds, thus acquiring a tuned version of the model.
+
+The above technique helps to strengthen our performance metric against biases when selecting the best set of hyperparameters to train our model with. However we still have an unique test set where we evaluate our model to obtain a final score. When comparing different types of estimators, it may happen that one estimator may better learn from the samples that are on the training set while the other can better learn from the patterns contained on the samples of the test set, a split that was purely made by chance. This may lead to a form of selection bias resulting in overly-optmistic scores \citep{cawley2010over}. The same procedure used for hyperparameter tuning can be applied for splitting the train and test sets, a technique called \emph{nested cross-validation}. In it, the full dataset is split into $k$ outer folds of training and test sets, and each training set is further split into $l$ inner folds for hyperameter tuning.  A diagram of this procedure can be seen in Figure \ref{fig:crossval}.
 
 	\begin{figure}[h]
     \centering
-    \includegraphics[width=0.6\textwidth, natwidth=400bp, natheight=200bp]{figures/crossval.png}
-    \caption{3-fold cross validation split}
+    \includegraphics[width=0.8\textwidth,keepaspectratio]{figures/crossval.pdf}
+    \caption{2x2 nested cross validation}
     \label{fig:crossval}
 	\end{figure}
 
-The above technique helps to strengthen our performance metric against biases when selecting the best set of hyperparameters to train our model with. However we still have an unique test set where we evaluate our model to obtain a final score. When comparing different types of estimators, it may happen that one estimator may better learn from the samples that are on the training set while the other can better learn from the patterns contained on the samples of the test set, a split that was purely made by chance. The same procedure used for hyperparameter tuning can be applied for splitting the train and test sets, a technique called \emph{nested cross-validation}. In it, the full dataset is split into $k$ outer folds of training and test sets, and each training set is further split into $l$ inner folds for hyperameter tuning. A diagram of this procedure can be seen in Figure \ref{fig:nest_crossval}.
+Even though this technique increases the confidence of our metric scores, there is a price to pay in terms of performance: training all these models may take a considerable amount of time. Spotify however has no lack of computational resources available, so this project makes use of this method. Inspired by \citep{Burez2009}, all our models were trained using \emph{2$\times$2 cross-validation}, with 2 outer folds for the train/test split and 2 inner folds for train/validation splits.
+
+\section{Hyperparameter search}
+
+Lastly, a proper method needs to chosen to perform search over the domain of parameter values. A common practice in machine learning model training is to perform a parameter sweep by exhaustively searching a subset of values manually chosen by the experimenter. This method is called \emph{grid search}, and due to its simplicity and reproducibility is one of the most used techniques, be it for classical machine learning algorithms like Support Vector Machines as to deep feed-forward neural networks \citep{larochelle2007empirical}.
+
+However, performing a grid search over every combination of values can quickly turn it into a method which is too computationally expensive to perform for any real-world applications. Deep architectures like LSTMs are known to be costly to train, and combining it a full parameter sweep is prohibitive if the dataset in question is of a respectable size. Bengio and Bergstra\citep{bergstra2012random} have demonstrated that, for neural networks, performing a \emph{random search} over the same parameters domain can result in a model which is as good or better than the one validated through grid search by using a fraction of the computation time. 
+
+In a random search, parameter values are randomly sampled from a specified distribution instead of being chosen directly from a grid. For a set number of rounds, samples are gathered for every parameter and used for model validation. This allows us to set a processing budget which is independent of the number of parameters available and the number of possible values for each. Therefore, adding parameters that have no impact in performance will not decrease the efficiency of the cross-validation process for no gain. 
+
+The experiments performed in this project make use of both methods: for the classical Logistic Regression and Random Forests, a grid search over a pre-selected set of values was the chosen method, since their training time is commonly faster when compared to regularly sized deep neural network. Random search is the technique used for validating parameters of our LSTM models, since it is too expensive to compute with a parameter sweep due to its long training time. The set of parameters used for the experiments follows:
+
+\begin{itemize}
+\item Logistic Regression
+\begin{itemize}
+\item C (inverse of regularization strength): 0.01, 0.1, 1, 10, 100
+\item Regularization method: L1-norm, L2-norm
+\end{itemize}
+\item Random Forest
+\begin{itemize}
+\item Number of estimators: 10, 100, 500, 1000
+\end{itemize}
+\item LSTM
+\begin{itemize}
+\item Number of layers: 1 to 3
+\item Units per layer: 64 to 256
+\item Optimizer: RMSprop, Adagrad
+\end{itemize}
+\end{itemize}
+
+\section{Model training}
+
+Even though all models were trained with the same source dataset, temporal and time-invariant models requires a different representation of the data, a topic which was explored in \autoref{sec:timewindows}. Logistic regression and random forest models were both trained with the SPTD version of the dataset using the mean as the aggregation function $f()$, while the LSTM models were trained with the full unrolled MPTD data.
+
+When analyzing the data contained in the MPTD dataset, it can easily be noticed that is severely sparse. This is due to the representation chosen for the absent user in a specific time step: users that did not stream any song during an 8 hours interval will have its features all set to zero. We can leverage this property through a data structure that better utilizes memory resources by storing only the non-zero entries instead, which is accomplished by representing the data with a \emph{compressed sparse row} structure \citep{bulucc2009parallel}. This allows us to store the data in memory in a single machine without resorting to distributed algorithms which would make the implementation more difficult.
+
+To increase the reproducibility of our experimentation process, the same seed value was used for all random factors contained in the experiments. That includes the dataset fold splitting, random search, weights initialization in LSTMs and the undersampling. The seed value chosen was 42, which is the answer to the ultimate question of life, universe and everything \citep{adams1995hitchhikers}.
+
+\subsection{The LSTM recurrent network}
+
+This section describes some details about the LSTM models used in the experiments of this project.
+
+Since the number of layers is a parameter that is being tuned during the cross-validation phase, the exact architecture of the LSTM varies depending on the training and validation data. It is beneficial however to visualize the overall structure of one choice of model parameters as to better understand how the layers are organized, which can be seen in \autoref{fig:lstm_arch}.
 
 	\begin{figure}[h]
     \centering
-    \includegraphics[width=0.6\textwidth, natwidth=450bp, natheight=200bp]{figures/nest_crossval.png}
-    \caption{2x2 nested cross validation}
-    \label{fig:nest_crossval}
+    \includegraphics[height=0.7\textwidth,keepaspectratio]{figures/lstm_arch.pdf}
+    \caption{Model architecture with 3 stacked LSTM layers}
+    \label{fig:lstm_arch}
 	\end{figure}
 
-Even though this technique increases the confidence of our metric scores, there is a price to pay in terms of performance: training all these models may take a considerable amount of time. Spotify however has no lack of computational resources available, so this project makes use of this method. Inspired by \citep{Burez2009}, all our models were trained using \emph{5x2 cross-validation}, with 5 outer folds for the train/test split and 2 inner folds for train/validation splits.
+In this example, three LSTM layers were stacked on after the other, each one with a different number of units per layer chosen through random search. A softmax layer transforms the output of the last LSTM layer and transform it into a probability distribution over the two retained and churned classes.
 
-\chapter{Results}
+Every model was trained for 70 epochs using a batch size of 512, a number chosen for performance reasons. The optimizers were initialized with a learning rate of 0.001. For Adagrad, the value for the fuzz factor $\epsilon=1\times10^{-8}$ applies. RMSProp also has the same $\epsilon$, adding $\gamma=0.9$ which regulates how much of the previous average of gradients shall be used to calculate the current gradients .
 
-\section{Temporal vs. Time-invariant Models}
+The weight matrices for the linear transformations of the input were initialized with Xavier initialization method, while the ones corresponding to the linear transformation of the recurrent state were initialized with a random orthogonal matrix. Bias vectors were initialized to zeros since the asymmetry breaking is already performed by the chosen weight initialization algorithm.
 
-\section{Experimenting on Different Window Sizes}
+The loss function is binary cross entropy. All parameters were regularized with $L_2$ weight decay method, using a regularizing factor of $0.01$.
+
+\subsection{Training Procedure}
+
+We summarize the training process in Algorithm \autoref{alg:train}. This procedure is applied for every different classifier that we are currently experimenting on, and results in a probability score assigned for every sample in the dataset.
+
+The first step of the procedure finds all the parameter values that the models are going be validated on, which can be either a full parameter sweep for Random Forests and Logistic Regression or through randomly sampling from parameters distributions for an LSTM. This will define the size of the innermost loop of the algorithm. 
+
+The outermost loop iterates two times by splitting the input data into two halves and selecting one fold to be the training set and the other the test set at each turn. After this split, the training data (and \emph{not} the test set) is randomly undersampled to the specified ratio, commonly 1-to-1 unless this is a parameter that is actually being experimented on. Since our dataset is heavily imbalanced, this reduces the number of samples significantly.
+
+The second for-loop iterates also two times and splits the undersampled training data further into two sets: training and validation. Finally, a model is trained for each choice of hyperparameter for that specific classifier, resulting in a score for that parameter for that fold. The best hyperparameter is then selected to be the one with the best average score over the 2 folds, which is then used to train a new model with the training the whole training data obtained from the first topmost split.
+
+After the training of the tuned model is finished, it is used to calculate the probability scores of each sample in the test set. These scores are stored in memory, and the process is repeated by switching the roles of the test and training sets. When the whole procedure is finished, every sample from the dataset will have a probability score assigned to it calculated when that sample was part of the test set.
+
+ \begin{algorithm}
+\caption{Training and evaluating procedure using nested cross-validation}
+\label{alg:train}
+\begin{algorithmic}
+	\REQUIRE $indata:$ input data 	
+	\ENSURE $preds:$ predictions for every input sample when they were part of the test set 
+	\STATE $params \Leftarrow gridOrRandSearch()$ 
+	\FOR{$trval, te$ in $2fold(indata)$}
+		\STATE $trval \Leftarrow undersample(trval)$ 		
+		\FOR{$tr, val$ in $2fold(trval)$} 
+			\FOR{$p$ in $params$} 
+				\STATE $model \Leftarrow train(tr, p)$
+				\STATE $scores[p] \Leftarrow evaluate(model, val)$	
+			\ENDFOR
+		\ENDFOR
+		\STATE $p \Leftarrow argmax(avg(scores))$
+		\STATE $model \Leftarrow train(trval, p)$
+		\STATE $preds \Leftarrow predict(model, te)$
+	\ENDFOR	
+	\RETURN $preds$
+	    
+\end{algorithmic}
+\end{algorithm} 
+
+\section{Evaluation Metrics}
+
+\subsection{Confusion Matrix}
+
+A \emph{confusion matrix} (also called contingency table) is a table layout representing the performance of a classifier's output, judging by its predictions against the actual true values. In a binary classification problem, the confusion matrix is a 2 x 2 table where commonly the rows represent the true labels while the columns the predicted classes. Each cell contains a count of how many samples were classified on that category, and the values in the diagonal represent the correctly classified samples (if the features are ordered). Figure \ref{fig:confusion_example} depicts a sample confusion matrix for a binary classifier.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.5\textwidth,keepaspectratio]{figures/confusion_example.pdf}
+    \caption{An example of a normalized confusion matrix}
+    \label{fig:confusion_example}
+\end{figure}
+
+The confusion matrix is an excellent visualization tool to estimate the performance of a model. The values that should be maximized, the \emph{true positives} (TP) and \emph{true negatives} (TN), represent the samples that were correctly labeled as possessing the feature of interest or not, respectively. On the other hand, the \emph{false positives} (FP) and \emph{false negatives} (FN) are the misclassified samples where the algorithm predicted that the feature was present while in truth it was not and vice-versa. In this work, the positive class will always represent a churning user, and it follows that the negative class represents the non-churners.
+
+\subsection{Classification Accuracy}
+
+Several different metrics can be derived from the confusion matrix table. The \emph{classification accuracy} (CA) of a model is a common metric that corresponds to the fraction of the correctly classified samples on the test set, and can be calculated as follows:
+
+\begin{equation}
+CA = \frac{TP + TN}{TP + TN + FP + FN} 
+\end{equation}
+
+While trivial to understand, this metric may lead to erroneous conclusions when class imbalance is present in the test set, which is a common occurrence on the churn prediction domain. For example, if 9 out of 10 users of a dataset are non-churners, any classifier that simply outputs a negative class for all samples will result in an accuracy of 90\%, however its ability of detecting churners is non-existent. For a service provider, detecting churn cases is always more important than detecting the loyal users, and this metric by itself cannot represent this goal \citep{Burez2009} \citep{Hassouna2015}.
+
+\subsection{Precision, recall and other metrics}
+
+To address the class imbalance problem of the classification accuracy, others metrics are also commonly used. The \emph{positive predictive value} (PPV, also known as precision) is the proportion of the samples labeled as positive which are true positives, and describes the performance of the algorithm. The \emph{true positive rate} (TPR, also called sensitivity and recall) of a model corresponds to the number of correctly predicted positive samples divided by all positive samples. \emph{True negative rate} (TNR, also called specificity and fall-out) is the number of correctly predicted negatives divided by all true negatives. The \emph{false positive rate} (FPR, also called false alarm ratio) is the probability of receiving a false positive as output of an experiment, and is calculated by dividing the number of false positives by the total number of positive samples. The \emph{F1 score} (F1, also called F-score or F-measure) builds upon precision and recall by returning an harmonic mean between these two metrics.
+
+\begin{equation}
+PPV = \frac{TP}{TP + FP}
+\end{equation}
+
+\begin{equation}
+TPR = \frac{TP}{TP + FN}
+\end{equation}
+
+\begin{equation}
+TNR = \frac{TN}{TN + FP}
+\end{equation}
+
+\begin{equation}
+FPR = \frac{FP}{TN + FP} = 1 - TNR
+\end{equation}
+
+\begin{equation}
+F1 = 2 \times \frac{PPV \times TPR}{PPV + TPR}
+\end{equation}
+
+Depending on the distribution of classes of the dataset, it is often difficult (although desirable) to maximize both precision and recall metrics at the same time. A compromise must be reached that achieves the best trade-off between the two, which is commonly a business decision. For a music streaming service like Spotify, maximizing sensitivity is preferred due to the costs associated with a churning user, however a reasonable specificity is also a metric that should be strived for. \Todo{Check with Sahar}
+
+\subsection{Receiver Operating Characteristic}
+
+The \emph{receiver operating characteristic} (ROC) is a visualization tool that plots the relationship between the true positive rate (commonly the y-axis) and the false positive rate (the x-axis) of a binary classifier system. The curve is drawn by selecting different parameters of a model or levels of threshold for the decision boundary between the positive and negative classes. For example, when the output of a classifier is a probability value (like in logistic regression), different thresholds can be chosen to decide whether a user is a churner or not, depending if the goal is to minimize FPR or maximize TPR. An example of a ROC curve can be seen in Figure \ref{fig:roc_example}.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.9\textwidth,keepaspectratio]{figures/roc_example.pdf}
+    \caption{An example of a ROC curve}
+    \label{fig:roc_example}
+\end{figure}
+
+A good classifier would score values close to the upper-left corner of the plot, where the point (0,1) represents a perfect classifier with 100\% TPR and 0\% FPR. On the other hand, an algorithm that outputs a curve alongside the diagonal where TPR and FPR are almost the same at different threshold levels can be considered close to a random guess, like the flip of a coin. A classifier would underperform if its scores are closer to the bottom-right corner of the plot, however this result can always be mirrored by updating the model to simply invert the positive and negative labels of the classified samples.
+
+ROC curves can be used to compare the performance of different models by measuring the \emph{area under the curve} (AUC) of its plotted scores, which ranges from 0.0 to 1.0. The greater this area, the better the algorithm is to find a specific feature. Moreover, models with an area close to 0.5 can be assumed to perform not much better than random guess, since this is the total area under the diagonal line. The AUC can also be interpreted as the probability of a randomly picked positive sample is ranked higher by the model when compared to a randomly picked negative case.
+
+\subsection{Precision-Recall curves}
+
+While ROC curve is the most commonly used method for evaluating the performance of a classifier, it still fails to capture the true quality of the model when data is severely sparse. For any heavily skewed dataset, predicting the negative majority correctly can be accomplished easily, however the same cannot be said about the rare positive class. Since ROC curves utilizes the false positive rate calculated using the large number of true negatives, the plot may give the idea that the model is doing quite well, while failing to show its ability to predict the positive class. 
+
+Visualizing the precision plotted against its recall value may be more informative when dealing with sparse data. The \emph{precision-recall curve} is the visualization tool that accomplishes exactly that, for every threshold value, the recall (commonly the x-axis) is plotted against its precision (the y-axis). 
+
+\autoref{fig:prc_example} shows an example a precision-recall curve plotted for the same data from \autoref{fig:roc_example}, however focusing only in the churning class which is the focus of this study. Here we can clearly see how the precision is affected by an skewed dataset: even if our model manages to have only a small fraction of false positives, since they are many the precision will quickly be reduced.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.9\textwidth,keepaspectratio]{figures/prc_example.pdf}
+    \caption{An example of a Precision-Recall curve}
+    \label{fig:prc_example}
+\end{figure}
+
+Similarly to ROC curves, the area under the line correlates to the overall quality of the classifier: values closer to 1 indicates that a model has high precision and recall for every different tested threshold.  The balance between precision and recall can be manipulated by changing the threshold value: if we want to increase the recall, simply using a lower threshold will yield an increase in the number of true positives, at the cost of lower precision.
+
+\section{Statistical significance}
+
+\Todo{Will I do statistical significance? If so, how?}
+
+\section{Software and Libraries}
+
+The experiments on this thesis project were only made possible by utilizing well known open-source software libraries for data processing and machine learning. The recurrent LSTM models were implemented in Keras\citep{chollet2015keras}, a high-level deep learning wrapper library written in Python.  Tensorflow\citep{abadi2016tensorflow}, a library for numerical computation using data flow graphs created by Google, was used as a backend for Keras. Random forests and logistic regressions models, as well as  the procedures for handling cross-validation and hyperparameter search, were implemented on Scikit-Learn\citep{scikit-learn}, a Python module for machine learning. The random undersampling was performed using a modified version of a library called Imbalanced-Learn\citep{lema2017imbalanced}, a Python package that offers several re-sampling techniques for imbalanced datasets. 
+
+\chapter{Results and Discussion}
+
+\epigraph{Talk is cheap. Show me the code.}{\textit{Linus Torvalds}}
+
+This chapter will be dedicated to detail the experiments performed in this project, while also visualizing and reasoning over the obtained results.
+
+The experiments on this project aim to verify how the performance of current models used for predicting churn compares to a newer approach like LSTMs, and also explore how can we influence the scores of our predictor by changing different aspects of the input data. The experiments in this project are:
+
+\begin{itemize}
+\item Comparing LSTMs to baseline models commonly used for churn prediction
+\item Changing the size of the prediction and observation windows
+\item Exploring how the class balance between churning and retaining users influences performance
+\item Verifying if reducing the dimensionality of the data can increase the scores of the predictor models 
+\end{itemize}
+
+
+ As to avoid overwhelming the reader with data, the main results will be presented only, while the more extensive data can be thoroughly explored in \autoref{chap:add_results}. Following are some details regarding all experiments.
+
+\begin{itemize}
+\item The precision, recall and F1-score metrics were all obtained by thresholding the output scores to 50\%, which makes no assumption of whether the provider would rather decrease precision in favor of recall or vice-versa. Precision-recall and ROC curves plot however its corresponding metrics against all possible thresholds.
+\item Unless explicitly stated, the plots will show the metrics for the churned class, which is the focus of this project.
+\end{itemize}
+
+\section{LSTM vs. baseline models}
+
+In this experiment, our goal is to test the performance of the LSTM model compared against the current state of the art in churn prediction. The pilot study has revealed that logistic regression and random forests are algorithms that are still fairly used in the industry and academia.
+
+All three models were trained on the on the dataset composed of 56 days of observation time and 30 days of prediction, where undersampling was performed on the training data as to have an equal number of churners and retainers.
+
+\begin{table}
+\centering
+\begin{tabular}{llrrrr}
+\toprule
+     &          &  F1-Score &    PR AUC &  Precision &    Recall \\
+\midrule
+\multirow{2}{*}{LSTM} & Retained &  \textbf{0.901823} &  \textbf{0.994568} &  \textbf{0.992342} &  \textbf{0.826438} \\
+     & Churned &  \textbf{0.173997} &  0.204015 &   \textbf{0.098445} &  \textbf{0.748219} \\
+\cline{1-6}
+\multirow{2}{*}{Logistic Regression} & Retained &  0.831038 &  0.992812 &   0.991091 &  0.715492 \\
+     & Churned &  0.114972 &  0.105123 &   0.062285 &  0.746072 \\
+\cline{1-6}
+\multirow{2}{*}{Random Forest} & Retained &  0.897689 &  0.994356 &   0.991901 &  0.819821 \\
+     & Churned &  0.166283 &  \textbf{0.204470} &   0.093734 &  0.735728 \\
+\bottomrule
+\end{tabular}
+\caption{Metrics for the LSTM vs. baseline experiment}
+\label{tab:temporal_static}
+\end{table}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth,keepaspectratio]{figures/prc_temporal_static.pdf}
+    \caption{Precision-Recall curves for the LSTM and baseline models}
+    \label{fig:prc_temporal_static}
+\end{figure}
+
+The results for this experiment shows that random forest has the best overall performance of all evaluated models for almost all metrics in \autoref{tab:temporal_static}. This follows the results observed during the pilot study of this project. The intuition behind this is that random forests can more easily learn the correlations between the data and the binary label given that proper features are engineered.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth,keepaspectratio]{figures/cfm_temporal_static.pdf}
+    \caption{Normalized confusion matrices for the LSTM and baseline models}
+    \label{fig:cfm_temporal_static}
+\end{figure}
+
+
+\section{Experimenting on different window sizes}
 
 The size chosen for the time windows may have an influence on the performance metrics of our trained estimators that is non-trivial to predict. Even though an intuitive guess can be made for the effect of the change, the set of values that maximizes the accuracy of the classifiers while being compliant to the company's goals and also the available computing resources is \textit{a priori} unknown. This experiment attempts to answer this question by training several LSTM models while changing the observation and the prediction window sizes, and by plotting the best score obtained for each estimator.
 
@@ -482,40 +1098,361 @@ The size chosen for the time windows may have an influence on the performance me
 
 Increasing the size of the observation window basically means that more data is going to be used for training. It is expected that with more data, a better accuracy can be achieved, however that comes with the cost of an ever increasing training time. So the question that this experiment is exploring is how far in the user history must we train our models on as to obtain a good trade-off between accuracy and training time, a topic thoroughly explored in the work of \citep{Ballings2012}.
 
-Our experiment involved increasing the size of the observation window roughly by 7 days while keeping the size of the prediction window constant in 30 days, the resulting scores can be seen in Figure \ref{fig:obswindow}. There is a noticeable gain in ROC AUC and F1 score when increasing the size of the observation window, however this gain visibly diminishes at larger windows. This suggests that there is a threshold where the performance gain is so insignificant that would not justify the increase in time for training these models.
+Our experiment involved increasing the size of the observation window by 7 days while keeping the size of the prediction window constant in 30 days, the resulting scores can be seen in \autoref{fig:line_obs_window} and \autoref{fig:line_obs_window_ret}. 
 
-	\begin{figure}[t]
-	\centering
-    \includegraphics[width=0.8\textwidth, natwidth=400bp, natheight=200bp]{figures/obswindow_line.png}
-	\caption{Effect on performance metrics for different observation window sizes}	
-	\label{fig:obswindow}
-	\end{figure}
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth,keepaspectratio]{figures/line_obs_window.pdf}
+    \caption{F1-scores for the churned class using different observation window sizes and models}
+    \label{fig:line_obs_window}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth,keepaspectratio]{figures/line_obs_window_retained.pdf}
+    \caption{F1-scores for the retained class using different observation window sizes and models}
+    \label{fig:line_obs_window_ret}
+\end{figure}
+
+Both the random forest and logistic regression models exhibit an increase in F1-scores when the size of the observation window is made larger, however the gain can hardly be considered significant. The LSTM model on the other hand show a rather erratic behavior, reaching its top when the window is sized at 21 days.
 
 \subsection{Prediction Window}
 
 Modifying the size of the prediction window indicates how tolerant we are for considering a user a churner or not. Small windows are commonly used for services lacking a formal contract between the provider and the customer, which is similar approach used in the works of \citep{Dror2012}, \citep{Runge2014} and \citep{Pudipeddi2014}. Larger prediction window sizes are often seem in "classical" service providers like the telecom industry where a contract is commonly established, an approach that is widely seem in the churn prediction literature, \citep{Khan2015} and \citep{Hassouna2015} to name a few.
 
-This experiment involves changing the size of the prediction window while keeping the observation window size constant at 30 days. It is important to note that smaller window sizes means that a larger share of users will be considered churners, and due to our undersampling technique this also means that the number of samples used for training will be larger. However the effect on performance metrics hardly seems to be affected by it as can be seen in Figure \ref{fig:predwindow}. The effect in ROC AUC and F1 scores suffer only minor changes when the prediction window size increaases from 7 to 59 days.
+This experiment involves changing the size of the prediction window in intervals of 7 days while keeping the observation window size constant at 56 days. It is important to note that smaller window sizes means that a larger share of users will be considered churners, and due to our undersampling technique this also means that the number of samples used for training will be larger. 
 
-	\begin{figure}[t]
-	\centering
-    \includegraphics[width=0.8\textwidth, natwidth=400bp, natheight=200bp]{figures/predwindow_line.png}  
-	\caption{Effect on performance metrics for different prediction window sizes}	
-    \label{fig:predwindow}
-	\end{figure}
+The result of this experiment can be seen in\autoref{fig:line_pred_window}. 
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth,keepaspectratio]{figures/line_pred_window.pdf}
+    \caption{F1-scores for the churned class for different prediction window sizes and models}
+    \label{fig:line_pred_window}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth,keepaspectratio]{figures/line_pred_window_retained.pdf}
+    \caption{F1-scores for the retained class for different prediction window sizes and models}
+    \label{fig:line_pred_window}
+\end{figure}
+
+\Todo{Reason about the pred window experiment}
 
 \section{Effect of Class Distribution}
 
-\section{Experimenting on Different Subset of Features}
+In this experiment...
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth,keepaspectratio]{figures/line_class_balance.pdf}
+    \caption{F1-scores of the positive churning class for different shares of churning users}
+    \label{fig:line_class_balance}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth,keepaspectratio]{figures/line_class_balance_retained.pdf}
+    \caption{F1-scores of the negative retained class for different shares of churning users}
+    \label{fig:line_class_balance}
+\end{figure}
+
+\section{Experimenting with Dimensionality Reduction}
+
+This experiment...
+
+
+\begin{table}
+\centering
+\begin{tabular}{llrrrr}
+\toprule
+     &          &  F1-Score &    PR AUC &  Precision &    Recall \\
+\midrule
+\multirow{2}{*}{LSTM} & Retained &  0.872797 &  0.992778 &   0.991944 &  0.779202 \\
+     & Churned &  0.143338 &  0.152913 &   0.079239 &  0.750171 \\
+\cline{1-6}
+\multirow{2}{*}{Random Forest} & Retained &  0.883207 &  0.992759 &   0.991383 &  0.796315 \\
+     & Churned &  0.148800 &  0.168207 &   0.082885 &  0.726749 \\
+\bottomrule
+\end{tabular}
+\caption{Metrics for the dimensionality reduction experiment}
+\end{table}
+
 
 
 \chapter{Conclusions and Future Work}
+
+* Predicting when the user is churning (Regression LSTM vs. Survival Analysis)
+
+* Ensemble methods using classifiers that can strongly predict the positive and negative classes
 
 \bibliography{references}
 
 \appendix
 
-\chapter{Unnecessary Appended Material}
+\chapter{Additional Results}
+\label{chap:add_results}
+
+\section{Precision-recall curves}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth,keepaspectratio]{figures/prc_obs_window.pdf}
+    \caption{Precision-recall curves of the churned class for the observation window experiment. The models are LSTM, logistic regression and random forest, respectively}
+    \label{fig:prc_obs_window}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth,keepaspectratio]{figures/prc_pred_window.pdf}
+    \caption{Precision-recall curves of the churned class for the prediction window experiment. The models are LSTM, logistic regression and random forest, respectively}
+    \label{fig:prc_pred_window}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth,keepaspectratio]{figures/prc_class_balance.pdf}
+    \caption{Precision-recall curves of the churned class for the class balance experiment. The models are LSTM and random forest, respectively}
+    \label{fig:prc_class_balance}
+\end{figure}
+
+
+\section{ROC curves}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.9\textwidth,keepaspectratio]{figures/roc_temporal_static.pdf}
+    \caption{ROC curves for the LSTM vs. baseline models experiment}
+    \label{fig:roc_temporal_static}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.9\textwidth,keepaspectratio]{figures/roc_obs_window.pdf}
+    \caption{ROC curves for the observation window experiment}
+    \label{fig:roc_obs_window}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.9\textwidth,keepaspectratio]{figures/roc_pred_window.pdf}
+    \caption{ROC curves for the prediction window experiment}
+    \label{fig:roc_pred_window}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.9\textwidth,keepaspectratio]{figures/roc_class_balance.pdf}
+    \caption{ROC curves for the class balance experiment}
+    \label{fig:roc_class_balance}
+\end{figure}
+
+% --------------------
+
+\section{Metrics tables}
+
+
+% --------------------
+
+\begin{table}
+\centering
+\begin{tabular}{lllrrrr}
+\toprule
+     &     &          &  F1-Score &    PR AUC &  Precision &    Recall \\
+\midrule
+\multirow{18}{*}{LSTM} & \multirow{2}{*}{10\%} & Retained &  \textit{0.961646} &  0.991275 &   0.984150 &  \textit{0.940148} \\
+     &     & Churned &  \textit{0.202574} &  \textit{0.090036} &   \textit{0.137299} &  0.386163 \\
+\cline{2-7}
+     & \multirow{2}{*}{15\%} & Retained &  0.946061 &  0.991598 &   0.985619 &  0.909556 \\
+     &     & Churned &  0.180157 &  0.077199 &   0.111897 &  0.461973 \\
+\cline{2-7}
+     & \multirow{2}{*}{20\%} & Retained &  0.919837 &  0.991991 &   0.988625 &  0.859998 \\
+     &     & Churned &  0.164649 &  0.073727 &   0.095445 &  0.598871 \\
+\cline{2-7}
+     & \multirow{2}{*}{25\%} & Retained &  0.918358 &  0.992326 &   0.989153 &  0.857021 \\
+     &     & Churned &  0.166948 &  0.076928 &   0.096486 &  0.618989 \\
+\cline{2-7}
+     & \multirow{2}{*}{30\%} & Retained &  0.911930 &  0.992033 &   0.988888 &  0.846085 \\
+     &     & Churned &  0.156494 &  0.074946 &   0.089663 &  0.614573 \\
+\cline{2-7}
+     & \multirow{2}{*}{35\%} & Retained &  0.898646 &  0.991438 &   0.989102 &  0.823349 \\
+     &     & Churned &  0.143794 &  0.070388 &   0.081122 &  0.632237 \\
+\cline{2-7}
+     & \multirow{2}{*}{40\%} & Retained &  0.874766 &  0.992236 &   0.990585 &  0.783195 \\
+     &     & Churned &  0.133156 &  0.074518 &   0.073595 &  0.698234 \\
+\cline{2-7}
+     & \multirow{2}{*}{45\%} & Retained &  0.863309 &  0.991402 &   0.991214 &  0.764641 \\
+     &     & Churned &  0.128737 &  0.060313 &   0.070638 &  0.725221 \\
+\cline{2-7}
+     & \multirow{2}{*}{50\%} & Retained &  0.839230 & \textit{ 0.992415} &   \textbf{0.992118} &  0.727171 \\
+     &   & Churned &  0.123085 &  0.068765 &   0.066874 &  \textbf{0.771933} \\
+\cline{1-7}
+\cline{2-7}
+\multirow{18}{*}{Random Forest} & \multirow{2}{*}{10\%} & Retained &  \textbf{0.981921} &  0.993655 &   0.983035 &  \textbf{0.980810} \\
+     &     & Churned &  \textbf{0.300023} &  0.203894 &   \textbf{0.287416} &  0.313788 \\
+\cline{2-7}
+     & \multirow{2}{*}{15\%} & Retained &  0.974738 &  0.993544 &   0.985423 &  0.964282 \\
+     &     & Churned &  0.293922 &  0.204665 &   0.225561 &  0.421737 \\
+\cline{2-7}
+     & \multirow{2}{*}{20\%} & Retained &  0.961760 &  0.993784 &   0.987977 &  0.936898 \\
+     &     & Churned &  0.262594 &  0.209803 &   0.173706 &  0.537782 \\
+\cline{2-7}
+     & \multirow{2}{*}{25\%} & Retained &  0.961340 &  0.993670 &   0.988060 &  0.936027 \\
+     &     & Churned &  0.261896 &  \textbf{0.212639} &   0.172719 &  0.541462 \\
+\cline{2-7}
+     & \multirow{2}{*}{30\%} & Retained &  0.951873 &  0.993767 &   0.989192 &  0.917266 \\
+     &     & Churned &  0.239996 &  0.209713 &   0.150395 &  0.593719 \\
+\cline{2-7}
+     & \multirow{2}{*}{35\%} & Retained &  0.943922 &  0.993684 &   0.989599 &  0.902276 \\
+     &     & Churned &  0.220736 &  0.207393 &   0.134480 &  0.615554 \\
+\cline{2-7}
+     & \multirow{2}{*}{40\%} & Retained &  0.933831 &  0.993775 &   0.990513 &  0.883286 \\
+     &     & Churned &  0.205684 &  0.210247 &   0.121927 &  0.657017 \\
+\cline{2-7}
+     & \multirow{2}{*}{45\%} & Retained &  0.916083 &  0.993626 &   0.991306 &  0.851471 \\
+     &     & Churned &  0.180668 &  0.208895 &   0.103779 &  0.697252 \\
+\cline{2-7}
+     & \multirow{2}{*}{50\%} & Retained &  0.897189 &  \textbf{0.994240} &   \textit{0.991878} &  0.819002 \\
+     &   & Churned &  0.165577 &  0.199575 &   0.093293 &  \textit{0.735240} \\
+\bottomrule
+\end{tabular}
+\caption{Metrics for the class balance experiment}
+\end{table}
+
+\begin{table}
+\centering
+\begin{tabular}{lllrrrr}
+\toprule
+     &   &          &  F1-Score &    PR AUC &  Precision &    Recall \\
+\midrule
+\multirow{8}{*}{LSTM} & \multirow{2}{*}{7} & Retained &  0.823630 &  0.974100 &   0.971157 &  0.715013 \\
+     &   & Churned &  \textit{0.272094} &  \textit{0.150116} &   \textit{0.167242} &  0.729376 \\
+\cline{2-7}
+     & \multirow{2}{*}{14} & Retained &  0.848669 &  0.987558 &   0.986669 &  0.744534 \\
+     &   & Churned &  0.185941 &  0.099012 &   0.106108 &  0.750910 \\
+\cline{2-7}
+     & \multirow{2}{*}{21} & Retained &  0.845348 &  0.989559 &   0.990381 &  0.737367 \\
+     &   & Churned &  0.142604 &  0.060440 &   0.078705 &  0.758035 \\
+\cline{2-7}
+     & \multirow{2}{*}{28} & Retained &  \textit{0.861970} &  \textit{0.992292} &   \textit{0.992303} &  \textit{0.761899} \\
+     &   & Churned &  0.133607 &  0.075458 &   0.073233 &  \textit{0.760976} \\
+\cline{1-7}
+\cline{2-7}
+\multirow{8}{*}{Logistic Regression} & \multirow{2}{*}{7} & Retained &  0.819430 &  0.980246 &   0.973687 &  \textit{0.707365} \\
+     &   & Churned &  \textit{0.275769} &  \textit{0.231384} &   \textit{0.168623} &  \textit{0.756390} \\
+\cline{2-7}
+     & \multirow{2}{*}{14} & Retained &  \textit{0.823319} &  0.988834 &   0.984885 &  0.707291 \\
+     &   & Churned &  0.162862 &  0.140317 &   0.091636 &  0.731201 \\
+\cline{2-7}
+     & \multirow{2}{*}{21} & Retained &  0.821328 &  0.991033 &   0.987873 &  0.702837 \\
+     &   & Churned &  0.120611 &  0.106732 &   0.065916 &  0.708495 \\
+\cline{2-7}
+     & \multirow{2}{*}{28} & Retained &  0.816645 &  \textit{0.992240} &  \textit{0.989444} &  0.695228 \\
+     &   & Churned &  0.099809 &  0.084523 &   0.053735 &  0.700000 \\
+\cline{1-7}
+\cline{2-7}
+\multirow{8}{*}{Random Forest} & \multirow{2}{*}{7} & Retained &  0.859076 &  0.984100 &   0.979099 &  0.765265 \\
+     &   & Churned &  \textbf{0.331079} &  \textbf{0.333607} &   \textbf{0.209295} &  \textbf{0.791815} \\
+\cline{2-7}
+     & \multirow{2}{*}{14} & Retained &  0.889945 &  0.991412 &   0.988637 &  0.809169 \\
+     &   & Churned &  0.237010 &  0.259038 &   0.140071 &  0.769709 \\
+\cline{2-7}
+     & \multirow{2}{*}{21} & Retained &  0.899322 &  0.993527 &   0.991293 &  0.822968 \\
+     &   & Churned &  0.195370 &  0.227368 &   0.112185 &  0.755783 \\
+\cline{2-7}
+     & \multirow{2}{*}{28} & Retained &  \textbf{0.907344} &  \textbf{0.994559} &   \textbf{0.992572} &  \textbf{0.835596} \\
+     &   & Churned &  0.177947 &  0.198052 &   0.101002 &  0.747073 \\
+\bottomrule
+\end{tabular}
+\caption{Metrics for the prediction window experiment}
+\end{table}
+
+% --------------------
+
+\begin{table}
+\centering
+\begin{tabular}{lllrrrr}
+\toprule
+     &   &          &  F1-Score &    PR AUC &  Precision &    Recall \\
+\midrule
+\multirow{16}{*}{LSTM} & \multirow{2}{*}{7} & Retained &  0.759781 &  0.991025 &   0.992226 &  0.615572 \\
+     &   & Churned &  0.095322 &  0.053770 &   0.050642 &  0.809603 \\
+\cline{2-7}
+     & \multirow{2}{*}{14} & Retained &  0.851632 &  0.992178 &   0.991327 &  0.746445 \\
+     &   & Churned &  0.126301 &  0.071872 &   0.069023 &  0.742168 \\
+\cline{2-7}
+     & \multirow{2}{*}{21} & Retained &  \textit{0.867829} &  \textit{0.992460} &   0.991078 &  \textit{0.771844} \\
+     &   & Churned &  \textit{0.135221} &  0.070760 &   \textit{0.074557} &  0.725676 \\
+\cline{2-7}
+     & \multirow{2}{*}{28} & Retained &  0.754988 &  0.991924 &   \textbf{0.993143} &  0.608960 \\
+     &   & Churned &  0.096572 &  0.067951 &   0.051253 &  \textbf{0.834000} \\
+\cline{2-7}
+     & \multirow{2}{*}{35} & Retained &  0.840498 &  0.992837 &   0.992663 &  0.728783 \\
+     &   & Churned &  0.126028 &  \textit{0.078335} &   0.068496 &  0.787352 \\
+\cline{2-7}
+     & \multirow{2}{*}{42} & Retained &  0.789003 &  0.991724 &   0.992310 &  0.654839 \\
+     &   & Churned &  0.103672 &  0.069907 &   0.055429 &  0.799649 \\
+\cline{2-7}
+     & \multirow{2}{*}{49} & Retained &  0.838852 &  0.992317 &   0.992239 &  0.726539 \\
+     &   & Churned &  0.123394 &  0.074572 &   0.067029 &  0.775642 \\
+\cline{2-7}
+     & \multirow{2}{*}{56} & Retained &  0.839230 &  0.992415 &   0.992118 &  0.727171 \\
+     &   & Churned &  0.123085 &  0.068765 &   0.066874 &  0.771933 \\
+\cline{1-7}
+\cline{2-7}
+\multirow{16}{*}{Logistic Regression} & \multirow{2}{*}{7} & Retained &  0.813669 &  0.991255 &   0.988039 &  0.691613 \\
+     &   & Churned &  0.096712 &  0.076252 &   0.052121 &  0.669464 \\
+\cline{2-7}
+     & \multirow{2}{*}{14} & Retained &  0.825072 &  0.991869 &   0.989110 &  0.707703 \\
+     &   & Churned &  0.104654 &  0.088905 &   0.056605 &  0.692398 \\
+\cline{2-7}
+     & \multirow{2}{*}{21} & Retained &  0.826448 &  0.992184 &   0.989865 &  0.709342 \\
+     &   & Churned &  0.108169 &  0.096096 &   0.058522 &  0.713282 \\
+\cline{2-7}
+     & \multirow{2}{*}{28} & Retained &  0.829265 &  0.992497 &   0.990268 &  0.713294 \\
+     &   & Churned &  0.110907 &  0.100216 &   0.060058 &  0.723236 \\
+\cline{2-7}
+     & \multirow{2}{*}{35} & Retained &  0.830033 &  0.992643 &   0.990586 &  0.714266 \\
+     &   & Churned &  0.112509 &  0.103061 &   0.060937 &  0.732019 \\
+\cline{2-7}
+     & \multirow{2}{*}{42} & Retained &  0.829915 &  0.992647 &   0.990726 &  0.714018 \\
+     &   & Churned &  0.113018 &  0.101979 &   0.061208 &  0.736118 \\
+\cline{2-7}
+     & \multirow{2}{*}{49} & Retained &  \textit{0.834664} &  0.992744 &   0.990785 &  \textit{0.721046} \\
+     &   & Churned &  \textit{0.115348} &  \textit{0.104808} &   \textit{0.062583} &  0.735240 \\
+\cline{2-7}
+     & \multirow{2}{*}{56} & Retained &  0.830921 &  \textit{0.992801} &   \textit{0.991129} &  0.715299 \\
+     &   & Churned &  0.115075 &  0.103801 &   0.062337 &  \textit{0.747243} \\
+\cline{1-7}
+\cline{2-7}
+\multirow{16}{*}{Random Forest} & \multirow{2}{*}{7} & Retained &  0.876152 &  0.993256 &   0.991183 &  0.785044 \\
+     &   & Churned &  0.141873 &  0.140149 &   0.078638 &  0.724310 \\
+\cline{2-7}
+     & \multirow{2}{*}{14} & Retained &  0.890559 &  0.993822 &   0.991668 &  0.808161 \\
+     &   & Churned &  0.157307 &  0.170996 &   0.088123 &  0.731922 \\
+\cline{2-7}
+     & \multirow{2}{*}{21} & Retained &  0.893164 &  0.993925 &   0.991717 &  0.812427 \\
+     &   & Churned &  0.160246 &  0.187477 &   0.089969 &  0.732117 \\
+\cline{2-7}
+     & \multirow{2}{*}{28} & Retained &  0.893381 &  0.994163 &   \textit{0.991941} &  0.812637 \\
+     &   & Churned &  0.161846 &  0.194900 &   0.090869 &  \textit{0.739338} \\
+\cline{2-7}
+     & \multirow{2}{*}{35} & Retained &  0.898717 &  0.994195 &   0.991906 &  0.821534 \\
+     &   & Churned &  0.167482 &  0.202993 &   0.094503 &  0.735337 \\
+\cline{2-7}
+     & \multirow{2}{*}{42} & Retained &  0.897824 &  0.994100 &   0.991815 &  0.820105 \\
+     &   & Churned &  0.165886 &  \textbf{0.203295} &   0.093529 &  0.732800 \\
+\cline{2-7}
+     & \multirow{2}{*}{49} & Retained &  \textbf{0.900970} &  0.994093 &   0.991656 &  \textbf{0.825481} \\
+     &   & Churned &  \textbf{0.168477} &  0.197516 &   \textbf{0.095300} &  0.725773 \\
+\cline{2-7}
+     & \multirow{2}{*}{56} & Retained &  0.897189 &  \textbf{0.994240} &   0.991878 &  0.819002 \\
+     &   & Churned &  0.165577 &  0.199575 &   0.093293 &  0.735240 \\
+\bottomrule
+\end{tabular}
+\caption{Metrics for the observation window experiment}
+\end{table}
 
 \todos
 
