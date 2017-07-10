@@ -1,4 +1,4 @@
-\begin{thebibliography}{64}
+\begin{thebibliography}{70}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -59,6 +59,35 @@ Vishal Mahajan, Richa Misra, and Renuka Mahajan.
   7889--7903, 2014.
 \newblock ISSN 09574174.
 \newblock \doi{10.1016/j.eswa.2014.06.018}.
+
+\bibitem[eu2()]{eu2017protection}
+{Protection of personal data}.
+\newblock http://ec.europa.eu/justice/data-protection/.
+\newblock Accessed: 2017-07-01.
+
+\bibitem[Kramer et~al.(2014)Kramer, Guillory, and
+  Hancock]{kramer2014experimental}
+Adam~DI Kramer, Jamie~E Guillory, and Jeffrey~T Hancock.
+\newblock Experimental evidence of massive-scale emotional contagion through
+  social networks.
+\newblock \emph{Proceedings of the National Academy of Sciences}, 111\penalty0
+  (24):\penalty0 8788--8790, 2014.
+
+\bibitem[Bennett et~al.(2007)Bennett, Lanning, et~al.]{bennett2007netflix}
+James Bennett, Stan Lanning, et~al.
+\newblock The netflix prize.
+\newblock In \emph{Proceedings of KDD cup and workshop}, volume 2007, page~35.
+  New York, NY, USA, 2007.
+
+\bibitem[wir()]{wired2010netflix}
+{NetFlix Cancels Recommendation Contest After Privacy Lawsuit}.
+\newblock https://www.wired.com/2010/03/netflix-cancels-contest/.
+\newblock Accessed: 2017-07-01.
+
+\bibitem[goo()]{google2017renew}
+{100\% renewable is just the beginning}.
+\newblock https://environment.google/projects/announcement-100/.
+\newblock Accessed: 2017-07-01.
 
 \bibitem[Cox(1958)]{cox1958regression}
 David~R Cox.
@@ -444,5 +473,11 @@ Guillaume Lema{{\^i}}tre, Fernando Nogueira, and Christos~K. Aridas.
 \newblock \emph{Journal of Machine Learning Research}, 18\penalty0
   (17):\penalty0 1--5, 2017.
 \newblock URL \url{http://jmlr.org/papers/v18/16-365.html}.
+
+\bibitem[Domingos(2012)]{domingos2012few}
+Pedro Domingos.
+\newblock A few useful things to know about machine learning.
+\newblock \emph{Communications of the ACM}, 55\penalty0 (10):\penalty0 78--87,
+  2012.
 
 \end{thebibliography}

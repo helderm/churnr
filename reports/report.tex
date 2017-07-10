@@ -107,7 +107,7 @@
 	
 \section{Churn prediction}	
 	
-	\emph{Churn prediction}, the task of identifying the most probable churning customers of a service provider, is an established topic in the literature and has seen a considerable amount of research specially on the mobile telecom industry \citep{Hassouna2015} \citep{Lu2014} \citep{Khan2015}.  Several classical techniques for predicting churn like decision trees and logistic regression have been used on recent work \citep{mahajan2015review}, however most of them make use of user behaviour data at a single point in time, normally the most recent one when the dataset was created. The user is commonly represented by summarizing or aggregating his behavioural feature values over a fixed time window, thus losing any latent sequential information that might be contained in the data set. This is a simplification that eases the burden of training a predictor model since the customer data is commonly high-dimensional and difficult to work with, nonetheless latent attributes, when used properly, have been shown to improve significantly a predictor's performance for industries like mobile telecom \citep{GurAli2014}.
+	\emph{Churn prediction}, the task of identifying the customers who are most prone to abandon the service provider, is an established topic in the literature and has seen a considerable amount of research specially on the mobile telecom industry \citep{Hassouna2015} \citep{Lu2014} \citep{Khan2015}.  Several classical techniques for predicting churn like decision trees and logistic regression have been used on recent work \citep{mahajan2015review}, however most of them make use of user behaviour data at a single point in time, normally the most recent one when the dataset was created. The user is commonly represented by summarizing or aggregating his behavioural feature values over a fixed time window, thus losing any latent sequential information that might be contained in the data set. This is a simplification that eases the burden of training a predictor model since the customer data is commonly high-dimensional and difficult to work with, nonetheless latent attributes, when used properly, have been shown to improve significantly a predictor's performance for industries like mobile telecom \citep{GurAli2014}.
     
     Intuitively one can think that latent factors hidden in the temporal axis of the user behaviour data could yield a better prediction accuracy when comparing to a model which leverage a single and static point in time. For instance, a user that is gradually reducing its consumption of the service over time can be easily thought of a prospect churner. While this intuition is trivial to come up with, we are also interested in learning strong correlations between temporal aspects of the data and the churn rate which are not as clear to the eye. Our hypothesis is that making use of the properties hidden on user behaviour data over time, a churn rate predictor could improve its accuracy greatly when compared to methods which are static on time. \Todo{Add this paragraph somewhere else maybe? It seems strange here}
     
@@ -117,11 +117,43 @@ A churn rate predictor which can identify possible churners accurately is just a
 	
 \section{Research Question}	
 	
-The goal of this project will be to research different models for churn prediction that can make use of the temporal aspect of user behaviour data at its fullest. Our hypothesis is that latent factors hidden on usage patterns may increase the accuracy of state-of-art predictors which considers only the state of the data at a single point in time. We shall experiment on different models that are known to perform well on time series data and compare their accuracy using different evaluation methods. Detecting possible churners, while important, does not improve user retention without an associated action performed by the service provider. To derive insights on what can done to improve this metric, a deep data exploration and feature analysis is also a goal of this project. Features shall be correlated to their influence on the churn rate, and feature selection techniques shall be researched and implemented in an attempt to reduce bias on the churn classifiers.  \Todo{Improve the research question section, add some bullet points}  
+The main research question of this project is:
 
-\section{Ethical and Social Aspects}
+\begin{itemize}
+\item Can recurrent neural networks, more specifically LSTMs, achieve a better classification performance for predicting user churn when compared to current state of the art methods for this task?
+\end{itemize}	
 
-This thesis... \Todo{Write ethics section}
+An auxiliary research question is:
+
+\begin{itemize}
+\item How does different aspects of the data, like the class distribution between churning and retaining users, the amount of historical user behavior information, and different representations for the data influences the accuracy of the predictor models?
+\end{itemize}
+
+
+\section{Sustainability, Ethical and Social Aspects}
+
+The protection of user personal data has reached the spotlight in recent years, mainly through its misuse by companies that detain this kind of information. With the widespread use of mobile devices connected to the Internet 24/7, service providers have at their disposal an immense quantity of customer data as fine grained as his exact geographical location, his purchase behavior in e-stores and more. Users are commonly unaware of how their data is being exploited by providers, the exact definition being hidden in thousands of lines in a software agreement written in an obscure way that even specialists may fail to comprehend. Even if fully understood, the legality of its terms is being questioned by courts of law around the world. To protects its citizen's digital data, the European Union has recently issued a set of laws concerning data privacy that shall be put into practice in May 2018 \citep{eu2017protection}.
+
+The misuse of customer information by companies that sparked these concerns has its fair share of examples in the wild. For instance, Facebook released a controversial study where it manipulated the sentiments of its users by feeding into its client's news feed articles leaning towards a positive and negative sentiment, and analyzing how users responded to that stimulus\citep{kramer2014experimental}. However no user was aware of this manipulation, which could inadvertently lead to tragic outcomes that the experimenters failed to consider. 
+
+Another notorious example came from a contest sponsored by Netflix for researchers who could improve its recommendation algorithm, an event known as "the Netflix Prize" \citep{bennett2007netflix}. The massive dataset containing user behavior information on its video platform, alongside a prize of 1 million dollars for the winning team, gathered the interest of researchers all around the world. However a major class-action suit was filled against the company for failing to anonymize user information properly, with customers claiming that they could be uniquely identified through the released data, with the outcome of Netflix canceling future versions of the contest altogether \citep{wired2010netflix}.
+
+The protection of user privacy is a key component in Spotify's business model. Being a company primarily data-driven, it is imperative that Spotify can be trusted in the public's eyes as a custodian of customers' data, both for increasing the user satisfaction with the service and also to avoid similar legal processes suffered by other companies that might deter it from its main mission and priorities. With that in mind, every user personal information is scrambled through a hashing algorithm that makes it impossible to decrypt without the use of the encryption key. If the user ever requests his data to be erased, the removal of this key from Spotify's database makes it impossible for the data to be read and exploited in any way. More so, every non-critical dataset has by default an expiration date on its rows no longer than 90 days, which ensures that data will not live forever in the database.
+
+The computing resources utilized in this project were provided mainly by Google's Cloud Platform data centers. These clusters of machines were heavily optimized throughout the years as to efficiently make use of energy resources, in a way that most companies are incapable of sue to technology and budget constraints. A recent announcement revealed that in 2017 every data centers owned by Google will run on 100\% renewable energy, which is a feat that few other companies can claim \citep{google2017renew}.  
+
+
+\section{Contributions}
+
+The main contributions of this project can be listed as:
+
+\begin{itemize}
+\item Evaluating the performance of a novel recurrent neural network method compared to the standard techniques currently in use for churn prediction.
+\item Assessing the impact in accuracy of the predictor models when trained with different quantities of user data.
+\item Analyzing how different threshold levels for determining if a user has churned or not affects the performance of classifiers.
+\item Experimenting on changing the ratio between the retained and churning classes, and the impact in accuracy that it yields.
+\item Evaluating if a more compact representation of user data can improve the performance of predictor models.
+\end{itemize}
 
 \section{Outline}
 
@@ -162,7 +194,7 @@ The \emph{observation window} is the time span used to observe user behavior and
 
 \begin{definition}
 \label{def:churn}
-A user is defined to have \emph{churned} if he is active during the activity window and inactive during the prediction window. 
+A user is defined to have \emph{churned} if he is active during the activity window and inactive during the prediction window, and as \emph{retained} otherwise.
 \end{definition}
 
 Note that as mentioned before this definition is not concerned whether the user is a paying customer or not, but only if he is actually making use of the service. For example, a user may be subscribed to a Premium paid account and still be considered to have churned if no activity was registered in the prediction window. However, it should be noted that empirical observations by the service provider suggest that there is a significant behavioral difference between the two classes of users that will be taken into consideration when the experiments are performed. 
@@ -194,7 +226,7 @@ which assigns one label per customer in our dataset. This definition follows bus
 The literature on churn prediction commonly describes the user features as a single point over the whole observation period, ignoring the time component of the data by transforming it through an aggregation function like the mean. As to train our non-sequential predictor models, we need a similar representation of the data which summarizes all information that we posses of a user over time into a single $D$-dimensional vector. Following the works by \citep{GurAli2014}, we define a \emph{single period training data (SPTD)} as the dataset consisting of one observation per customer who is active during the sampling period. In this approach, the dataset is 
 
 \begin{equation}
-\text{SPTD}_{t_0 \rightarrow t_\alpha} = [\mathbf{X}_{t_0 \rightarrow t_\alpha}, \mathbf{y}]
+\text{SPTD} = [\mathbf{X}_{t_0 \rightarrow t_\alpha}, \mathbf{y}]
 \end{equation}
 
 where $\mathbf{X}_{t_0\rightarrow t_\alpha}$ is a $N \times D$ matrix consisting of the constructed features $f(\mathbf{X})$, $f()$ is a feature aggregation function that maps all $\alpha$ user vectors over the observation window to a single one with the same number of $D$ features, and  $\mathbf{X}$ as the $N \times \alpha \times D$ matrix containing information about all users over the whole observation period. $\mathbf{y}$ is a $1 \times N$ column vector containing churn labels for all samples. 
@@ -534,9 +566,9 @@ The rapid increase in Internet popularity has spawned a plethora of new services
 In \citep{Runge2014}, players responsible for generating the most profit on two casual social games were the focus of a study on churn analysis and prediction. Formal definitions for active players and churning were made, and the problem was defined as a binary classification task where users were labelled as leaving the service or not in the following week of when the models were trained. Four different models were then trained, and a neural network classifier obtained the best area under the curve (AUC) score, with logistic regression as a close second. The formal definitions of "churn" and "activity" can be applied to a music streaming service in a similar way, as the evaluation of performance using a series of receiver operating characteristic (ROC) curves. In \citep{Borbora2011}, the activity log of a subscription-based multiplayer online game was the source of an experiment focused on comparing two different methods for predicting the users with a higher tendency to leave the service, a theory-driven and data-driven approaches. For the modelling, an ensemble method was used with several different classifiers, where the choice of model was made based on whether the cluster of the data set (found with K-means) that will be used to train the classifier has a significant proportion of churners or not. Even though the performance of the data-driven model was superior, the difference was negligible when taking into consideration the complexity of the models and also its interpretability. Moreover, if marketing resources are constrained the theory-driven model was considerably superior for the first 40\% of users on the lift chart. 
 
 
-\section{Sequential Modelling for User Behaviour Data}
+\section{Sequential Modelling for User Behavior Data}
 
-Even though there is currently a wealth of research on churn prediction techniques, most of them treat the user behavioral features as static points in time by aggregating or summarizing their values over a time window \citep{Auon2015}. It is a simplification that eases the hassle of training models with a data set which is commonly high-dimensional and difficult to work with, however information that could be used to improve the predictors' performance is lost in this process  \citep{GurAli2014}. For example, there is no information as to when over the time window being analysed a user decides to churn, it could be that all defectors are grouped into a period where an external event (like the end of an offer) has taken place. Environmental variables, that is those that varies through time but are common to all users, are also omitted on static models, leaving it to the experts the task of manually integrating these features on their analyses. Newer models like \citep{Pudipeddi2014} attempt to integrate some temporal data by manually engineering features related to time (like the duration of an event, for example), however since each user is represented as a sample in a single point in time the sequence of data transformations is inherently lost in this process.
+Even though there is currently a wealth of research on churn prediction techniques, most of them treat the user behavioral features as static points in time by aggregating or summarizing their values over a time window \citep{Auon2015}. It is a simplification that eases the hassle of training models with a data set which is commonly high-dimensional and difficult to work with, however information that could be used to improve the predictors' performance is lost in this process  \citep{GurAli2014}. For example, there is no information as to when over the time window being analyzed a user decides to churn, it could be that all defectors are grouped into a period where an external event (like the end of an offer) has taken place. Environmental variables, that is those that varies through time but are common to all users, are also omitted on static models, leaving it to the experts the task of manually integrating these features on their analyses. Newer models like \citep{Pudipeddi2014} attempt to integrate some temporal data by manually engineering features related to time (like the duration of an event, for example), however since each user is represented as a sample in a single point in time the sequence of data transformations is inherently lost in this process.
 
 It is natural to think that the human behaviour evolves through time. Our opinions and desires changes in accordance to the stimuli that we receive from the world around us, and summarizing our persona by looking at a single point in our life is an oversimplification that does not make justice to the path that leaded us to where we are. Dealing with temporal data is by no means trivial however, and to leverage fully its properties some careful considerations about this type of data must be done. On \citep{Langkvist2014}, an overview of the challenges on creating models that make use of the time component on data sets are presented to the reader. Also, since hand-crafted features are generally domain-specific and difficult to create, a review of the current research on unsupervised feature learning applied for time-series data is the focus of this paper. From the challenges, it is worth of mention the uncertainty that there is enough information to understand the underlying process, its non-stationary characteristics like mean, variance and frequency, and its common high dimensionality and noise. The right representation is deemed then crucial for any model to be successful in its goal. Several different techniques currently being used for unsupervised feature learning are then presented in details to the reader, where it is worth of quick mention the conditional Restricted Boltzmann Machine (cRBM), Recurrent Neural Networks (RNN, with is Long Short-Term Memory extension), the Gated RBM, the Time-Delay Neural Networks, and the Space-Time Deep Belief Network. Finally, several classical time-series problems are reviewed alongside the best models currently being used for each domain. 
 
@@ -546,7 +578,6 @@ Deep architectures like LSTMs could theoretically be applied in a similar way fo
 
 
 \section{Evaluating and Training Churn Prediction Models}
-
 
 Data sets from service industries often have a common characteristic that may be problematic while training models, which is the uneven distribution between the churning and non-churning classes. It is a common scenario for the number of non-churners to heavily outweigh the number of churning samples on real data sets. Class imbalance is thus a recurrent concern in almost all domains, however research in this area lacks the proper attention. \citep{Burez2009} aims to solve this mystery by focusing entirely on how the uneven class distribution affects the performance of several different classifiers. The performance boost estimated to be received by using a cost-sensitive learning algorithm (where false negatives are assigned a greater cost than false positives) is also evaluated, and it has taken the form of a weighted random forest model which was compared to other classical baseline models like logistic regression and random forests. Under-sampling, where fewer samples from the majority class are incorporated in the training data as to artificially change the distribution between the labels, is proved to significantly improve the performance of the underlying models, however the exact ratio between churners and non-churners is confirmed to be case-dependant, not necessarily being the even distribution the perfect choice. 
 
@@ -558,7 +589,7 @@ Current data sets from service providers have no lack of user historical informa
 
 Churn prediction has been explored in different kind of applications on recent literature, however music streaming services are as of today a quite under-researched area, even though there is a prominent feature that makes it significantly different from other more researched and similar areas like video streaming, which would be the absence of the constant attention factor that video demands. Studying the user behaviour in each application can possibly help optimizing parameters that are difficult to tune without expert knowledge on how the interaction between costumer and application occurs. The work by \citep{Zhang2013} aims to fill that gap by analysing patterns of usage of Spotify's Premium subscribers on features like session and playback arrival patterns, user behavior on single and multiple devices and favorite times of day for streaming. The main contributions of the study can be summarized as follows: First, daily patterns can be observed on features like session arrival, playback arrivals and session length. Second, there is a high probability of users to continue on the same device for consecutive sessions. Third, users have their unique times of day when they prefer to stream music on the platform. Fourth, a session length can be used as a good indicator of the next session length and also downtime.
 
-\chapter{Dataset creation and exploration}
+\chapter{Dataset Creation and Exploration}
 \label{chap:dataset}
 
 \epigraph{In God we trust: all others bring data.}{\textit{William Edwards Deming}}
@@ -571,7 +602,7 @@ Every time a user streams content on Spotify, be it through the mobile applicati
 
 After processing and cleaning procedures, a set of tables, named by the provider as \emph{ReportingEndContent}, are generated one for each day, and it serves as the main source of data for this project. The tables have an average of 2.8 billions of rows with 38 columns, occupying up to 1.7 TB of storage in disk each, one of the largest datasets currently stored in Google Cloud platform. These tables are further joined with other tables as to gather a more detailed information about the stream, which are capped to a limit of 90 days due to privacy rules established by the provider.
 
-\section{Dataset creation}
+\section{Dataset Creation}
 
 Creating a dataset that realistically represents the target population of this is by no mean an easy feat to accomplish. While it is desirable to train models with all the data that is available to us, doing so is an engineering feat by itself that could span the entirety of a project. Thus, we need to make smart decisions as to create a dataset that is representative of the audience while also avoiding scalability pitfalls that eventually occurs when working with big data.
 
@@ -626,7 +657,7 @@ While the play context contains information that we would like to use in our mod
 
 After filtering the group of streams from the users that we are interested on and parsing the play context information, the process of extracting and engineering the features can be started. The main goal of this stage is to create the sequential dataset that is going to be used for training the temporal models, while also calculating the binary labels that will indicate whether the users are going to churn or not. Before introducing the resulting features however, understanding how the time range was divided into different windows is utmost importance as to better comprehend how these features are generated.
 
-\subsubsection{Time windows}
+\subsubsection{Time Windows}
 
 In order to predict whether a user is going to churn in the future or not and generate the churn binary labels, the time sequence is split into two time windows. The \emph{observation window} is the time span where the user behavior is tracked, data which will be used for training the predictor models. It is sequentially followed by a \emph{prediction window} that is exclusively used for generating the churn label. The windows can be better visualized in \autoref{fig:timewindows}. In order to make sure that selected users did not churn a long time before being observed, the last few days of the observation window are used for sampling users who are active, a time span called \emph{activity window}. 
 
@@ -748,7 +779,7 @@ Users in Spotify possess different behaviors whether they registered for a long 
     \label{fig:dayssinceregdist}
 	\end{figure}
 
-\subsection{User Behavior through Time}
+\subsection{User Behavior Through Time}
 
 Humans are creatures of habits. Our daily routines follow distinguishable patterns mainly influenced by day-night cycles that are far from being random. To better visualize these patterns, \autoref{fig:featstime} plots the feature values for churning and retaining users over the course of the observation window sized at 56 days. 
 
@@ -795,7 +826,7 @@ In \autoref{fig:pca_data} we can visualize the data distribution when its dimens
     \label{fig:pca_data}
 	\end{figure}
 
-\section{Software and libraries}
+\section{Software and Libraries}
 
 Manipulating large quantities of data is a task that cannot be performed easily using standard libraries of a programming language. The pipeline creation was only made possible in the scope of this project by making use of frameworks for massive data manipulation available at Spotify.
 
@@ -840,7 +871,7 @@ The above technique helps to strengthen our performance metric against biases wh
 
 Even though this technique increases the confidence of our metric scores, there is a price to pay in terms of performance: training all these models may take a considerable amount of time. Spotify however has no lack of computational resources available, so this project makes use of this method. Inspired by \citep{Burez2009}, all our models were trained using \emph{2$\times$2 cross-validation}, with 2 outer folds for the train/test split and 2 inner folds for train/validation splits.
 
-\section{Hyperparameter search}
+\section{Hyperparameter Search}
 
 Lastly, a proper method needs to chosen to perform search over the domain of parameter values. A common practice in machine learning model training is to perform a parameter sweep by exhaustively searching a subset of values manually chosen by the experimenter. This method is called \emph{grid search}, and due to its simplicity and reproducibility is one of the most used techniques, be it for classical machine learning algorithms like Support Vector Machines as to deep feed-forward neural networks \citep{larochelle2007empirical}.
 
@@ -868,7 +899,7 @@ The experiments performed in this project make use of both methods: for the clas
 \end{itemize}
 \end{itemize}
 
-\section{Model training}
+\section{Model Training}
 
 Even though all models were trained with the same source dataset, temporal and time-invariant models requires a different representation of the data, a topic which was explored in \autoref{sec:timewindows}. Logistic regression and random forest models were both trained with the SPTD version of the dataset using the mean as the aggregation function $f()$, while the LSTM models were trained with the full unrolled MPTD data.
 
@@ -876,7 +907,7 @@ When analyzing the data contained in the MPTD dataset, it can easily be noticed 
 
 To increase the reproducibility of our experimentation process, the same seed value was used for all random factors contained in the experiments. That includes the dataset fold splitting, random search, weights initialization in LSTMs and the undersampling. The seed value chosen was 42, which is the answer to the ultimate question of life, universe and everything \citep{adams1995hitchhikers}.
 
-\subsection{The LSTM recurrent network}
+\subsection{The LSTM Recurrent Network}
 
 This section describes some details about the LSTM models used in the experiments of this project.
 
@@ -891,7 +922,7 @@ Since the number of layers is a parameter that is being tuned during the cross-v
 
 In this example, three LSTM layers were stacked on after the other, each one with a different number of units per layer chosen through random search. A softmax layer transforms the output of the last LSTM layer and transform it into a probability distribution over the two retained and churned classes.
 
-Every model was trained for 70 epochs using a batch size of 512, a number chosen for performance reasons. The optimizers were initialized with a learning rate of 0.001. For Adagrad, the value for the fuzz factor $\epsilon=1\times10^{-8}$ applies. RMSProp also has the same $\epsilon$, adding $\gamma=0.9$ which regulates how much of the previous average of gradients shall be used to calculate the current gradients .
+Every model was trained for 100 epochs using a batch size of 512, a number chosen for performance reasons. The optimizers were initialized with a learning rate of 0.001. For Adagrad, the value for the fuzz factor $\epsilon=1\times10^{-8}$ applies. RMSProp also has the same $\epsilon$, adding $\gamma=0.9$ which regulates how much of the previous average of gradients shall be used to calculate the current gradients .
 
 The weight matrices for the linear transformations of the input were initialized with Xavier initialization method, while the ones corresponding to the linear transformation of the recurrent state were initialized with a random orthogonal matrix. Bias vectors were initialized to zeros since the asymmetry breaking is already performed by the chosen weight initialization algorithm.
 
@@ -958,7 +989,7 @@ CA = \frac{TP + TN}{TP + TN + FP + FN}
 
 While trivial to understand, this metric may lead to erroneous conclusions when class imbalance is present in the test set, which is a common occurrence on the churn prediction domain. For example, if 9 out of 10 users of a dataset are non-churners, any classifier that simply outputs a negative class for all samples will result in an accuracy of 90\%, however its ability of detecting churners is non-existent. For a service provider, detecting churn cases is always more important than detecting the loyal users, and this metric by itself cannot represent this goal \citep{Burez2009} \citep{Hassouna2015}.
 
-\subsection{Precision, recall and other metrics}
+\subsection{Precision, Recall and Other Metrics}
 
 To address the class imbalance problem of the classification accuracy, others metrics are also commonly used. The \emph{positive predictive value} (PPV, also known as precision) is the proportion of the samples labeled as positive which are true positives, and describes the performance of the algorithm. The \emph{true positive rate} (TPR, also called sensitivity and recall) of a model corresponds to the number of correctly predicted positive samples divided by all positive samples. \emph{True negative rate} (TNR, also called specificity and fall-out) is the number of correctly predicted negatives divided by all true negatives. The \emph{false positive rate} (FPR, also called false alarm ratio) is the probability of receiving a false positive as output of an experiment, and is calculated by dividing the number of false positives by the total number of positive samples. The \emph{F1 score} (F1, also called F-score or F-measure) builds upon precision and recall by returning an harmonic mean between these two metrics.
 
@@ -990,7 +1021,7 @@ The \emph{receiver operating characteristic} (ROC) is a visualization tool that 
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.9\textwidth,keepaspectratio]{figures/roc_example.pdf}
+    \includegraphics[width=1.0\textwidth,keepaspectratio]{figures/roc_example.pdf}
     \caption{An example of a ROC curve}
     \label{fig:roc_example}
 \end{figure}
@@ -999,7 +1030,7 @@ A good classifier would score values close to the upper-left corner of the plot,
 
 ROC curves can be used to compare the performance of different models by measuring the \emph{area under the curve} (AUC) of its plotted scores, which ranges from 0.0 to 1.0. The greater this area, the better the algorithm is to find a specific feature. Moreover, models with an area close to 0.5 can be assumed to perform not much better than random guess, since this is the total area under the diagonal line. The AUC can also be interpreted as the probability of a randomly picked positive sample is ranked higher by the model when compared to a randomly picked negative case.
 
-\subsection{Precision-Recall curves}
+\subsection{Precision-Recall Curves}
 
 While ROC curve is the most commonly used method for evaluating the performance of a classifier, it still fails to capture the true quality of the model when data is severely sparse. For any heavily skewed dataset, predicting the negative majority correctly can be accomplished easily, however the same cannot be said about the rare positive class. Since ROC curves utilizes the false positive rate calculated using the large number of true negatives, the plot may give the idea that the model is doing quite well, while failing to show its ability to predict the positive class. 
 
@@ -1009,16 +1040,12 @@ Visualizing the precision plotted against its recall value may be more informati
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.9\textwidth,keepaspectratio]{figures/prc_example.pdf}
-    \caption{An example of a Precision-Recall curve}
+    \includegraphics[width=1.0\textwidth,keepaspectratio]{figures/prc_example.pdf}
+    \caption{An example of a precision-recall curve}
     \label{fig:prc_example}
 \end{figure}
 
 Similarly to ROC curves, the area under the line correlates to the overall quality of the classifier: values closer to 1 indicates that a model has high precision and recall for every different tested threshold.  The balance between precision and recall can be manipulated by changing the threshold value: if we want to increase the recall, simply using a lower threshold will yield an increase in the number of true positives, at the cost of lower precision.
-
-\section{Statistical significance}
-
-\Todo{Will I do statistical significance? If so, how?}
 
 \section{Software and Libraries}
 
@@ -1044,10 +1071,12 @@ The experiments on this project aim to verify how the performance of current mod
 
 \begin{itemize}
 \item The precision, recall and F1-score metrics were all obtained by thresholding the output scores to 50\%, which makes no assumption of whether the provider would rather decrease precision in favor of recall or vice-versa. Precision-recall and ROC curves plot however its corresponding metrics against all possible thresholds.
-\item Unless explicitly stated, the plots will show the metrics for the churned class, which is the focus of this project.
+\item All experiments undersample the training data to a 1-to-1 ratio between churning and retaining users, unless this is a parameter being currently tested.
+\item Unless explicitly stated, the dataset being used will be composed 56 days of observation window size and 30 days of prediction.
+\item Random forest and logistic regression were trained using the SPTD version of the dataset defined in \autoref{sec:timewindows},  while LSTM was trained using MPTD.
 \end{itemize}
 
-\section{LSTM vs. baseline models}
+\section{LSTM vs. Baseline Models}
 
 In this experiment, our goal is to test the performance of the LSTM model compared against the current state of the art in churn prediction. The pilot study has revealed that logistic regression and random forests are algorithms that are still fairly used in the industry and academia.
 
@@ -1059,127 +1088,139 @@ All three models were trained on the on the dataset composed of 56 days of obser
 \toprule
      &          &  F1-Score &    PR AUC &  Precision &    Recall \\
 \midrule
-\multirow{2}{*}{LSTM} & Retained &  \textbf{0.901823} &  \textbf{0.994568} &  \textbf{0.992342} &  \textbf{0.826438} \\
-     & Churned &  \textbf{0.173997} &  0.204015 &   \textbf{0.098445} &  \textbf{0.748219} \\
+\multirow{2}{*}{LSTM} & Retained &  \textbf{0.898539} &  \textbf{0.994353} &   \textbf{0.992256} &  \textbf{0.820997} \\
+     & Churned &  \textbf{0.169514} &  0.184844 &   \textbf{0.095604} &  \textbf{0.747048} \\
 \cline{1-6}
-\multirow{2}{*}{Logistic Regression} & Retained &  0.831038 &  0.992812 &   0.991091 &  0.715492 \\
-     & Churned &  0.114972 &  0.105123 &   0.062285 &  0.746072 \\
+\multirow{2}{*}{Random Forest} & Retained &  0.895238 &  0.994219 &   0.991906 &  0.815740 \\
+     & Churned &  0.163607 &  \textbf{0.196442} &   0.092014 &  0.737191 \\
 \cline{1-6}
-\multirow{2}{*}{Random Forest} & Retained &  0.897689 &  0.994356 &   0.991901 &  0.819821 \\
-     & Churned &  0.166283 &  \textbf{0.204470} &   0.093734 &  0.735728 \\
+\multirow{2}{*}{Logistic Regression} & Retained &  0.830156 &  0.992835 &   0.991119 &  0.714172 \\
+     & Churned &  0.114696 &  0.103541 &   0.062114 &  0.747341 \\
 \bottomrule
 \end{tabular}
 \caption{Metrics for the LSTM vs. baseline experiment}
 \label{tab:temporal_static}
 \end{table}
 
+The results for this experiment shows that LSTM has the best overall performance of the evaluated models for almost all metrics in \autoref{tab:temporal_static}. It must be noted however that the difference to random forest is very slim, a model which is significantly faster to train and optimize. The intuition behind the surprising performance of random forests is that it can more easily learn the correlations between the data and the binary label given that proper features are engineered. On the other hand, the LSTM model performed significantly better than logistic regression in all metrics.
+
 \begin{figure}
     \centering
-    \includegraphics[width=0.9\textwidth,keepaspectratio]{figures/prc_temporal_static.pdf}
-    \caption{Precision-Recall curves for the LSTM and baseline models}
+    \includegraphics[width=1.0\textwidth,keepaspectratio]{figures/prc_temporal_static.pdf}
+    \caption{Precision-recall curves of the churned class for the LSTM and baseline models}
     \label{fig:prc_temporal_static}
 \end{figure}
 
-The results for this experiment shows that random forest has the best overall performance of all evaluated models for almost all metrics in \autoref{tab:temporal_static}. This follows the results observed during the pilot study of this project. The intuition behind this is that random forests can more easily learn the correlations between the data and the binary label given that proper features are engineered.
-
 \begin{figure}
     \centering
-    \includegraphics[width=0.9\textwidth,keepaspectratio]{figures/cfm_temporal_static.pdf}
-    \caption{Normalized confusion matrices for the LSTM and baseline models}
-    \label{fig:cfm_temporal_static}
+    \includegraphics[width=1.0\textwidth,keepaspectratio]{figures/roc_temporal_static.pdf}
+    \caption{ROC curves for the LSTM and baseline models}
+    \label{fig:roc_temporal_static}
 \end{figure}
 
+\autoref{fig:prc_temporal_static} and \autoref{fig:roc_temporal_static} plots the precision-recall and ROC curves for the LSTM and the evaluated baseline models for several different threshold levels. In it it can be clearly seen how similar the metrics of LSTMs and random forests are, the curves frequently overlap along the x-axis. The gap in performance between logistic regression and the top predictors observed in the metrics table is further visualized in these plots, suggesting that this model might not be a good choice for predicting churn for this specific dataset. 
 
-\section{Experimenting on different window sizes}
 
-The size chosen for the time windows may have an influence on the performance metrics of our trained estimators that is non-trivial to predict. Even though an intuitive guess can be made for the effect of the change, the set of values that maximizes the accuracy of the classifiers while being compliant to the company's goals and also the available computing resources is \textit{a priori} unknown. This experiment attempts to answer this question by training several LSTM models while changing the observation and the prediction window sizes, and by plotting the best score obtained for each estimator.
+\section{Experimenting on Different Window Sizes}
+
+The size chosen for the time windows may have an influence on the performance metrics of our trained estimators that is non-trivial to predict. Even though an intuitive guess can be made for the effect of the change, the set of values that maximizes the accuracy of the classifiers while being compliant to the company's goals and also the available computing resources is \textit{a priori} unknown. This experiment attempts to answer this question by training several models while changing the observation and the prediction window sizes, and by plotting the best score obtained for each estimator.
+
+\Todo{More details to the time windows experiments. Add maybe a figure showing the different windows}
 
 \subsection{Observation Window}
 
 Increasing the size of the observation window basically means that more data is going to be used for training. It is expected that with more data, a better accuracy can be achieved, however that comes with the cost of an ever increasing training time. So the question that this experiment is exploring is how far in the user history must we train our models on as to obtain a good trade-off between accuracy and training time, a topic thoroughly explored in the work of \citep{Ballings2012}.
 
-Our experiment involved increasing the size of the observation window by 7 days while keeping the size of the prediction window constant in 30 days, the resulting scores can be seen in \autoref{fig:line_obs_window} and \autoref{fig:line_obs_window_ret}. 
+Our experiment involved increasing the size of the observation window by 7 days and training a model for each, evaluating the performance of each. The prediction window is made constant at 30 days, corresponding to the same period in time for all different parameters tested in this experiment. The effect of modifying the observation window size for both retained and churned classes can be seen in \autoref{fig:line_obs_window} and \autoref{fig:line_obs_window_ret}, respectively. 
 
 \begin{figure}
     \centering
-    \includegraphics[width=0.9\textwidth,keepaspectratio]{figures/line_obs_window.pdf}
+    \includegraphics[width=1.0\textwidth,keepaspectratio]{figures/line_obs_window.pdf}
     \caption{F1-scores for the churned class using different observation window sizes and models}
     \label{fig:line_obs_window}
 \end{figure}
 
 \begin{figure}
     \centering
-    \includegraphics[width=0.9\textwidth,keepaspectratio]{figures/line_obs_window_retained.pdf}
+    \includegraphics[width=1.0\textwidth,keepaspectratio]{figures/line_obs_window_retained.pdf}
     \caption{F1-scores for the retained class using different observation window sizes and models}
     \label{fig:line_obs_window_ret}
 \end{figure}
 
-Both the random forest and logistic regression models exhibit an increase in F1-scores when the size of the observation window is made larger, however the gain can hardly be considered significant. The LSTM model on the other hand show a rather erratic behavior, reaching its top when the window is sized at 21 days.
+Both the random forest and logistic regression models exhibit an increase in F1-scores when the size of the observation window is made larger, however the gain can hardly be considered significant. The LSTM model on the other hand show a rather erratic behavior, reaching its top when the window is sized at 49 days. Precision-recall curves, ROC curves and a table with all metrics for this experiment can be seen in \autoref{fig:prc_obs_window}, \autoref{fig:roc_obs_window} and \autoref{tab:obs_window}, respectively.
 
 \subsection{Prediction Window}
 
 Modifying the size of the prediction window indicates how tolerant we are for considering a user a churner or not. Small windows are commonly used for services lacking a formal contract between the provider and the customer, which is similar approach used in the works of \citep{Dror2012}, \citep{Runge2014} and \citep{Pudipeddi2014}. Larger prediction window sizes are often seem in "classical" service providers like the telecom industry where a contract is commonly established, an approach that is widely seem in the churn prediction literature, \citep{Khan2015} and \citep{Hassouna2015} to name a few.
 
-This experiment involves changing the size of the prediction window in intervals of 7 days while keeping the observation window size constant at 56 days. It is important to note that smaller window sizes means that a larger share of users will be considered churners, and due to our undersampling technique this also means that the number of samples used for training will be larger. 
+This experiment involves changing the size of the prediction window in intervals of 7 days while keeping the observation window size constant in time and sized at 56 days. It is important to note that smaller window sizes means that a larger share of users will be considered churners, and due to our undersampling technique this also means that the number of samples used for training will be larger. 
 
-The result of this experiment can be seen in\autoref{fig:line_pred_window}. 
+The result of this experiment for the churning users can be seen in\autoref{fig:line_pred_window}. Both LSTM and random forests exhibit a good performance when the prediction window is small in size, gradually and significantly reducing its F1-score as more days are added to the window. Two reasons for this behavior can be inferred: First, smaller window means more churners, and that means more training data. Second, it is intuitively easier to predict what the user is going to do right after the observation period when compared to further days in the future. 
+
+The same can not be said about the performance of predictor for the retaining class of \autoref{fig:line_pred_window_ret}. There is a gradual increase of the F1-score as more days are added to the window, however the difference between the highest and lowest values is considerably smaller as the one observed for the churning users. Precision-recall curves, ROC curves and a table with all metrics for this experiment can be seen in \autoref{fig:prc_pred_window}, \autoref{fig:roc_pred_window} and \autoref{tab:pred_window}, respectively.
+
 
 \begin{figure}
     \centering
-    \includegraphics[width=0.9\textwidth,keepaspectratio]{figures/line_pred_window.pdf}
+    \includegraphics[width=1.0\textwidth,keepaspectratio]{figures/line_pred_window.pdf}
     \caption{F1-scores for the churned class for different prediction window sizes and models}
     \label{fig:line_pred_window}
 \end{figure}
 
 \begin{figure}
     \centering
-    \includegraphics[width=0.9\textwidth,keepaspectratio]{figures/line_pred_window_retained.pdf}
+    \includegraphics[width=1.0\textwidth,keepaspectratio]{figures/line_pred_window_retained.pdf}
     \caption{F1-scores for the retained class for different prediction window sizes and models}
-    \label{fig:line_pred_window}
+    \label{fig:line_pred_window_ret}
 \end{figure}
-
-\Todo{Reason about the pred window experiment}
 
 \section{Effect of Class Distribution}
 
-In this experiment...
+The dataset being used for training our predictor models is heavily skewed towards the retaining class. Training models with the data in its raw form may yield an estimator that fails to capture the latent information of user behavior for the minority class, which is the one the service provider is more interested in. There is often a gain in performance when narrowing the gap between the distributions of the classes, however the exact ratio is a question not easily answered and commonly dependent on which data is used for training the models, not necessarly the 1-to-1 ratio being the one that maximizes the evaluated metrics \cite{Burez2009}.
+
+The goal of this experiment is to verify the impact that using different class distributions has on the quality of the predictor models. This is accomplished by training several estimators and changing the ratio between the churning and retaining classes . The ratio of churners is initially set to 10\%, with the remaining 90\% corresponding to the retained users. This difference is then gradually reduced until both classes have the same number of samples. We focus on the LSTM and random forest models, since logistic regression underperformed significantly in the previous experiments.
 
 \begin{figure}
     \centering
-    \includegraphics[width=0.9\textwidth,keepaspectratio]{figures/line_class_balance.pdf}
+    \includegraphics[width=1.0\textwidth,keepaspectratio]{figures/line_class_balance.pdf}
     \caption{F1-scores of the positive churning class for different shares of churning users}
     \label{fig:line_class_balance}
 \end{figure}
 
 \begin{figure}
     \centering
-    \includegraphics[width=0.9\textwidth,keepaspectratio]{figures/line_class_balance_retained.pdf}
+    \includegraphics[width=1.0\textwidth,keepaspectratio]{figures/line_class_balance_retained.pdf}
     \caption{F1-scores of the negative retained class for different shares of churning users}
-    \label{fig:line_class_balance}
+    \label{fig:line_class_balance_ret}
 \end{figure}
+
+The resulting F1-scores of this experiment for both the churning and retaining classes can be seen in \autoref{fig:line_class_balance} and \autoref{fig:line_class_balance_ret}, respectively. Interestingly the harmonic mean between precision and recall steadily reduces for both classes and models being experimented on. As can be seen in \autoref{tab:class_balance}, increasing the ratio of churning users by undersampling the majority class has an effect of increasing the recall metric, at the cost of a lower precision. If both metrics are equally weighted, the aggregated score suffer a significant decrease for the churning class as the gap between the churning and retaining users is reduced. 
+
+This result is contrary to what is exposed by Burez and Van den Poel \citep{Burez2009}. In their study, there is a performance gain for using a less imbalanced dataset for training the predictor models,  however their main evaluation metric is ROC AUC, which could be mapped to our own results in \autoref{fig:roc_class_balance}. However the difference between different ratios in ROC AUC is minimal at best, mainly due to how heavily skewed the raw dataset is. 
 
 \section{Experimenting with Dimensionality Reduction}
 
-This experiment...
+The dataset generated through our data pipeline is composed of 52 features related to the user behavior through time. It is intuitive to think that not all of these attributes will have the same importance when predicting if the user is going to churn or not, some of them may even be redundant in the presence of others. Having too many features may also lead to phenomenon known as "curse of dimensionality", where predictor models that learn through similarity of samples (implicitly or explicitly) may fail to achieve a good performance because examples are further apart from each other as more dimensions are used for representing the data \citep{domingos2012few}. 
 
+Often the samples can be explained with some controlled loss of information by using a lower dimensional representation of the data. A common dimensionality reduction technique widely used for compression and visualization that strives to maximize the variance of the dataset is PCA. In this experiment, we attempt to find an optimal data format that maximizes the accuracy of our predictor models by pre-processing it through PCA while gradually increasing the number of principal components the data is reduced to, being the last tested value all 52 features of the original dataset with no compression. Logistic regression is once again removed from this experiment due to poor performance in the previous analysis.
 
-\begin{table}
-\centering
-\begin{tabular}{llrrrr}
-\toprule
-     &          &  F1-Score &    PR AUC &  Precision &    Recall \\
-\midrule
-\multirow{2}{*}{LSTM} & Retained &  0.872797 &  0.992778 &   0.991944 &  0.779202 \\
-     & Churned &  0.143338 &  0.152913 &   0.079239 &  0.750171 \\
-\cline{1-6}
-\multirow{2}{*}{Random Forest} & Retained &  0.883207 &  0.992759 &   0.991383 &  0.796315 \\
-     & Churned &  0.148800 &  0.168207 &   0.082885 &  0.726749 \\
-\bottomrule
-\end{tabular}
-\caption{Metrics for the dimensionality reduction experiment}
-\end{table}
+\begin{figure}
+    \centering
+    \includegraphics[width=1.0\textwidth,keepaspectratio]{figures/line_dim_reduction.pdf}
+    \caption{F1-scores of the positive churning class for different number of principal components}
+    \label{fig:line_dim_reduction}
+\end{figure}
 
+\begin{figure}
+    \centering
+    \includegraphics[width=1.0\textwidth,keepaspectratio]{figures/line_dim_reduction_retained.pdf}
+    \caption{F1-scores of the negative retained class for different number of principal components}
+    \label{fig:line_dim_reduction_ret}
+\end{figure}
 
+The results of this experiment can be seen in \autoref{fig:line_dim_reduction} and \autoref{fig:line_dim_reduction_ret}. Here it can be seen that by selecting 16 principal components after reducing the data through PCA achieves highest F1-scores for both retaining and churning classes in the LSTM model, however the increase is not large, a difference of $0.04$ of the metric between the highest and the uncompressed data for the churned class, and even less when evaluating the retaining users.
+
+Random forests exhibit a similar behavior, but peaking at 40 principal components instead. The gain however is marginal: around $0.01$ of F1-score increase when compared to the full dataset, for both retaining and churning users. Extensive metrics can be seen in the precision-recall curves, ROC curves and metrics table at \autoref{fig:prc_dim_reduction}, \autoref{fig:roc_dim_reduction} and \autoref{tab:dim_reduction}, respectively.
 
 \chapter{Conclusions and Future Work}
 
@@ -1198,54 +1239,60 @@ This experiment...
 
 \begin{figure}
     \centering
-    \includegraphics[width=0.9\textwidth,keepaspectratio]{figures/prc_obs_window.pdf}
-    \caption{Precision-recall curves of the churned class for the observation window experiment. The models are LSTM, logistic regression and random forest, respectively}
+    \includegraphics[width=1.0\textwidth,keepaspectratio]{figures/prc_obs_window.pdf}
+    \caption{Precision-recall curves of the churned class for the observation window experiment.}
     \label{fig:prc_obs_window}
 \end{figure}
 
 \begin{figure}
     \centering
-    \includegraphics[width=0.9\textwidth,keepaspectratio]{figures/prc_pred_window.pdf}
-    \caption{Precision-recall curves of the churned class for the prediction window experiment. The models are LSTM, logistic regression and random forest, respectively}
+    \includegraphics[width=1.0\textwidth,keepaspectratio]{figures/prc_pred_window.pdf}
+    \caption{Precision-recall curves of the churned class for the prediction window experiment.}
     \label{fig:prc_pred_window}
 \end{figure}
 
 \begin{figure}
     \centering
-    \includegraphics[width=0.9\textwidth,keepaspectratio]{figures/prc_class_balance.pdf}
-    \caption{Precision-recall curves of the churned class for the class balance experiment. The models are LSTM and random forest, respectively}
+    \includegraphics[width=1.0\textwidth,keepaspectratio]{figures/prc_class_balance.pdf}
+    \caption{Precision-recall curves of the churned class for the class balance experiment.}
     \label{fig:prc_class_balance}
 \end{figure}
 
+\begin{figure}
+    \centering
+    \includegraphics[width=1.0\textwidth,keepaspectratio]{figures/prc_dim_reduction.pdf}
+    \caption{Precision-recall curves of the churned class for the dimensionality reduction experiment.}
+    \label{fig:prc_dim_reduction}
+\end{figure}
 
 \section{ROC curves}
 
-\begin{figure}[h]
+\begin{figure}
     \centering
-    \includegraphics[width=0.9\textwidth,keepaspectratio]{figures/roc_temporal_static.pdf}
-    \caption{ROC curves for the LSTM vs. baseline models experiment}
-    \label{fig:roc_temporal_static}
-\end{figure}
-
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=0.9\textwidth,keepaspectratio]{figures/roc_obs_window.pdf}
+    \includegraphics[width=1.0\textwidth,keepaspectratio]{figures/roc_obs_window.pdf}
     \caption{ROC curves for the observation window experiment}
     \label{fig:roc_obs_window}
 \end{figure}
 
-\begin{figure}[h]
+\begin{figure}
     \centering
-    \includegraphics[width=0.9\textwidth,keepaspectratio]{figures/roc_pred_window.pdf}
+    \includegraphics[width=1.0\textwidth,keepaspectratio]{figures/roc_pred_window.pdf}
     \caption{ROC curves for the prediction window experiment}
     \label{fig:roc_pred_window}
 \end{figure}
 
-\begin{figure}[h]
+\begin{figure}
     \centering
-    \includegraphics[width=0.9\textwidth,keepaspectratio]{figures/roc_class_balance.pdf}
+    \includegraphics[width=1.0\textwidth,keepaspectratio]{figures/roc_class_balance.pdf}
     \caption{ROC curves for the class balance experiment}
     \label{fig:roc_class_balance}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=1.0\textwidth,keepaspectratio]{figures/roc_dim_reduction.pdf}
+    \caption{ROC curves for the dimensionality reduction experiment}
+    \label{fig:roc_dim_reduction}
 \end{figure}
 
 % --------------------
@@ -1259,84 +1306,33 @@ This experiment...
 \centering
 \begin{tabular}{lllrrrr}
 \toprule
-     &     &          &  F1-Score &    PR AUC &  Precision &    Recall \\
+     &   &          &  F1-Score &    PR AUC &  Precision &    Recall \\
+Models & Days & Label &           &           &            &           \\
 \midrule
-\multirow{18}{*}{LSTM} & \multirow{2}{*}{10\%} & Retained &  \textit{0.961646} &  0.991275 &   0.984150 &  \textit{0.940148} \\
-     &     & Churned &  \textit{0.202574} &  \textit{0.090036} &   \textit{0.137299} &  0.386163 \\
+\multirow{8}{*}{LSTM} & \multirow{2}{*}{7} & Retained &  0.864030 &  0.984615 &   0.979584 &  0.772862 \\
+     &   & Churned &  \textbf{0.338950} &  \textit{0.333207} &   \textbf{0.215412} &  \textbf{0.794727} \\
 \cline{2-7}
-     & \multirow{2}{*}{15\%} & Retained &  0.946061 &  0.991598 &   0.985619 &  0.909556 \\
-     &     & Churned &  0.180157 &  0.077199 &   0.111897 &  0.461973 \\
+     & \multirow{2}{*}{14} & Retained &  0.903476 &  0.992219 &   0.988370 &  0.832012 \\
+     &   & Churned &  0.256053 &  0.255312 &   0.154062 &  0.757580 \\
 \cline{2-7}
-     & \multirow{2}{*}{20\%} & Retained &  0.919837 &  0.991991 &   0.988625 &  0.859998 \\
-     &     & Churned &  0.164649 &  0.073727 &   0.095445 &  0.598871 \\
+     & \multirow{2}{*}{21} & Retained &  0.911840 &  0.994085 &   0.991263 &  0.844199 \\
+     &   & Churned &  0.213510 &  0.213452 &   0.124511 &  0.748618 \\
 \cline{2-7}
-     & \multirow{2}{*}{25\%} & Retained &  0.918358 &  0.992326 &   0.989153 &  0.857021 \\
-     &     & Churned &  0.166948 &  0.076928 &   0.096486 &  0.618989 \\
-\cline{2-7}
-     & \multirow{2}{*}{30\%} & Retained &  0.911930 &  0.992033 &   0.988888 &  0.846085 \\
-     &     & Churned &  0.156494 &  0.074946 &   0.089663 &  0.614573 \\
-\cline{2-7}
-     & \multirow{2}{*}{35\%} & Retained &  0.898646 &  0.991438 &   0.989102 &  0.823349 \\
-     &     & Churned &  0.143794 &  0.070388 &   0.081122 &  0.632237 \\
-\cline{2-7}
-     & \multirow{2}{*}{40\%} & Retained &  0.874766 &  0.992236 &   0.990585 &  0.783195 \\
-     &     & Churned &  0.133156 &  0.074518 &   0.073595 &  0.698234 \\
-\cline{2-7}
-     & \multirow{2}{*}{45\%} & Retained &  0.863309 &  0.991402 &   0.991214 &  0.764641 \\
-     &     & Churned &  0.128737 &  0.060313 &   0.070638 &  0.725221 \\
-\cline{2-7}
-     & \multirow{2}{*}{50\%} & Retained &  0.839230 & \textit{ 0.992415} &   \textbf{0.992118} &  0.727171 \\
-     &   & Churned &  0.123085 &  0.068765 &   0.066874 &  \textbf{0.771933} \\
+     & \multirow{2}{*}{28} & Retained &  \textbf{0.920708} &  \textit{0.994217} &   \textit{0.992211} &  \textbf{0.858818} \\
+     &   & Churned &  0.195579 &  0.179993 &   0.112980 &  0.727317 \\
 \cline{1-7}
 \cline{2-7}
-\multirow{18}{*}{Random Forest} & \multirow{2}{*}{10\%} & Retained &  \textbf{0.981921} &  0.993655 &   0.983035 &  \textbf{0.980810} \\
-     &     & Churned &  \textbf{0.300023} &  0.203894 &   \textbf{0.287416} &  0.313788 \\
+\multirow{8}{*}{Random Forest} & \multirow{2}{*}{7} & Retained &  0.859076 &  0.984100 &   0.979099 &  0.765265 \\
+     &   & Churned &  \textit{0.331079} &  \textbf{0.333607} &   \textit{0.209295} &  \textit{0.791815} \\
 \cline{2-7}
-     & \multirow{2}{*}{15\%} & Retained &  0.974738 &  0.993544 &   0.985423 &  0.964282 \\
-     &     & Churned &  0.293922 &  0.204665 &   0.225561 &  0.421737 \\
+     & \multirow{2}{*}{14} & Retained &  0.889945 &  0.991412 &   0.988637 &  0.809169 \\
+     &   & Churned &  0.237010 &  0.259038 &   0.140071 &  0.769709 \\
 \cline{2-7}
-     & \multirow{2}{*}{20\%} & Retained &  0.961760 &  0.993784 &   0.987977 &  0.936898 \\
-     &     & Churned &  0.262594 &  0.209803 &   0.173706 &  0.537782 \\
+     & \multirow{2}{*}{21} & Retained &  0.899322 &  0.993527 &   0.991293 &  0.822968 \\
+     &   & Churned &  0.195370 &  0.227368 &   0.112185 &  0.755783 \\
 \cline{2-7}
-     & \multirow{2}{*}{25\%} & Retained &  0.961340 &  0.993670 &   0.988060 &  0.936027 \\
-     &     & Churned &  0.261896 &  \textbf{0.212639} &   0.172719 &  0.541462 \\
-\cline{2-7}
-     & \multirow{2}{*}{30\%} & Retained &  0.951873 &  0.993767 &   0.989192 &  0.917266 \\
-     &     & Churned &  0.239996 &  0.209713 &   0.150395 &  0.593719 \\
-\cline{2-7}
-     & \multirow{2}{*}{35\%} & Retained &  0.943922 &  0.993684 &   0.989599 &  0.902276 \\
-     &     & Churned &  0.220736 &  0.207393 &   0.134480 &  0.615554 \\
-\cline{2-7}
-     & \multirow{2}{*}{40\%} & Retained &  0.933831 &  0.993775 &   0.990513 &  0.883286 \\
-     &     & Churned &  0.205684 &  0.210247 &   0.121927 &  0.657017 \\
-\cline{2-7}
-     & \multirow{2}{*}{45\%} & Retained &  0.916083 &  0.993626 &   0.991306 &  0.851471 \\
-     &     & Churned &  0.180668 &  0.208895 &   0.103779 &  0.697252 \\
-\cline{2-7}
-     & \multirow{2}{*}{50\%} & Retained &  0.897189 &  \textbf{0.994240} &   \textit{0.991878} &  0.819002 \\
-     &   & Churned &  0.165577 &  0.199575 &   0.093293 &  \textit{0.735240} \\
-\bottomrule
-\end{tabular}
-\caption{Metrics for the class balance experiment}
-\end{table}
-
-\begin{table}
-\centering
-\begin{tabular}{lllrrrr}
-\toprule
-     &   &          &  F1-Score &    PR AUC &  Precision &    Recall \\
-\midrule
-\multirow{8}{*}{LSTM} & \multirow{2}{*}{7} & Retained &  0.823630 &  0.974100 &   0.971157 &  0.715013 \\
-     &   & Churned &  \textit{0.272094} &  \textit{0.150116} &   \textit{0.167242} &  0.729376 \\
-\cline{2-7}
-     & \multirow{2}{*}{14} & Retained &  0.848669 &  0.987558 &   0.986669 &  0.744534 \\
-     &   & Churned &  0.185941 &  0.099012 &   0.106108 &  0.750910 \\
-\cline{2-7}
-     & \multirow{2}{*}{21} & Retained &  0.845348 &  0.989559 &   0.990381 &  0.737367 \\
-     &   & Churned &  0.142604 &  0.060440 &   0.078705 &  0.758035 \\
-\cline{2-7}
-     & \multirow{2}{*}{28} & Retained &  \textit{0.861970} &  \textit{0.992292} &   \textit{0.992303} &  \textit{0.761899} \\
-     &   & Churned &  0.133607 &  0.075458 &   0.073233 &  \textit{0.760976} \\
+     & \multirow{2}{*}{28} & Retained &  \textit{0.907344} &  \textbf{0.994559} &   \textbf{0.992572} &  \textit{0.835596} \\
+     &   & Churned &  0.177947 &  0.198052 &   0.101002 &  0.747073 \\
 \cline{1-7}
 \cline{2-7}
 \multirow{8}{*}{Logistic Regression} & \multirow{2}{*}{7} & Retained &  0.819430 &  0.980246 &   0.973687 &  \textit{0.707365} \\
@@ -1350,22 +1346,10 @@ This experiment...
 \cline{2-7}
      & \multirow{2}{*}{28} & Retained &  0.816645 &  \textit{0.992240} &  \textit{0.989444} &  0.695228 \\
      &   & Churned &  0.099809 &  0.084523 &   0.053735 &  0.700000 \\
-\cline{1-7}
-\cline{2-7}
-\multirow{8}{*}{Random Forest} & \multirow{2}{*}{7} & Retained &  0.859076 &  0.984100 &   0.979099 &  0.765265 \\
-     &   & Churned &  \textbf{0.331079} &  \textbf{0.333607} &   \textbf{0.209295} &  \textbf{0.791815} \\
-\cline{2-7}
-     & \multirow{2}{*}{14} & Retained &  0.889945 &  0.991412 &   0.988637 &  0.809169 \\
-     &   & Churned &  0.237010 &  0.259038 &   0.140071 &  0.769709 \\
-\cline{2-7}
-     & \multirow{2}{*}{21} & Retained &  0.899322 &  0.993527 &   0.991293 &  0.822968 \\
-     &   & Churned &  0.195370 &  0.227368 &   0.112185 &  0.755783 \\
-\cline{2-7}
-     & \multirow{2}{*}{28} & Retained &  \textbf{0.907344} &  \textbf{0.994559} &   \textbf{0.992572} &  \textbf{0.835596} \\
-     &   & Churned &  0.177947 &  0.198052 &   0.101002 &  0.747073 \\
 \bottomrule
 \end{tabular}
 \caption{Metrics for the prediction window experiment}
+\label{tab:pred_window}
 \end{table}
 
 % --------------------
@@ -1375,83 +1359,199 @@ This experiment...
 \begin{tabular}{lllrrrr}
 \toprule
      &   &          &  F1-Score &    PR AUC &  Precision &    Recall \\
+Models & Days & Label &           &           &            &           \\
 \midrule
-\multirow{16}{*}{LSTM} & \multirow{2}{*}{7} & Retained &  0.759781 &  0.991025 &   0.992226 &  0.615572 \\
-     &   & Churned &  0.095322 &  0.053770 &   0.050642 &  0.809603 \\
+\multirow{16}{*}{LSTM} & \multirow{2}{*}{7} & Retained &  0.895413 &  0.992923 &   0.990665 &  0.816872 \\
+     &   & Churned &  0.155974 &  0.126967 &   0.087826 &  0.696106 \\
 \cline{2-7}
-     & \multirow{2}{*}{14} & Retained &  0.851632 &  0.992178 &   0.991327 &  0.746445 \\
-     &   & Churned &  0.126301 &  0.071872 &   0.069023 &  0.742168 \\
+     & \multirow{2}{*}{14} & Retained &  0.886632 &  0.993870 &   \textbf{0.991997} &  0.801501 \\
+     &   & Churned &  0.155449 &  0.155895 &   0.086782 &  \textbf{0.744706} \\
 \cline{2-7}
-     & \multirow{2}{*}{21} & Retained &  \textit{0.867829} &  \textit{0.992460} &   0.991078 &  \textit{0.771844} \\
-     &   & Churned &  \textit{0.135221} &  0.070760 &   \textit{0.074557} &  0.725676 \\
+     & \multirow{2}{*}{21} & Retained &  0.923889 &  0.993570 &   0.990672 &  0.865541 \\
+     &   & Churned &  0.194156 &  0.138192 &   0.113294 &  0.678247 \\
 \cline{2-7}
-     & \multirow{2}{*}{28} & Retained &  0.754988 &  0.991924 &   \textbf{0.993143} &  0.608960 \\
-     &   & Churned &  0.096572 &  0.067951 &   0.051253 &  \textbf{0.834000} \\
+     & \multirow{2}{*}{28} & Retained &  0.907956 &  0.994128 &   0.991705 &  0.837250 \\
+     &   & Churned &  0.177579 &  0.162224 &   0.101209 &  0.723529 \\
 \cline{2-7}
-     & \multirow{2}{*}{35} & Retained &  0.840498 &  0.992837 &   0.992663 &  0.728783 \\
-     &   & Churned &  0.126028 &  \textit{0.078335} &   0.068496 &  0.787352 \\
+     & \multirow{2}{*}{35} & Retained &  0.893332 &  0.993526 &   0.991655 &  0.812749 \\
+     &   & Churned &  0.160036 &  0.169727 &   0.089869 &  0.729970 \\
 \cline{2-7}
-     & \multirow{2}{*}{42} & Retained &  0.789003 &  0.991724 &   0.992310 &  0.654839 \\
-     &   & Churned &  0.103672 &  0.069907 &   0.055429 &  0.799649 \\
+     & \multirow{2}{*}{42} & Retained &  0.899900 &  0.993773 &  0.991808 &  0.823580 \\
+     &   & Churned &  0.168215 &  \textit{0.175214} &   0.095036 &  0.731434 \\
 \cline{2-7}
-     & \multirow{2}{*}{49} & Retained &  0.838852 &  0.992317 &   0.992239 &  0.726539 \\
-     &   & Churned &  0.123394 &  0.074572 &   0.067029 &  0.775642 \\
+     & \multirow{2}{*}{49} & Retained &  \textbf{0.934375} &  \textit{0.994084} &   0.990261 &  \textbf{0.884461} \\
+     &   & Churned &  \textbf{0.211187} &  0.153296 &   \textbf{0.125830} &  0.656582 \\
 \cline{2-7}
-     & \multirow{2}{*}{56} & Retained &  0.839230 &  0.992415 &   0.992118 &  0.727171 \\
-     &   & Churned &  0.123085 &  0.068765 &   0.066874 &  0.771933 \\
+     & \multirow{2}{*}{56} & Retained &  0.911085 &  0.994052 &   0.991691 &  0.842597 \\
+     &   & Churned &  0.181787 &  0.174330 &   0.103999 &  0.721284 \\
 \cline{1-7}
 \cline{2-7}
-\multirow{16}{*}{Logistic Regression} & \multirow{2}{*}{7} & Retained &  0.813669 &  0.991255 &   0.988039 &  0.691613 \\
-     &   & Churned &  0.096712 &  0.076252 &   0.052121 &  0.669464 \\
+\multirow{16}{*}{Random Forest} & \multirow{2}{*}{7} & Retained &  0.876067 &  0.993260 &   0.991120 &  0.784947 \\
+     &   & Churned &  0.141465 &  0.140472 &   0.078410 &  0.722358 \\
 \cline{2-7}
-     & \multirow{2}{*}{14} & Retained &  0.825072 &  0.991869 &   0.989110 &  0.707703 \\
-     &   & Churned &  0.104654 &  0.088905 &   0.056605 &  0.692398 \\
+     & \multirow{2}{*}{14} & Retained &  0.890595 &  0.993833 &   0.991612 &  0.808257 \\
+     &   & Churned &  0.157004 &  0.171877 &   0.087960 &  0.730067 \\
 \cline{2-7}
-     & \multirow{2}{*}{21} & Retained &  0.826448 &  0.992184 &   0.989865 &  0.709342 \\
-     &   & Churned &  0.108169 &  0.096096 &   0.058522 &  0.713282 \\
+     & \multirow{2}{*}{21} & Retained &  0.893176 &  0.993899 &   0.991700 &  0.812459 \\
+     &   & Churned &  0.160150 &  0.188480 &   0.089918 &  0.731531 \\
 \cline{2-7}
-     & \multirow{2}{*}{28} & Retained &  0.829265 &  0.992497 &   0.990268 &  0.713294 \\
-     &   & Churned &  0.110907 &  0.100216 &   0.060058 &  0.723236 \\
+     & \multirow{2}{*}{28} & Retained &  0.893712 &  0.994151 &   \textit{0.991931} &  0.813191 \\
+     &   & Churned &  0.162136 &  0.196100 &   0.091059 &  \textit{0.738850} \\
+\cline{2-7}
+     & \multirow{2}{*}{35} & Retained &  0.898663 &  0.994214 &   0.991843 &  0.821487 \\
+     &   & Churned &  0.167019 &  0.201898 &   0.094242 &  0.733288 \\
+\cline{2-7}
+     & \multirow{2}{*}{42} & Retained &  0.898192 &  0.994117 &   0.991803 &  0.820728 \\
+     &   & Churned &  0.166227 &  \textbf{0.202974} &   0.093756 &  0.732214 \\
+\cline{2-7}
+     & \multirow{2}{*}{49} & Retained &  \textit{0.900939} &  0.993919 &   0.991547 &  \textit{0.825504} \\
+     &   & Churned &  \textit{0.167726} &  0.201751 &   \textit{0.094882} &  0.722163 \\
+\cline{2-7}
+     & \multirow{2}{*}{56} & Retained &  0.896787 &  \textbf{0.994241} &   0.991866 &  0.818342 \\
+     &   & Churned &  0.165052 &  0.200151 &   0.092964 &  0.735044 \\
+\cline{1-7}
+\cline{2-7}
+\multirow{16}{*}{Logistic Regression} & \multirow{2}{*}{7} & Retained &  0.813596 &  0.991253 &   0.988041 &  0.691507 \\
+     &   & Churned &  0.096696 &  0.076120 &   0.052111 &  0.669562 \\
+\cline{2-7}
+     & \multirow{2}{*}{14} & Retained &  0.825077 &  0.991869 &   0.989111 &  0.707710 \\
+     &   & Churned &  0.104656 &  0.088905 &   0.056606 &  0.692398 \\
+\cline{2-7}
+     & \multirow{2}{*}{21} & Retained &  0.826441 &  0.992184 &   0.989862 &  0.709334 \\
+     &   & Churned &  0.108152 &  0.096097 &   0.058513 &  0.713184 \\
+\cline{2-7}
+     & \multirow{2}{*}{28} & Retained &  0.829275 &  0.992497 &   0.990268 &  0.713309 \\
+     &   & Churned &  0.110912 &  0.100216 &   0.060061 &  0.723236 \\
 \cline{2-7}
      & \multirow{2}{*}{35} & Retained &  0.830033 &  0.992643 &   0.990586 &  0.714266 \\
      &   & Churned &  0.112509 &  0.103061 &   0.060937 &  0.732019 \\
 \cline{2-7}
-     & \multirow{2}{*}{42} & Retained &  0.829915 &  0.992647 &   0.990726 &  0.714018 \\
-     &   & Churned &  0.113018 &  0.101979 &   0.061208 &  0.736118 \\
+     & \multirow{2}{*}{42} & Retained &  0.829788 &  0.992641 &   0.990720 &  0.713833 \\
+     &   & Churned &  0.112941 &  0.101419 &   0.061163 &  0.736020 \\
 \cline{2-7}
-     & \multirow{2}{*}{49} & Retained &  \textit{0.834664} &  0.992744 &   0.990785 &  \textit{0.721046} \\
-     &   & Churned &  \textit{0.115348} &  \textit{0.104808} &   \textit{0.062583} &  0.735240 \\
+     & \multirow{2}{*}{49} & Retained &  \textit{0.834670} &  0.992744 &   0.990785 &  \textit{0.721056} \\
+     &   & Churned &  \textit{0.115351} &  \textit{0.104809} &   \textit{0.062585} &  0.735240 \\
 \cline{2-7}
-     & \multirow{2}{*}{56} & Retained &  0.830921 &  \textit{0.992801} &   \textit{0.991129} &  0.715299 \\
-     &   & Churned &  0.115075 &  0.103801 &   0.062337 &  \textit{0.747243} \\
-\cline{1-7}
-\cline{2-7}
-\multirow{16}{*}{Random Forest} & \multirow{2}{*}{7} & Retained &  0.876152 &  0.993256 &   0.991183 &  0.785044 \\
-     &   & Churned &  0.141873 &  0.140149 &   0.078638 &  0.724310 \\
-\cline{2-7}
-     & \multirow{2}{*}{14} & Retained &  0.890559 &  0.993822 &   0.991668 &  0.808161 \\
-     &   & Churned &  0.157307 &  0.170996 &   0.088123 &  0.731922 \\
-\cline{2-7}
-     & \multirow{2}{*}{21} & Retained &  0.893164 &  0.993925 &   0.991717 &  0.812427 \\
-     &   & Churned &  0.160246 &  0.187477 &   0.089969 &  0.732117 \\
-\cline{2-7}
-     & \multirow{2}{*}{28} & Retained &  0.893381 &  0.994163 &   \textit{0.991941} &  0.812637 \\
-     &   & Churned &  0.161846 &  0.194900 &   0.090869 &  \textit{0.739338} \\
-\cline{2-7}
-     & \multirow{2}{*}{35} & Retained &  0.898717 &  0.994195 &   0.991906 &  0.821534 \\
-     &   & Churned &  0.167482 &  0.202993 &   0.094503 &  0.735337 \\
-\cline{2-7}
-     & \multirow{2}{*}{42} & Retained &  0.897824 &  0.994100 &   0.991815 &  0.820105 \\
-     &   & Churned &  0.165886 &  \textbf{0.203295} &   0.093529 &  0.732800 \\
-\cline{2-7}
-     & \multirow{2}{*}{49} & Retained &  \textbf{0.900970} &  0.994093 &   0.991656 &  \textbf{0.825481} \\
-     &   & Churned &  \textbf{0.168477} &  0.197516 &   \textbf{0.095300} &  0.725773 \\
-\cline{2-7}
-     & \multirow{2}{*}{56} & Retained &  0.897189 &  \textbf{0.994240} &   0.991878 &  0.819002 \\
-     &   & Churned &  0.165577 &  0.199575 &   0.093293 &  0.735240 \\
+     & \multirow{2}{*}{56} & Retained &  0.830928 &  \textit{0.992801} &   \textit{0.991129} &  0.715309 \\
+     &   & Churned &  0.115078 &  0.103800 &   0.062339 &  \textit{0.747243} \\
 \bottomrule
 \end{tabular}
 \caption{Metrics for the observation window experiment}
+\label{tab:obs_window}
+\end{table}
+
+%---------------------
+
+\begin{table}
+\centering
+\begin{tabular}{lllrrrr}
+\toprule
+     &     &          &  F1-Score &    PR AUC &  Precision &    Recall \\
+Models & Share & Label &           &           &            &           \\
+\midrule
+\multirow{18}{*}{LSTM} & \multirow{2}{*}{10\%} & Retained &  \textbf{0.982307} &  0.994025 &   0.983159 &  \textbf{0.981457} \\
+     &     & Churned &  \textbf{0.307656} &  0.217342 &   \textbf{0.297570} &  0.318449 \\
+\cline{2-7}
+     & \multirow{2}{*}{15\%} & Retained &  0.975857 &  0.994287 &   0.985437 &  0.966461 \\
+     &     & Churned &  0.302806 &  0.222597 &   0.236429 &  0.421001 \\
+\cline{2-7}
+     & \multirow{2}{*}{20\%} & Retained &  0.962595 &  0.994362 &   0.988227 &  0.938260 \\
+     &     & Churned &  0.270067 &  0.224562 &   0.179310 &  0.546860 \\
+\cline{2-7}
+     & \multirow{2}{*}{25\%} & Retained &  0.966747 &  0.993023 &   0.987343 &  0.946993 \\
+     &     & Churned &  0.277759 &  0.201470 &   0.191153 &  0.507851 \\
+\cline{2-7}
+     & \multirow{2}{*}{30\%} & Retained &  0.943058 &  0.994174 &   0.990025 &  0.900346 \\
+     &     & Churned &  0.222924 &  0.194165 &   0.135318 &  0.632237 \\
+\cline{2-7}
+     & \multirow{2}{*}{35\%} & Retained &  0.941206 &  0.994706 &   0.990460 &  0.896618 \\
+     &     & Churned &  0.222530 &  \textbf{0.223431} &   0.134249 &  0.649902 \\
+\cline{2-7}
+     & \multirow{2}{*}{40\%} & Retained &  0.930454 &  \textbf{0.994734} &   0.991322 &  0.876629 \\
+     &     & Churned &  0.205941 &  0.220575 &   0.121066 &  0.688911 \\
+\cline{2-7}
+     & \multirow{2}{*}{45\%} & Retained &  0.923512 &  0.994291 &   0.991447 &  0.864289 \\
+     &     & Churned &  0.193832 &  0.175024 &   0.112549 &  0.697743 \\
+\cline{2-7}
+     & \multirow{2}{*}{50\%} & Retained &  0.914968 &  0.994161 &   \textit{0.991891} &  0.849117 \\
+     &     & Churned &  0.183424 &  0.184284 &   0.105129 &  \textit{0.718597} \\
+\cline{1-7}
+\cline{2-7}
+\multirow{18}{*}{Random Forest} & \multirow{2}{*}{10\%} & Retained &  \textit{0.981921} &  0.993655 &   0.983035 &  \textit{0.980810} \\
+     &     & Churned &  \textit{0.300023} &  0.203894 &   \textit{0.287416} &  0.313788 \\
+\cline{2-7}
+     & \multirow{2}{*}{15\%} & Retained &  0.974738 &  0.993544 &   0.985423 &  0.964282 \\
+     &     & Churned &  0.293922 &  0.204665 &   0.225561 &  0.421737 \\
+\cline{2-7}
+     & \multirow{2}{*}{20\%} & Retained &  0.961760 &  \textit{0.993784} &   0.987977 &  0.936898 \\
+     &     & Churned &  0.262594 &  0.209803 &   0.173706 &  0.537782 \\
+\cline{2-7}
+     & \multirow{2}{*}{25\%} & Retained &  0.961340 &  0.993670 &   0.988060 &  0.936027 \\
+     &     & Churned &  0.261896 &  \textit{0.212639} &   0.172719 &  0.541462 \\
+\cline{2-7}
+     & \multirow{2}{*}{30\%} & Retained &  0.951873 &  0.993767 &   0.989192 &  0.917266 \\
+     &     & Churned &  0.239996 &  0.209713 &   0.150395 &  0.593719 \\
+\cline{2-7}
+     & \multirow{2}{*}{35\%} & Retained &  0.943922 &  0.993684 &   0.989599 &  0.902276 \\
+     &     & Churned &  0.220736 &  0.207393 &   0.134480 &  0.615554 \\
+\cline{2-7}
+     & \multirow{2}{*}{40\%} & Retained &  0.933831 &  0.993775 &   0.990513 &  0.883286 \\
+     &     & Churned &  0.205684 &  0.210247 &   0.121927 &  0.657017 \\
+\cline{2-7}
+     & \multirow{2}{*}{45\%} & Retained &  0.916083 &  0.993626 &   0.991306 &  0.851471 \\
+     &     & Churned &  0.180668 &  0.208895 &   0.103779 &  0.697252 \\
+\cline{2-7}
+     & \multirow{2}{*}{50\%} & Retained &  0.896975 &  0.993761 &   \textbf{0.992056} &  0.818526 \\
+     &     & Churned &  0.161539 &  0.208957 &   0.090752 &  \textbf{0.734298} \\
+\bottomrule
+\end{tabular}
+\caption{Metrics for the class balance experiment}
+\label{tab:class_balance}
+\end{table}
+
+%---------------------
+
+\begin{table}
+\centering
+\begin{tabular}{lllrrrr}
+\toprule
+     &   &          &  F1-Score &    PR AUC &  Precision &    Recall \\
+Models & \# Components & Label &           &           &            &           \\
+\midrule
+\multirow{10}{*}{LSTM} & \multirow{2}{*}{4} & Retained &  0.922415 &  0.993324 &   0.990890 &  0.862792 \\
+     &   & Churned &  0.193373 &  0.140500 &   0.112527 &  0.686835 \\
+\cline{2-7}
+     & \multirow{2}{*}{16} & Retained &  \textbf{0.927496} &  0.993826 &   0.990609 &  \textbf{0.871943} \\
+     &   & Churned &  \textbf{0.200218} &  0.146970 &   \textbf{0.117582} &  0.673661 \\
+\cline{2-7}
+     & \multirow{2}{*}{28} & Retained &  0.924869 &  0.993922 &   0.990807 &  0.867160 \\
+     &   & Churned &  0.197016 &  0.152360 &   0.115129 &  0.682346 \\
+\cline{2-7}
+     & \multirow{2}{*}{40} & Retained &  0.902679 &  0.994233 &   0.992157 &  0.828005 \\
+     &   & Churned &  0.173838 &  \textit{0.185674} &   0.098459 &  0.741583 \\
+\cline{2-7}
+     & \multirow{2}{*}{52} & Retained &  0.898539 &  \textbf{0.994353} &   \textbf{0.992256} &  0.820997 \\
+     &   & Churned &  0.169514 &  0.184844 &   0.095604 &  \textbf{0.747048} \\
+\cline{1-7}
+\cline{2-7}
+\multirow{10}{*}{Random Forest} & \multirow{2}{*}{4} & Retained &  0.886591 &  0.993103 &   0.991396 &  0.801825 \\
+     &   & Churned &  0.151906 &  0.175956 &   0.084837 &  0.725285 \\
+\cline{2-7}
+     & \multirow{2}{*}{16} & Retained &  0.903003 &  0.993781 &   0.991422 &  0.829063 \\
+     &   & Churned &  0.169349 &  0.192872 &   0.096017 &  0.716795 \\
+\cline{2-7}
+     & \multirow{2}{*}{28} & Retained &  \textit{0.906450} &  0.993801 &   0.991455 &  \textit{0.834870} \\
+     &   & Churned &  0.173868 &  0.193854 &   0.098949 &  0.715917 \\
+\cline{2-7}
+     & \multirow{2}{*}{40} & Retained &  0.906357 &  0.993904 &   0.991499 &  0.834682 \\
+     &   & Churned &  \textit{0.174057} &  0.196415 &   \textit{0.099042} &  0.717478 \\
+\cline{2-7}
+     & \multirow{2}{*}{52} & Retained &  0.895238 &  \textit{0.994219} &   \textit{0.991906} &  0.815740 \\
+     &   & Churned &  0.163607 &  \textbf{0.196442} &   0.092014 &  \textit{0.737191} \\
+\bottomrule
+\end{tabular}
+\caption{Metrics for the dimensionality reduction experiment}
+\label{tab:dim_reduction}
 \end{table}
 
 \todos
