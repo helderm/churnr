@@ -52,16 +52,23 @@
 \BOOKMARK [2][-]{subsection.5.5.4}{Receiver Operating Characteristic}{section.5.5}% 52
 \BOOKMARK [2][-]{subsection.5.5.5}{Precision-Recall Curves}{section.5.5}% 53
 \BOOKMARK [1][-]{section.5.6}{Software and Libraries}{chapter.5}% 54
-\BOOKMARK [0][-]{chapter.6}{Results and Discussion}{}% 55
+\BOOKMARK [0][-]{chapter.6}{Results}{}% 55
 \BOOKMARK [1][-]{section.6.1}{LSTM vs. Baseline Models}{chapter.6}% 56
 \BOOKMARK [1][-]{section.6.2}{Experimenting on Different Window Sizes}{chapter.6}% 57
 \BOOKMARK [2][-]{subsection.6.2.1}{Observation Window}{section.6.2}% 58
 \BOOKMARK [2][-]{subsection.6.2.2}{Prediction Window}{section.6.2}% 59
 \BOOKMARK [1][-]{section.6.3}{Effect of Class Distribution}{chapter.6}% 60
 \BOOKMARK [1][-]{section.6.4}{Experimenting with Dimensionality Reduction}{chapter.6}% 61
-\BOOKMARK [0][-]{chapter.7}{Conclusions and Future Work}{}% 62
-\BOOKMARK [0][-]{chapter*.48}{Bibliography}{}% 63
-\BOOKMARK [0][-]{appendix.A}{Additional Results}{}% 64
-\BOOKMARK [1][-]{section.A.1}{Metrics tables}{appendix.A}% 65
-\BOOKMARK [1][-]{section.A.2}{Precision-recall curves}{appendix.A}% 66
-\BOOKMARK [1][-]{section.A.3}{ROC curves}{appendix.A}% 67
+\BOOKMARK [0][-]{chapter.7}{Discussion}{}% 62
+\BOOKMARK [1][-]{section.7.1}{Comparing LSTM to Baseline Models}{chapter.7}% 63
+\BOOKMARK [1][-]{section.7.2}{The Class Imbalance Problem}{chapter.7}% 64
+\BOOKMARK [1][-]{section.7.3}{The Impact of the Prediction Window}{chapter.7}% 65
+\BOOKMARK [1][-]{section.7.4}{Training Time}{chapter.7}% 66
+\BOOKMARK [1][-]{section.7.5}{System Improvements}{chapter.7}% 67
+\BOOKMARK [1][-]{section.7.6}{Future Work}{chapter.7}% 68
+\BOOKMARK [0][-]{chapter.8}{Conclusions}{}% 69
+\BOOKMARK [0][-]{chapter*.48}{Bibliography}{}% 70
+\BOOKMARK [0][-]{appendix.A}{Additional Results}{}% 71
+\BOOKMARK [1][-]{section.A.1}{Metrics tables}{appendix.A}% 72
+\BOOKMARK [1][-]{section.A.2}{Precision-recall curves}{appendix.A}% 73
+\BOOKMARK [1][-]{section.A.3}{ROC curves}{appendix.A}% 74
