@@ -2,73 +2,71 @@
 \BOOKMARK [0][-]{chapter*.2}{List of Figures}{}% 2
 \BOOKMARK [0][-]{chapter*.3}{List of Tables}{}% 3
 \BOOKMARK [0][-]{chapter.1}{Introduction}{}% 4
-\BOOKMARK [1][-]{section.1.1}{Streaming Services}{chapter.1}% 5
-\BOOKMARK [1][-]{section.1.2}{Spotify and the Growing Competition}{chapter.1}% 6
-\BOOKMARK [1][-]{section.1.3}{Churn Prediction}{chapter.1}% 7
-\BOOKMARK [1][-]{section.1.4}{Customer Retention}{chapter.1}% 8
-\BOOKMARK [1][-]{section.1.5}{Research Question}{chapter.1}% 9
-\BOOKMARK [1][-]{section.1.6}{Sustainability, Ethical and Social Aspects}{chapter.1}% 10
-\BOOKMARK [1][-]{section.1.7}{Contributions}{chapter.1}% 11
-\BOOKMARK [1][-]{section.1.8}{Outline}{chapter.1}% 12
-\BOOKMARK [0][-]{chapter.2}{Background}{}% 13
-\BOOKMARK [1][-]{section.2.1}{Definitions}{chapter.2}% 14
-\BOOKMARK [1][-]{section.2.2}{Time Series and Aggregated Data}{chapter.2}% 15
-\BOOKMARK [1][-]{section.2.3}{Modeling Approach}{chapter.2}% 16
-\BOOKMARK [2][-]{subsection.2.3.1}{Logistic Regression}{section.2.3}% 17
-\BOOKMARK [2][-]{subsection.2.3.2}{Decision Trees}{section.2.3}% 18
-\BOOKMARK [2][-]{subsection.2.3.3}{Random Forests}{section.2.3}% 19
-\BOOKMARK [2][-]{subsection.2.3.4}{Recurrent Neural Networks}{section.2.3}% 20
-\BOOKMARK [2][-]{subsection.2.3.5}{Long Short-Term Memory}{section.2.3}% 21
-\BOOKMARK [1][-]{section.2.4}{Dimensionality Reduction}{chapter.2}% 22
-\BOOKMARK [2][-]{subsection.2.4.1}{Principal Component Analysis}{section.2.4}% 23
-\BOOKMARK [0][-]{chapter.3}{Related Work}{}% 24
-\BOOKMARK [1][-]{section.3.1}{Churn Prediction}{chapter.3}% 25
-\BOOKMARK [1][-]{section.3.2}{Sequential Modelling for User Behavior Data}{chapter.3}% 26
-\BOOKMARK [1][-]{section.3.3}{Evaluating and Training Churn Prediction Models}{chapter.3}% 27
-\BOOKMARK [0][-]{chapter.4}{Dataset Creation and Exploration}{}% 28
-\BOOKMARK [1][-]{section.4.1}{Infrastructure and Data Sources}{chapter.4}% 29
-\BOOKMARK [1][-]{section.4.2}{Dataset Creation}{chapter.4}% 30
-\BOOKMARK [2][-]{subsection.4.2.1}{Sampling}{section.4.2}% 31
-\BOOKMARK [2][-]{subsection.4.2.2}{Parsing}{section.4.2}% 32
-\BOOKMARK [2][-]{subsection.4.2.3}{Feature Extraction}{section.4.2}% 33
-\BOOKMARK [2][-]{subsection.4.2.4}{Data Pre-processing}{section.4.2}% 34
-\BOOKMARK [1][-]{section.4.3}{Data Exploration}{chapter.4}% 35
-\BOOKMARK [2][-]{subsection.4.3.1}{User Distribution}{section.4.3}% 36
-\BOOKMARK [2][-]{subsection.4.3.2}{User Behavior Through Time}{section.4.3}% 37
-\BOOKMARK [2][-]{subsection.4.3.3}{Feature Correlation to Churn}{section.4.3}% 38
-\BOOKMARK [2][-]{subsection.4.3.4}{Dimensionality Reduction}{section.4.3}% 39
-\BOOKMARK [1][-]{section.4.4}{Software and Libraries}{chapter.4}% 40
-\BOOKMARK [0][-]{chapter.5}{Methodology}{}% 41
-\BOOKMARK [1][-]{section.5.1}{Handling the Class Imbalance Problem}{chapter.5}% 42
-\BOOKMARK [1][-]{section.5.2}{Cross-Validation}{chapter.5}% 43
-\BOOKMARK [1][-]{section.5.3}{Hyperparameter Search}{chapter.5}% 44
-\BOOKMARK [1][-]{section.5.4}{Model Training}{chapter.5}% 45
-\BOOKMARK [2][-]{subsection.5.4.1}{The LSTM Recurrent Network}{section.5.4}% 46
-\BOOKMARK [2][-]{subsection.5.4.2}{Training Procedure}{section.5.4}% 47
-\BOOKMARK [1][-]{section.5.5}{Evaluation Metrics}{chapter.5}% 48
-\BOOKMARK [2][-]{subsection.5.5.1}{Confusion Matrix}{section.5.5}% 49
-\BOOKMARK [2][-]{subsection.5.5.2}{Classification Accuracy}{section.5.5}% 50
-\BOOKMARK [2][-]{subsection.5.5.3}{Precision, Recall and Other Metrics}{section.5.5}% 51
-\BOOKMARK [2][-]{subsection.5.5.4}{Receiver Operating Characteristic}{section.5.5}% 52
-\BOOKMARK [2][-]{subsection.5.5.5}{Precision-Recall Curves}{section.5.5}% 53
-\BOOKMARK [1][-]{section.5.6}{Software and Libraries}{chapter.5}% 54
-\BOOKMARK [0][-]{chapter.6}{Results}{}% 55
-\BOOKMARK [1][-]{section.6.1}{LSTM vs. Baseline Models}{chapter.6}% 56
-\BOOKMARK [1][-]{section.6.2}{Experimenting on Different Window Sizes}{chapter.6}% 57
-\BOOKMARK [2][-]{subsection.6.2.1}{Observation Window}{section.6.2}% 58
-\BOOKMARK [2][-]{subsection.6.2.2}{Prediction Window}{section.6.2}% 59
-\BOOKMARK [1][-]{section.6.3}{Effect of Class Distribution}{chapter.6}% 60
-\BOOKMARK [1][-]{section.6.4}{Experimenting with Dimensionality Reduction}{chapter.6}% 61
-\BOOKMARK [0][-]{chapter.7}{Discussion}{}% 62
-\BOOKMARK [1][-]{section.7.1}{Comparing LSTM to Baseline Models}{chapter.7}% 63
-\BOOKMARK [1][-]{section.7.2}{The Class Imbalance Problem}{chapter.7}% 64
-\BOOKMARK [1][-]{section.7.3}{The Impact of the Prediction Window}{chapter.7}% 65
-\BOOKMARK [1][-]{section.7.4}{Training Time}{chapter.7}% 66
-\BOOKMARK [1][-]{section.7.5}{System Improvements}{chapter.7}% 67
-\BOOKMARK [1][-]{section.7.6}{Future Work}{chapter.7}% 68
-\BOOKMARK [0][-]{chapter.8}{Conclusions}{}% 69
-\BOOKMARK [0][-]{chapter*.48}{Bibliography}{}% 70
-\BOOKMARK [0][-]{appendix.A}{Additional Results}{}% 71
-\BOOKMARK [1][-]{section.A.1}{Metrics tables}{appendix.A}% 72
-\BOOKMARK [1][-]{section.A.2}{Precision-recall curves}{appendix.A}% 73
-\BOOKMARK [1][-]{section.A.3}{ROC curves}{appendix.A}% 74
+\BOOKMARK [1][-]{section.1.1}{Research Question}{chapter.1}% 5
+\BOOKMARK [1][-]{section.1.2}{Sustainability, Ethical and Social Aspects}{chapter.1}% 6
+\BOOKMARK [1][-]{section.1.3}{Contributions}{chapter.1}% 7
+\BOOKMARK [1][-]{section.1.4}{Outline}{chapter.1}% 8
+\BOOKMARK [0][-]{chapter.2}{Background}{}% 9
+\BOOKMARK [1][-]{section.2.1}{Streaming Services}{chapter.2}% 10
+\BOOKMARK [1][-]{section.2.2}{Spotify and the Growing Competition}{chapter.2}% 11
+\BOOKMARK [1][-]{section.2.3}{Customer Churn and Retention}{chapter.2}% 12
+\BOOKMARK [1][-]{section.2.4}{Time Series and Aggregated Data}{chapter.2}% 13
+\BOOKMARK [1][-]{section.2.5}{Modeling Approach}{chapter.2}% 14
+\BOOKMARK [2][-]{subsection.2.5.1}{Logistic Regression}{section.2.5}% 15
+\BOOKMARK [2][-]{subsection.2.5.2}{Decision Trees}{section.2.5}% 16
+\BOOKMARK [2][-]{subsection.2.5.3}{Random Forests}{section.2.5}% 17
+\BOOKMARK [2][-]{subsection.2.5.4}{Recurrent Neural Networks}{section.2.5}% 18
+\BOOKMARK [2][-]{subsection.2.5.5}{Long Short-Term Memory}{section.2.5}% 19
+\BOOKMARK [1][-]{section.2.6}{Dimensionality Reduction}{chapter.2}% 20
+\BOOKMARK [2][-]{subsection.2.6.1}{Principal Component Analysis}{section.2.6}% 21
+\BOOKMARK [0][-]{chapter.3}{Related Work}{}% 22
+\BOOKMARK [1][-]{section.3.1}{Churn Prediction}{chapter.3}% 23
+\BOOKMARK [1][-]{section.3.2}{Sequential Modelling for User Behavior Data}{chapter.3}% 24
+\BOOKMARK [1][-]{section.3.3}{Evaluating and Training Churn Prediction Models}{chapter.3}% 25
+\BOOKMARK [0][-]{chapter.4}{Dataset Creation and Exploration}{}% 26
+\BOOKMARK [1][-]{section.4.1}{Infrastructure and Data Sources}{chapter.4}% 27
+\BOOKMARK [1][-]{section.4.2}{Dataset Creation}{chapter.4}% 28
+\BOOKMARK [2][-]{subsection.4.2.1}{Sampling}{section.4.2}% 29
+\BOOKMARK [2][-]{subsection.4.2.2}{Parsing}{section.4.2}% 30
+\BOOKMARK [2][-]{subsection.4.2.3}{Feature Extraction}{section.4.2}% 31
+\BOOKMARK [2][-]{subsection.4.2.4}{Data Pre-processing}{section.4.2}% 32
+\BOOKMARK [1][-]{section.4.3}{Data Exploration}{chapter.4}% 33
+\BOOKMARK [2][-]{subsection.4.3.1}{User Distribution}{section.4.3}% 34
+\BOOKMARK [2][-]{subsection.4.3.2}{User Behavior Through Time}{section.4.3}% 35
+\BOOKMARK [2][-]{subsection.4.3.3}{Feature Correlation to Churn}{section.4.3}% 36
+\BOOKMARK [2][-]{subsection.4.3.4}{Dimensionality Reduction}{section.4.3}% 37
+\BOOKMARK [1][-]{section.4.4}{Software and Libraries}{chapter.4}% 38
+\BOOKMARK [0][-]{chapter.5}{Methodology}{}% 39
+\BOOKMARK [1][-]{section.5.1}{Handling the Class Imbalance Problem}{chapter.5}% 40
+\BOOKMARK [1][-]{section.5.2}{Cross-Validation}{chapter.5}% 41
+\BOOKMARK [1][-]{section.5.3}{Hyperparameter Search}{chapter.5}% 42
+\BOOKMARK [1][-]{section.5.4}{Model Training}{chapter.5}% 43
+\BOOKMARK [2][-]{subsection.5.4.1}{The LSTM Recurrent Network}{section.5.4}% 44
+\BOOKMARK [2][-]{subsection.5.4.2}{Training Procedure}{section.5.4}% 45
+\BOOKMARK [1][-]{section.5.5}{Evaluation Metrics}{chapter.5}% 46
+\BOOKMARK [2][-]{subsection.5.5.1}{Confusion Matrix}{section.5.5}% 47
+\BOOKMARK [2][-]{subsection.5.5.2}{Classification Accuracy}{section.5.5}% 48
+\BOOKMARK [2][-]{subsection.5.5.3}{Precision, Recall and Other Metrics}{section.5.5}% 49
+\BOOKMARK [2][-]{subsection.5.5.4}{Receiver Operating Characteristic}{section.5.5}% 50
+\BOOKMARK [2][-]{subsection.5.5.5}{Precision-Recall Curves}{section.5.5}% 51
+\BOOKMARK [1][-]{section.5.6}{Software and Libraries}{chapter.5}% 52
+\BOOKMARK [0][-]{chapter.6}{Results}{}% 53
+\BOOKMARK [1][-]{section.6.1}{LSTM vs. Baseline Models}{chapter.6}% 54
+\BOOKMARK [1][-]{section.6.2}{Experimenting on Different Window Sizes}{chapter.6}% 55
+\BOOKMARK [2][-]{subsection.6.2.1}{Observation Window}{section.6.2}% 56
+\BOOKMARK [2][-]{subsection.6.2.2}{Prediction Window}{section.6.2}% 57
+\BOOKMARK [1][-]{section.6.3}{Effect of Class Distribution}{chapter.6}% 58
+\BOOKMARK [1][-]{section.6.4}{Experimenting with Dimensionality Reduction}{chapter.6}% 59
+\BOOKMARK [0][-]{chapter.7}{Discussion}{}% 60
+\BOOKMARK [1][-]{section.7.1}{Comparing LSTM to Baseline Models}{chapter.7}% 61
+\BOOKMARK [1][-]{section.7.2}{The Class Imbalance Problem}{chapter.7}% 62
+\BOOKMARK [1][-]{section.7.3}{The Impact of the Prediction Window}{chapter.7}% 63
+\BOOKMARK [1][-]{section.7.4}{Training Time}{chapter.7}% 64
+\BOOKMARK [1][-]{section.7.5}{System Improvements}{chapter.7}% 65
+\BOOKMARK [1][-]{section.7.6}{Future Work}{chapter.7}% 66
+\BOOKMARK [0][-]{chapter.8}{Conclusions}{}% 67
+\BOOKMARK [0][-]{chapter*.48}{Bibliography}{}% 68
+\BOOKMARK [0][-]{appendix.A}{Additional Results}{}% 69
+\BOOKMARK [1][-]{section.A.1}{Metrics tables}{appendix.A}% 70
+\BOOKMARK [1][-]{section.A.2}{Precision-recall curves}{appendix.A}% 71
+\BOOKMARK [1][-]{section.A.3}{ROC curves}{appendix.A}% 72

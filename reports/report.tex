@@ -16,6 +16,8 @@
 \usepackage{booktabs}
 \usepackage{adjustbox}
 
+\newtheorem{definition}{Definition}
+
 % remove this if you are using XeLaTeX or LuaLaTeX
 \usepackage[utf8]{inputenc}
 
@@ -79,17 +81,73 @@
 
 \chapter{Introduction}
 
-		In a world where service providers face an ever increasing competition on the market, retaining the already acquired customers is rising in importance for any company that wants to stay in business. This is specially true on industries that are mainly web-based: startups nowadays can provide an online service with  an impressively low amount of initial capital, ingressing into a market with relative ease. While ousting a well-established company from the top is a hard feat to accomplish, it is far from being unheard event, urging business to set up specialized tools to identify unsatisfied clients and plan retention actions. 
+		In a world where service providers face an ever increasing competition on the market, retaining the already acquired customers is rising in importance for any company that wants to stay in business. This is specially true on industries that are mainly web-based: startups nowadays can provide an online service with  an impressively low amount of initial capital, ingressing into a market with relative ease. While ousting a well-established company from the top is a hard feat to accomplish, it is far from being an unheard event, urging business to set up specialized tools to identify unsatisfied clients and plan retention actions. 
 		
 	The act of a user abandoning a service provider, either by discontinuation of a formal contract or inactivity, is called in the industry as \emph{churn}. Customer relationship management tools  aims to minimize this metric as to increase profitability and to improve business health. For doing so, the first step that must be taken is to identify the users that more likely to churn in the near future as to know on which customers the retention actions should be focused on. These actions may have a significant cost to the company when executed, so it is desirable that errors in classification are minimized. The task of detecting how likely a user is to abandon a service is called \emph{churn prediction}, and it will be the main subject of this thesis project.
 	
-	With the advent of big data technologies and cloud providers, the burden of storing large quantities of user data has been mostly lifted, allowing companies to store detailed information about its customers behavior on the application with moderate engineering effort. The overwhelming amount of information available however poses its own set of challenges when it comes to make use of this data for a specific task, since choosing which set of user attributes can more precisely describes the problem that is trying to be solved is far from being trivial: choose too few and the task may be unsolvable, choose too many and the important information might be lost in a sea of irrelevant data. Similarly, the available features may fail to represent the user attitude towards the service in its raw state, requiring  new features to be engineered to capture this information. This is also a problem present in churn prediction: creating a dataset that is suitable for detecting the user disposition towards churning and retraining will be a main topic in this thesis work as well.
+	With the advent of big data technologies and cloud providers, the burden of storing large quantities of user data has been mostly lifted, allowing companies to store detailed information about its customers behavior on the application with moderate engineering effort. The overwhelming amount of information available however poses its own set of challenges when it comes to make use of this data for a specific task, since choosing which set of user attributes can more precisely describes the problem that is trying to be solved is far from being trivial: choose too few and the task may be unsolvable, choose too many and the important information might be lost in a sea of irrelevant data. Similarly, the available features may fail to represent the user attitude towards the service in its raw state, requiring  new features to be engineered to capture this information. This is also a problem present in churn prediction: creating a dataset that is suitable for detecting the user disposition towards churning and retaining will be a main topic in this thesis work as well.
 	
 	Predicting whether a user is going to leave the service provider in the near future is a subject that has received some attention in the academia in the past few years \citep{Pudipeddi2014}\citep{GurAli2014}\citep{Drachen2016RapidPO}. Most of them share however a common trait regarding the way the data is represented before being used for model training: the available data is aggregated over a time span into a single data point for each user, normally through a mean function. Even though this approach simplifies the task of training the predictive models, latent temporal factors hidden in the sequence that could prove useful for increasing the performance of models are inherently lost in this process. For instance, a customer who is gradually reducing its usage of the service over time  can be thought as having a higher chance of churning in the future. One of the hypothesis that is going to be explored in this project is if by using a sequential representation of the data and also a predictive model that knows how to leverage this property, a significant performance gain can be achieved when comparing to a state-of-the-art baseline models. 
 	 
 	The user behavior data and the required computational resources were provided by \emph{Spotify}, a well known music streaming service that joined this project in a tutoring partnership with the student and the university. 
 	
 	
+
+      
+\section{Research Question}	
+	
+The main research question of this project is:
+
+\begin{itemize}
+\item Which predictive modeling algorithm between logistic regression, random forests and recurrent neural networks obtains the best performance for predicting the probability of a user towards churning the service provider in the future?
+\end{itemize}	
+
+An auxiliary research question is:
+
+\begin{itemize}
+\item How does different aspects of the data, like the class distribution between churning and retaining users, the amount of historical user behavior information used for training, and different representations for the data influences the accuracy of the predictive models?
+\end{itemize}
+
+
+\section{Sustainability, Ethical and Social Aspects}
+
+The protection of user personal data has reached the spotlight in recent years, mainly through its misuse by companies that detain this kind of information. With the widespread use of mobile devices connected to the Internet 24/7, service providers have at their disposal an immense quantity of customer data as fine grained as his exact geographical location, his purchase behavior in e-stores and more. Users are commonly unaware of how their data is being exploited by providers, the exact definition being hidden in thousands of lines in a software agreement written in an obscure way that even specialists may fail to comprehend. Even if fully understood, the legality of its terms is being questioned by courts of law around the world. To protects its citizen's digital data, the European Union has recently issued a set of laws concerning data privacy that shall be put into practice in May 2018 \citep{eu2017protection}.
+
+The misuse of customer information by companies that sparked these concerns has its fair share of examples in the wild. For instance, Facebook released a controversial study where it manipulated the sentiments of its users by feeding into its client's news feed articles leaning towards a positive and negative sentiment, and analyzing how users responded to that stimulus\citep{kramer2014experimental}. However no user was aware of this manipulation, which could inadvertently lead to tragic outcomes that the experimenters failed to consider. 
+
+Another notorious example came from a contest sponsored by Netflix for researchers who could improve its recommendation algorithm, an event known as "the Netflix Prize" \citep{bennett2007netflix}. The massive dataset containing user behavior information on its video platform, alongside a prize of 1 million dollars for the winning team, gathered the interest of researchers all around the world. However a major class-action suit was filled against the company for failing to anonymize user information properly with customers claiming that they could be uniquely identified through the released data, and the outcome was Netflix canceling future versions of the contest altogether \citep{wired2010netflix}.
+
+The protection of user privacy is a key component in Spotify's business model. Being a company primarily data-driven, it is imperative that Spotify can be trusted in the public's eyes as a custodian of customers' data, both for increasing the user satisfaction with the service and also to avoid similar legal processes suffered by other companies that might deter it from its main mission and priorities. With that in mind, Spotify take steps as to ensure that privacy, security and encryption of its user data complies with the applicable law. 
+
+The computing resources utilized in this project were provided mainly by Google's Cloud Platform data centers. These clusters of machines were heavily optimized throughout the years as to efficiently make use of energy resources, in a way that most companies are incapable of due to technology and budget constraints. A recent announcement revealed that in 2017 every data centers owned by Google will run on 100\% renewable energy, which is a feat that few other companies can claim \citep{google2017renew}.  
+
+
+\section{Contributions}
+
+The main contributions of this project can be listed as:
+
+\begin{itemize}
+\item Evaluating the performance of a recurrent neural network method compared to the standard techniques currently in use for churn prediction.
+\item Assessing the impact that the size of the customer event history has in accuracy of the trained predictive models.
+\item Analyzing the performance of models when predicting the future for increasing ranges.
+\item Experimenting on changing the ratio between the retained and churning classes, and the impact in accuracy that it yields.
+\item Evaluating if a lower dimensional representation of user data can improve the performance of predictive models.
+\item A data pipeline framework suitable for extracting sequential information from raw user data as to build predictive models tailored to Spotify's service.
+\end{itemize}
+
+\section{Outline}
+
+This thesis is organized as follows. \Cref{cha:background} introduces key concepts that will be important for the proper understanding of this report. Following is \Cref{cha:related_work}, where the current state-of-the-art in churn prediction techniques will be presented to the reader, while also exposing the literature on time-series modeling and how it can be applied for the task at hand. 
+
+In \Cref{cha:data} a detailed description on how the dataset used for training the classifiers was created will be given, followed by a brief exploration of the generated data. In \Cref{cha:method}, the reader will be presented to the methods utilized for performing the experiments in this project. It will delve into how the training of the models was performed, how the parameters were optimized, and how the final score for each classifier was obtained.
+
+\Cref{cha:results} will be dedicated to present to the reader the main results obtained from the experiments performed in the project, which will be discussed on \Cref{cha:discussion}. \Cref{cha:conclusion} summarizes the work performed in this project. Additional extensive results are presented on \Cref{cha:add_results}. 
+
+\chapter{Background}
+\label{cha:background}
+
+For a better understanding of this degree project, some concepts are required to be properly introduced. Some of them are mainly application-specific, while others pertains to how we decided to represent the data, which algorithms we decided to use in our experiments and how the data was manipulated and transformed. 
+
 	\section{Streaming Services}
 	
 	The rise of streaming services has in recent years revolutionized the way customers get access to digital content. The traditional model of media ownership, even though it still represents a significant share of revenue, is continuously losing ground to a new right-of-access model where users get access to content ether by paying a monthly subscription or by being exposed to advertisement. The customer base of said services is steadily growing, and with it the amount data collected tracking how they interact with the provided digital media. This information is of high-value to any provider who expects improve the user experience, increase its total number of clients and also avoid losing the current ones to the competition.
@@ -114,119 +172,19 @@
     \label{fig:spotify-screenshot}
 \end{figure}
 		
-	Spotify is the top music streaming service globally in terms of number of users, totaling 140 millions of which 50 millions are Premium paid subscriptions \citep{spotifypress}. The content is delivered through applications available on several different operating systems like Windows, macOS and Linux, as well as devices like iOS and Android tablets and smartphones, an example is shown in Figure \ref{fig:spotify-screenshot}. Users may access over 30 millions songs available in its catalog through two methods: a free membership where the client is exposed to advertisement, and a Premium paid subscription with additional features like offline downloads, increased music quality and unlimited number of song skips. Spotify also is well known for its music recommendation subsystems like Discover Weekly and Daily Mix that provides playlists tailored to each user based on their listening history. The service is available in most of Europe, as well as in Australia, New Zealand, most of the Americas and several Asian countries.	
+	Spotify is the top music streaming service globally in terms of number of users, with more than 140 million active users and also over 50 million Premium paid subscriptions as of the time of this report \citep{spotifypress}. The content is delivered through applications available on several different operating systems like Windows, macOS and Linux, as well as devices like iOS and Android tablets and smartphones, an example is shown in Figure \ref{fig:spotify-screenshot}. Users may access over 30 millions songs available in its catalog through two methods: a free membership where the client is exposed to advertisement, and a Premium paid subscription with additional features like offline downloads, increased music quality and on demand access to music. Spotify also is well known for its music recommendation subsystems like Discover Weekly and Daily Mix that provides playlists tailored to each user based on their listening history. The service is available in most of Europe, as well as in Australia, New Zealand, most of the Americas and several Asian countries.	
 	
-	The promise of growth in the area however has attracted well known brands to the dispute like Apple and Google, and their growth, while still not up to par with the top players, has been steady and may be significant in the following years \citep{ifpi}. The market is becoming saturated with competition, and any contender to the top position in the music streaming area must strive to keep its current user base at all costs. The loss of a customer, be it for the competition or not, is called in the industry as \emph{churn} and is commonly seen as a metric that should be minimized in a customer relations framework (CRM) of a service provider. For that goal, an important step is to identify prematurely the candidate churning customers and to leverage actions that may avoid them from leaving, and this is commonly achieved by making use of the wealth of historical information that digital providers have about their users. 
-	
-\section{Churn Prediction}	
-	
-	\Todo{Rewrite}	
-	
-	\emph{Churn prediction}, the task of identifying the customers who are most prone to abandon the service provider, is an established topic in the literature and has seen a considerable amount of research specially on the mobile telecom industry \citep{Hassouna2015} \citep{Lu2014} \citep{Khan2015}.  Several classical techniques for predicting churn like decision trees and logistic regression have been used on recent work \citep{mahajan2015review}, however most of them make use of user behaviour data at a single point in time, normally the most recent one when the dataset was created. The user is commonly represented by summarizing or aggregating his behavioral feature values over a fixed time window, thus losing any latent sequential information that might be contained in the data set. This is a simplification that eases the burden of training a predictive model since the customer data is commonly high-dimensional and difficult to work with, nonetheless latent attributes, when used properly, have been shown to improve significantly a predictor's performance for industries like mobile telecom \citep{GurAli2014}.
-    
-    Intuitively one can think that latent factors hidden in the temporal axis of the user behaviour data could yield a better prediction accuracy when comparing to a model which leverage a single and static point in time. For instance, a user that is gradually reducing its consumption of the service over time can be easily thought of a prospect churner. While this intuition is trivial to come up with, we are also interested in learning strong correlations between temporal aspects of the data and the churn rate which are not as clear to the eye. Our hypothesis is that making use of the properties hidden on user behavior data over time, a churn rate predictor could improve its accuracy greatly when compared to methods which are static on time. \Todo{Add this paragraph somewhere else maybe? It seems strange here}
-    
-\section{Customer Retention} 
+	The promise of growth in the area however has attracted well-known brands to the dispute like Apple and Google, and their growth, while still not up to par with the top players, has been steady and may be significant in the following years \citep{ifpi}. The market is becoming saturated with competition, and contenders to the top position in the music streaming domain must strive to keep its current user base. The loss of a customer, be it for the competition or not, is commonly seen as a metric that should be minimized in a customer relations framework (CRM) of a service provider. For that goal, an important step is to identify prematurely the candidate churning customers and to leverage actions that may avoid them from leaving, and this is commonly achieved by making use of the wealth of historical information that digital providers have about their users. 
+	  
+\section{Customer Churn and Retention} 
 
-\Todo{Improve}   
-    
-The ability of a company retaining its clients over a specific period of time is called \emph{customer retention}. Firms that that have a high share of users that return to the provided service are said to possess high retention, a property that posses a non-linear relationship with customer satisfaction  metrics \citep{hennig1997impact}. Low retention on the other hand indicates the inability of a company keeping its user base for a long period of time, which can be interpreted as clients being displeased with the products they have been offered. A study performed on a bank firm in Brazil also showed how retention metrics are positvely correlated to profitability measures of a business \citep{morgan2006value}. 
+\emph{Customer churn}, also know as turnover or defection, is defined as the loss of clients in a company. The rate at which the user base defects from the service provider is widely considered a good indicator of business health. Its dual formulation, the ability of a company retaining its clients over a specific period of time, is called \emph{customer retention}. Firms that that have a high share of users that return to the provided service are said to possess high retention, a property that posses a non-linear relationship with customer satisfaction  metrics \citep{hennig1997impact}. Low retention on the other hand indicates the inability of a company keeping its user base for a long period of time, which can be interpreted as clients being displeased with the products they have been offered. A study performed on a bank firm in Brazil also showed how retention metrics are positively correlated to profitability measures of a business \citep{morgan2006value}. 
         
-A churn rate predictor which can identify possible churners accurately is just a trigger on the user retention process that can span several different stages. One of these stages is to identify what actions can be taken by the service provider as to avoid the user abandoning the service. An important problem to solve beforehand is to identify which features of the data have a strong statistical correlation with the churn rate. With that information, the providers could for example set up automated actions as to influence the value on these features. Learning which are the most important features is also of relevance for the task of choosing what data to use for training the predictive models, since commonly service providers have a vast amount of data about the user but only a fraction of that is of importance for predicting churn: training models with a full dataset will commonly introduce error on the system and take a large amount of computing resources to train.
-	
-\section{Research Question}	
-	
-The main research question of this project is:
-
-\begin{itemize}
-\item Can recurrent neural networks, more specifically LSTMs, achieve a better classification performance for predicting user churn when compared to current state-of-the-art methods for this task?
-\end{itemize}	
-
-An auxiliary research question is:
-
-\begin{itemize}
-\item How does different aspects of the data, like the class distribution between churning and retaining users, the amount of historical user behavior information, and different representations for the data influences the accuracy of the predictive models?
-\end{itemize}
-
-
-\section{Sustainability, Ethical and Social Aspects}
-
-The protection of user personal data has reached the spotlight in recent years, mainly through its misuse by companies that detain this kind of information. With the widespread use of mobile devices connected to the Internet 24/7, service providers have at their disposal an immense quantity of customer data as fine grained as his exact geographical location, his purchase behavior in e-stores and more. Users are commonly unaware of how their data is being exploited by providers, the exact definition being hidden in thousands of lines in a software agreement written in an obscure way that even specialists may fail to comprehend. Even if fully understood, the legality of its terms is being questioned by courts of law around the world. To protects its citizen's digital data, the European Union has recently issued a set of laws concerning data privacy that shall be put into practice in May 2018 \citep{eu2017protection}.
-
-The misuse of customer information by companies that sparked these concerns has its fair share of examples in the wild. For instance, Facebook released a controversial study where it manipulated the sentiments of its users by feeding into its client's news feed articles leaning towards a positive and negative sentiment, and analyzing how users responded to that stimulus\citep{kramer2014experimental}. However no user was aware of this manipulation, which could inadvertently lead to tragic outcomes that the experimenters failed to consider. 
-
-Another notorious example came from a contest sponsored by Netflix for researchers who could improve its recommendation algorithm, an event known as "the Netflix Prize" \citep{bennett2007netflix}. The massive dataset containing user behavior information on its video platform, alongside a prize of 1 million dollars for the winning team, gathered the interest of researchers all around the world. However a major class-action suit was filled against the company for failing to anonymize user information properly with customers claiming that they could be uniquely identified through the released data, and the outcome was Netflix canceling future versions of the contest altogether \citep{wired2010netflix}.
-
-The protection of user privacy is a key component in Spotify's business model. Being a company primarily data-driven, it is imperative that Spotify can be trusted in the public's eyes as a custodian of customers' data, both for increasing the user satisfaction with the service and also to avoid similar legal processes suffered by other companies that might deter it from its main mission and priorities. With that in mind, Spotify take steps as to ensure that privacy, security and encryption of its user data complies with the applicable law. 
-
-The computing resources utilized in this project were provided mainly by Google's Cloud Platform data centers. These clusters of machines were heavily optimized throughout the years as to efficiently make use of energy resources, in a way that most companies are incapable of due to technology and budget constraints. A recent announcement revealed that in 2017 every data centers owned by Google will run on 100\% renewable energy, which is a feat that few other companies can claim \citep{google2017renew}.  
-
-
-\section{Contributions}
-
-The main contributions of this project can be listed as:
-
-\begin{itemize}
-\item Evaluating the performance of a novel recurrent neural network method compared to the standard techniques currently in use for churn prediction.
-\item Assessing the impact in accuracy of the predictive models when trained with different quantities of user data.
-\item Analyzing how different threshold levels for determining if a user has churned or not affects the performance of classifiers.
-\item Experimenting on changing the ratio between the retained and churning classes, and the impact in accuracy that it yields.
-\item Evaluating if a more compact representation of user data can improve the performance of predictive models.
-\item A detailed description of a data pipeline suitable for extracting sequential information from raw user data tailored to Spotify's service
-\end{itemize}
-
-\section{Outline}
-
-This thesis is organized as follows. \Cref{cha:background} introduces concepts that will be important for the proper understanding of this report. In it, it will be explored the formal definitions of a time series, as well as how a user is considered to have churned or not and how the aggregated data is generated for training non-sequential predictive models. This chapter also briefly overviews the predictive models that are going to be experimented on, and also how a different lower-dimensional representation of the data can be obtained.
-
-Following is \Cref{cha:related_work}, where it will be studied the current state-of-the-art in churn prediction techniques, while also exploring the literature on time-series modeling and how it can be applied for the task at hand. 
-
-In \Cref{cha:data} a detailed description on how the dataset used for training the classifiers was created will be given, followed by a brief exploration of the generated data. In \Cref{cha:method}, the reader will be presented to the methods utilized for performing the experiments in this project. It will delve into how the training of the models was performed, how the parameters were optimized, and how the final score for each classifier was obtained.
-
-\Cref{cha:results} will be dedicated to present to the reader the experiments performed in the project, where the results will be presented and discussed. The conclusions and opportunities to for future work will be explored in \Cref{cha:conclusion}. 
-
-\Todo{Update outline}
-
-\chapter{Background}
-\label{cha:background}
-
-For a better understanding of this degree project, some concepts are required to be properly introduced. Some of them like the ones present in the Definitions section are mainly application-specific, while others pertains to how we decided to represent the data, which predictors we decided to evaluate and how the data can be transformed into a lower-dimensional representation. 
-
-\section{Definitions}
-\label{sec:definitions}
+Every company that wants to keep being relevant in a competitive market should strive to retain its user base and minimize user defection. Understanding the how's and why's of user behavior on the platform is deemed critical for the planning of successful retention actions. With that goal, an important step is to identify which features of the data have a strong correlation with the probability of a user churning or not. With that information, the providers could for example set up automated actions as to influence the value on these features. Learning which are the most important features is also of relevance for the task of choosing what data to use for training the predictive models, since commonly service providers have a vast amount of data about the user but only a fraction of that is of importance for predicting churn: training models with a full dataset will commonly introduce error on the system and take a large amount of computing resources to train.
 
 Every service provider has a different definition of what churn is. Some of them use the explicit cancellation of a contract as a indicator of user abandonment, which has  the advantage of being straightforward to calculate and having a clear correlation to revenue metrics, while others prefer to explore the user activity instead, which has the benefit of better leveraging his satisfaction level and working with the assumption that a satisfied customer has a lower chance of leaving the service for the competition. 
 
-In this degree project, the \emph{user activity} will be used as indication of churn. Even though Spotify has a paid Premium version that could be used as a source of churn labels, a considerable fraction of Free users who generates revenue through advertisement would be excluded from this study. Thus their engagement will be measured instead disregarding for labeling purposes whether they are paying customers or not, however they may be split into different clusters for visualization purposes.
-
-To build up the exact definition of what churn is for Spotify, some concepts need to firstly be introduced, which follows.
-
-\newtheorem{definition}{Definition}
-
-\begin{definition}
-The action of a user listening to a song through any of the provider's supported platforms is called a \emph{stream}, also sometimes called \emph{playback}. A stream is initiated when the user starts listening to a song (either by explicitly selecting it through the application or passively by being the next song in a list), and the stream ends when the user listen to a song until it finishes, when he actively skips it by the press of a button, or other technical reasons.
-\end{definition}
-
-The playback is the basic measurement of activity of the user on the service. It incorporates the user music streaming behavior, and it is also source of key metrics for the company's financial health. Since Spotify is mainly interested in evaluating the user based on its main feature of content streaming, other user interactions (eg. following another user or artist) are out of the scope for this project. 
-
-\begin{definition}
-A user is considered to be \emph{active} during a time period if he possesses one or more streams of at least 30 seconds in length, and \emph{inactive} otherwise.
-\end{definition}
-
-The definition of an active user will be important during the sampling phase: there is no interesting information that can be gathered from customers that churned a long time before the first day of behavior observation. More details about the sampling process will be thoroughly explored in \autoref{sec:sampling}.
-
-Before we arrive in the definition of churn, a brief introduction to time windows will be given to understand further concepts in this section. These definitions will be thoroughly explored on \autoref{sec:timewindows}.
-
-\begin{definition}
-The \emph{observation window} is the time span used to observe user behavior and to train the predictive models. It is always followed by the \emph{prediction window} which is exclusively used to predict whether a user in the observation window is going to churn in the future or not. The last few time steps of the observation period is called \emph{activity window}, and is mainly used for fetching user samples.
-\end{definition}
-
-\begin{definition}
-\label{def:churn}
-A user is defined to have \emph{churned} if he is active during the activity window and inactive during the prediction window, and as \emph{retained} otherwise.
-\end{definition}
-
-Note that as mentioned before this definition is not concerned whether the user is a paying customer or not, but only if he is actually making use of the service. For example, a user may be subscribed to a Premium paid account and still be considered to have churned if no activity was registered in the prediction window. However, it should be noted that empirical observations by the service provider suggest that there is a significant behavioral difference between the two classes of users that will be taken into consideration when the experiments are performed. 
+In this degree project, the \emph{user activity} will be used as indication of churn. Even though Spotify has a paid Premium version that could be used as a source of churn labels, a considerable fraction of Free users who generates revenue through advertisement would be excluded from this study. Thus their engagement will be measured instead disregarding for labeling purposes whether they are paying customers or not, however they will be split into different clusters for visualization purposes and data exploration.
 
 \section{Time Series and Aggregated Data}
 \label{sec:timewindows}
@@ -240,6 +198,14 @@ In this section we introduce some concepts that explores the sequential nature o
     \label{fig:timewindows}
 \end{figure}
 
+\begin{definition}
+The action of a user listening to a song through any of the provider's supported platforms is called a \emph{stream}. A stream is initiated when the user starts listening to a song in the platform, and the stream ends when this action stop for a number of technical reasons.
+\end{definition}
+
+\begin{definition}
+A user is considered to be \emph{active} during a time period if he possesses one or more streams of any length, and \emph{inactive} otherwise.
+\end{definition}
+
 Being $\mathbf{x}_n$ a sampled user who is active in the activity window, $y_{n}$ is the variable specifying if customer $n$ has churned between time steps $t_{\alpha+1}$ and $t_{\alpha+\beta}$ of the prediction window, such as
 
 \begin{equation}
@@ -250,7 +216,7 @@ y_n = \\
 \end{cases}
 \end{equation}
 
-which assigns one label per customer in our dataset. This definition follows business metrics originated from the service provider, where the counting of active users over a predetermined time span is one of the key metrics indicating business health. For instance, choosing a $\beta$ sized at the number of time periods over 30 days would yield whether the customer will be a monthly active user the following month after being observed for $\alpha$ time steps. 
+which assigns one label per customer in our dataset. A user is said to have \emph{churned} if the label is positive, and \emph{retained} otherwise (sometimes called the negative class). This definition follows business metrics originated from the service provider, where the counting of active users over a predetermined time span is one of the key metrics indicating business health. For instance, choosing a $\beta$ sized at the number of time periods over 30 days would yield whether the customer will be a monthly active user the following month after being observed for $\alpha$ time steps. 
 
 The literature on churn prediction commonly describes the user features as a single point over the whole observation period, ignoring the time component of the data by transforming it through an aggregation function like the mean. As to train our non-sequential predictive models, we need a similar representation of the data which summarizes all information that we posses of a user over time into a single $D$-dimensional vector. Following the works by \citep{GurAli2014}, we define a \emph{single period training data (SPTD)} as the dataset consisting of one observation per customer who is active during the sampling period. In this approach, the dataset is 
 
@@ -1255,6 +1221,7 @@ The results of this experiment can be seen in \autoref{fig:line_dim_reduction} a
 Random forests exhibit a similar behavior, but peaking at 40 principal components instead. The gain however is marginal: around $0.01$ of F1-score increase when compared to the full dataset, for both retaining and churning users. Extensive metrics can be seen in the precision-recall curves, ROC curves and metrics table at \autoref{fig:prc_dim_reduction}, \autoref{fig:roc_dim_reduction} and \autoref{tab:dim_reduction}, respectively.
 
 \chapter{Discussion}
+\label{cha:discussion}
 
 \section{Comparing LSTM to Baseline Models}
 
@@ -1311,7 +1278,7 @@ Finally, a detailed description of the methods utilized for creating a dataset s
 \appendix
 
 \chapter{Additional Results}
-\label{chap:add_results}
+\label{cha:add_results}
 
 \section{Metrics tables}
 
