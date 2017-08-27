@@ -50,7 +50,7 @@ download:
 
 ## Submit a training job to CloudML
 submit: package
-	gcloud ml-engine jobs submit training helderm_$(EXP)_28d_$(NOW) --config config.yaml --job-dir gs://helder/churnr/ --runtime-version 1.0 --module-name churnr.submitter --region us-east1 --packages dist/churnr-$(VERSION).tar.gz,libs/imbalanced-learn-0.3.0.dev0.tar.gz --project user-lifecycle -- --experiment $(EXP) --stages train --datasets 56_28d
+	gcloud ml-engine jobs submit training helderm_$(EXP)_lstm_$(NOW) --config config.yaml --job-dir gs://helderm/churnr/ --runtime-version 1.0 --module-name churnr.submitter --region us-east1 --packages dist/churnr-$(VERSION).tar.gz,libs/imbalanced-learn-0.3.0.dev0.tar.gz --project user-attributes-bq -- --experiment $(EXP) --stages train --expfile experiments_ua.json --tuned --epochs 1
 
 ## Set up python interpreter environment
 env:

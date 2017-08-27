@@ -23,7 +23,8 @@
             "global": {
                 "modelpath": "/Users/helderm/Documents/churnr/models",
                 "classbalance": 1.0,
-                "dimred": 0
+                "dimred": 0,
+                "features": []
             },
             "lr": {
                 "prettyname": "Logistic Regression"
@@ -72,7 +73,8 @@
             "global": {
                 "modelpath": "/Users/helderm/Documents/churnr/models",
                 "classbalance": 1.0,
-                "dimred": 0
+                "dimred": 0,
+                "features": []
             },
             "lr": {
                 "prettyname": "Logistic Regression"
@@ -154,9 +156,12 @@
             "global": {
                 "modelpath": "/Users/helderm/Documents/churnr/models",
                 "classbalance": 1.0,
-                "dimred": 0
+                "dimred": 0,
+                "features": []
             },
-            "lstm": {}
+            "lstm": {},
+            "rf": {},
+            "lr": {}
         },
         "plots":{
             "global": {
@@ -212,9 +217,12 @@
             "global": {
                 "modelpath": "/Users/helderm/Documents/churnr/models",
                 "classbalance": 1.0,
-                "dimred": 0
+                "dimred": 0,
+                "features": []
             },
-            "lstm": {}
+            "lstm": {},
+            "rf": {},
+            "lr": {}
         },
         "plots":{
             "global": {
@@ -230,7 +238,70 @@
                 "title": "Prediction window"
             }
         }
-   },  
+   }, 
+   "pred_window_fix": {
+        "datasets": {
+            "global": {
+                "obsdays": 59,
+                "actdays": 3,
+                "gsoutput": "gs://helder/churnr/data/",
+                "timesplits": 3,
+                "shareusers": 0.05,
+                "dataset": "helderm",
+                "project": "user-lifecycle",
+                "rawpath": "/Users/helderm/Documents/churnr/data/raw",
+                "procpath":"/Users/helderm/Documents/churnr/data/processed",
+                "testsize": 0.1,
+                "valsize": 0.1,
+                "retainedshare": 1
+            },
+            "56_7d" :  {
+                 "preddays": 7,
+                 "enddate": "20170506",
+                 "prettyname": "7"
+            },
+            "56_14d" :  {
+                 "preddays": 14,
+                 "enddate": "20170513",
+                 "prettyname": "14"
+            },
+            "56_21d" :  {
+                 "preddays": 21,
+                 "enddate": "20170520",
+                 "prettyname": 21
+            },
+            "56_28d" :  {
+                 "preddays": 28,
+                 "enddate": "20170527",
+                 "prettyname": "28"
+            }
+        },
+        "models":{
+            "global": {
+                "modelpath": "/Users/helderm/Documents/churnr/models",
+                "classbalance": 1.0,
+                "dimred": 0,
+                "features": []
+            },
+            "lstm": {},
+            "rf": {},
+            "lr": {}
+        },
+        "plots":{
+            "global": {
+                "plotpath": "/Users/helderm/Documents/churnr/plots",
+                "modellabel": 0
+            },
+            "roc": {},
+            "precrec": {
+                "at_k": 1000
+            },
+            "line": {
+                "xlabel": "Window size (days)",
+                "title": "Prediction window"
+            }
+        }
+   },
    "coolexp": {
         "datasets": {
             "global": { 
@@ -255,8 +326,9 @@
         "models":{
             "global": {
                 "modelpath": "/Users/helderm/Documents/churnr/models",
-                "classbalance": 1.0,
-                "dimred": 3
+                "classbalance": 0.11,
+                "dimred": 0,
+                "features": ["secs_played"]
             },
             "lr": {
                 "prettyname": "Logistic Regression"
@@ -303,7 +375,9 @@
         },
         "models": {
             "global": {
-                "modelpath": "/Users/helderm/Documents/churnr/models"
+                "modelpath": "/Users/helderm/Documents/churnr/models",
+                "dimred": 0,
+                "features": []
             },
             "lstm_10p": {
                 "classbalance": 0.11,
@@ -338,6 +412,42 @@
                 "prettyname": "45%"
             },
             "lstm_50p": {
+                "classbalance": 1.0,
+                "prettyname": "50%"
+            },
+            "rf_10p": {
+                "classbalance": 0.11,
+                "prettyname": "10%"
+            },
+            "rf_15p": {
+                "classbalance": 0.18,
+                "prettyname": "15%"
+            },
+            "rf_20p": {
+                "classbalance": 0.325,
+                "prettyname": "20%"
+            },
+            "rf_25p": {
+                "classbalance": 0.33,
+                "prettyname": "25%"
+            },
+            "rf_30p": {
+                "classbalance": 0.43,
+                "prettyname": "30%"
+            },
+            "rf_35p": {
+                "classbalance": 0.54,
+                "prettyname": "35%"
+            },
+            "rf_40p": {
+                "classbalance": 0.67,
+                "prettyname": "40%"
+            },
+            "rf_45p": {
+                "classbalance": 0.82,
+                "prettyname": "45%"
+            },
+            "rf_50p": {
                 "classbalance": 1.0,
                 "prettyname": "50%"
             }   
@@ -380,13 +490,58 @@
             "global": {
                 "modelpath": "/Users/helderm/Documents/churnr/models",
                 "classbalance": 1.0,
-                "dimred": 3
+                "dimred": 3,
+                "features": []
             },
             "lr": {
                 "prettyname": "Logistic Regression"
             },
             "abdt": {
                 "prettyname": "AdaBoost DT"
+            },
+            "lstm": {
+                "prettyname": "LSTM"
+            },
+            "rf": {
+                "prettyname": "Random Forest"
+            }
+        },
+        "plots":{
+            "global": {
+                "plotpath": "/Users/helderm/Documents/churnr/plots",
+                "dslabel": 0
+            },
+            "roc": {},
+            "precrec": {},
+            "confusion": {}
+        }
+    },
+   "tuned": {
+        "datasets": {
+            "global": { 
+                "obsdays": 49, 
+                "preddays": 7,
+                "actdays": 3,
+                "gsoutput": "gs://helder/churnr/data/", 
+                "timesplits": 3, 
+                "shareusers": 0.05, 
+                "enddate": "20170529", 
+                "dataset": "helderm", 
+                "project": "user-lifecycle", 
+                "rawpath": "/Users/helderm/Documents/churnr/data/raw", 
+                "procpath":"/Users/helderm/Documents/churnr/data/processed", 
+                "testsize": 0.1,
+                "valsize": 0.1,
+                "retainedshare": 1
+            },
+            "49_7d" : {}
+        },
+        "models":{
+            "global": {
+                "modelpath": "/Users/helderm/Documents/churnr/models",
+                "classbalance": 0.0,
+                "dimred": 16,
+                "features": []
             },
             "lstm": {
                 "prettyname": "LSTM"

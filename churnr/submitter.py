@@ -56,22 +56,27 @@ def upload_dir_to_gcs(local_dir, gcs_uri, project):
 
 def main():
     pkgpath = os.path.dirname(churnr.__file__)
-    exppath = os.path.join(pkgpath, 'experiments.json')
 
     parser = argparse.ArgumentParser(description='Model trainer')
     parser.add_argument('--job-dir', default='gs://helder/churnr/', help='GCS path where the model is going to be stored')
-    parser.add_argument('--exppath', default=exppath, help='Path to the experiments json file')
+    parser.add_argument('--expfile', default='experiments.json', help='Path to the experiments json file')
     parser.add_argument('--experiment', default='temporal_static', help='Name of the experiment being performed')
     parser.add_argument('--stages', default=['extract','process','train', 'plot'], help='Stages that will be executed', nargs='*')
     parser.add_argument('--models', default=[], help='Model that will be trained', nargs='*')
     parser.add_argument('--datasets', default=[], help='Datasets that will be processed', nargs='*')
 
     parser.add_argument('--debug', default=False, help='Debug flag that sped up some stages', action='store_true')
+    parser.add_argument('--tuned', default=False, help='Tuned model training', action='store_true')
+    parser.add_argument('--timesteps', default=147, help='Number of timesteps')
+    parser.add_argument('--features', default=52, help='Number of features')
+    parser.add_argument('--dsname', default='49_7d', help='Number of features')
+    parser.add_argument('--epochs', type=int, default=100, help='Number of epochs')
 
     args = parser.parse_args()
     logger.info('Initializing experiment [{}]...'.format(args.experiment))
 
     # load experiments.json
+    args.exppath = os.path.join(pkgpath, args.expfile)
     with open(args.exppath, 'r') as f:
         conf = json.load(f)
 
@@ -91,8 +96,12 @@ def main():
     with open(args.exppath, 'w') as f:
         json.dump(conf, f)
 
-    from churnr.app import run
-    run(args)
+    if args.tuned:
+        from churnr.lstm_train import main
+        main(args)
+    else:
+        from churnr.app import run
+        run(args)
 
     # sync model outputs to gcs
     jobdir = os.path.join(args.job_dir, args.experiment)

@@ -1,4 +1,5 @@
 include requirements.txt
 include churnr/experiments.json
+include churnr/experiments_ua.json
 include libs/imbalanced-learn-0.3.0.dev0.tar.gz
 recursive-include churnr/scala *

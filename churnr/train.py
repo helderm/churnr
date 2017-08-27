@@ -164,7 +164,7 @@ def load_data(modeltype, conf):
     if not conf['debug']:
         tablename = 'features_{}_{}_tr'.format(conf['experiment'], conf['dsname'])
     else:
-        tablename = 'features_{}_{}_trus'.format(conf['experiment'], conf['dsname'])
+        tablename = 'features_{}_{}_tr'.format(conf['experiment'], conf['dsname'])
 
     local_files = extract_dataset_to_disk(conf['procpath'], [tablename], conf['project'], conf['gsoutput'])
 
@@ -182,8 +182,11 @@ def load_data(modeltype, conf):
             text = None
 
         for user in jdata:
-            features = [user[k] for k in sorted(user.keys()) if k not in ['user_id', 'churn', 'times']]
-            #features = [user[k] for k in sorted(user.keys()) if k in ['iat', 'secs_played', 'skip_ratio', 'unique_top_types', 'total_streams']]
+            if len(conf['features']) > 0:
+                features = [user[k] for k in sorted(user.keys()) if k in conf['features'] and k not in ['user_id', 'churn', 'times']]
+            else:
+                features = [user[k] for k in sorted(user.keys()) if k not in ['user_id', 'churn', 'times']]
+
             features.insert(0, user['times'])
             features = list(zip(*sorted(zip(*features))))
             features = features[1:] # remove times
@@ -240,7 +243,7 @@ def main(args):
     conf = {}
     for key in keys:
         conf[key] = expconf['datasets'][args.dsname][key] if key in expconf['datasets'][args.dsname] else expconf['datasets']['global'][key]
-    keys = ['modelpath', 'classbalance', 'dimred']
+    keys = ['modelpath', 'classbalance', 'dimred', 'features']
     for key in keys:
         conf[key] = expconf['models'][args.modelname][key] if key in expconf['models'][args.modelname] else expconf['models']['global'][key]
 
@@ -278,7 +281,8 @@ def main(args):
     if modeltype == 'lstm':
         model = KerasClassifier(build_fn=custom_model, data_shape=(X.shape[0], X[0].shape[1]))
         params = models[modeltype]['params']
-        clf = RandomizedSearchCV(estimator=model, param_distributions=params, n_iter=5 if not args.debug else 1, cv=inner_cv, fit_params={'batch_size': 512, 'epochs': 70 if not args.debug else 30}, verbose=3, n_jobs=1, random_state=42)
+        fit_params = {'batch_size': 512, 'epochs': 100}
+        clf = RandomizedSearchCV(estimator=model, param_distributions=params, n_iter=5 if not args.debug else 1, cv=inner_cv, fit_params=fit_params, verbose=3, n_jobs=1, random_state=42)
     else:
         model = models[modeltype]['obj']
         params = models[modeltype]['params']

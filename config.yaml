@@ -1,7 +1,7 @@
 trainingInput:
   scaleTier: CUSTOM
-  #masterType: "complex_model_m_gpu"
-  masterType: "large_model"
+  masterType: "complex_model_l_gpu"
+  #masterType: "large_model"
   pythonModule: "churnr.submitter"
   runtimeVersion: "1.0"
   jobDir: "gs://helder/churnr"

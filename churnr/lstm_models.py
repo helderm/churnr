@@ -1,10 +1,11 @@
 #!/usr/bin/env pythonw
 # -*- coding: utf-8 -*-
 from keras.models import Sequential
-from keras.layers import LSTM, Dense, Masking
+from keras.layers import LSTM, Dense, Masking, Dropout
+from keras.regularizers import l2
+from keras.initializers import glorot_uniform, orthogonal
 
-
-def custom_model(data_shape, layers=1, units1=128, units2=128, units3=128, units4=128, units5=128, optim='rmsprop'):
+def custom_model(data_shape, layers=1, units1=128, units2=128, units3=128, units4=128, units5=128, optim='rmsprop', metrics=['accuracy']):
     units = {
         1: units1,
         2: units2,
@@ -20,14 +21,34 @@ def custom_model(data_shape, layers=1, units1=128, units2=128, units3=128, units
         if i+1 >= layers:
             return_sequences = False
         if i == 0:
-            model.add(LSTM(units[i+1], input_shape=data_shape,
-                return_sequences=return_sequences))
+            model.add(LSTM(units[i+1], input_shape=data_shape, return_sequences=return_sequences,
+                kernel_regularizer=l2(0.01), recurrent_regularizer=l2(0.01),
+                kernel_initializer=glorot_uniform(seed=42), recurrent_initializer=orthogonal(seed=42)))
+            #model.add(Dropout(rate=.1))
         else:
-            model.add(LSTM(units[i+1], return_sequences=return_sequences))
+            model.add(LSTM(units[i+1], return_sequences=return_sequences,
+                kernel_regularizer=l2(0.01), recurrent_regularizer=l2(0.01),
+                kernel_initializer=glorot_uniform(seed=42), recurrent_initializer=orthogonal(seed=42)))
+            #model.add(Dropout(rate=.1))
 
-    model.add(Dense(2, activation='softmax'))
+    model.add(Dense(2, activation='softmax', kernel_initializer=glorot_uniform(seed=42), kernel_regularizer=l2(0.01)))
     model.compile(loss='binary_crossentropy',
                   optimizer=optim,
+                  metrics=metrics)
+
+    return model
+
+
+def tuned_model(data_shape):
+    model = Sequential()
+    model.add(Masking(mask_value=0.0, input_shape=data_shape))
+    model.add(LSTM(166, input_shape=data_shape, return_sequences=False,
+                kernel_regularizer=l2(0.01), recurrent_regularizer=l2(0.01),
+                kernel_initializer=glorot_uniform(seed=42), recurrent_initializer=orthogonal(seed=42)))
+
+    model.add(Dense(2, activation='softmax', kernel_initializer=glorot_uniform(seed=42), kernel_regularizer=l2(0.01)))
+    model.compile(loss='binary_crossentropy',
+                  optimizer='rmsprop',
                   metrics=['accuracy'])
 
     return model
@@ -39,7 +60,7 @@ def light_model(data_shape, units1=81, optim='adam'):
     model.add(Dense(2, activation='softmax'))
     model.compile(loss='binary_crossentropy',
                   optimizer=optim,
-                  metrics=['accuracy'])
+                  metrics=['binary_accuracy'])
     return model
 
 
