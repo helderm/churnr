@@ -1,4 +1,4 @@
-\begin{thebibliography}{75}
+\begin{thebibliography}{80}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
@@ -26,65 +26,6 @@ Anders Drachen, Eric~Thurston Lundquist, Yungjen Kung, Pranav~Simha Rao, Diego
   Klabjan, Rafet Sifa, and Julian Runge.
 \newblock Rapid prediction of player retention in free-to-play mobile games.
 \newblock \emph{CoRR}, abs/1607.03202, 2016.
-
-\bibitem[net()]{netflixsh}
-{Netflix Quarterly Earnings}.
-\newblock https://ir.netflix.com/results.cfm.
-\newblock Acessed: 2017-03-01.
-
-\bibitem[spo()]{spotifypress}
-{Spotify Press}.
-\newblock https://press.spotify.com/us/about/.
-\newblock Accessed: 2017-03-01.
-
-\bibitem[ifp()]{ifpi}
-{IFPI Global Music Report 2016}.
-\newblock http://www.ifpi.org/downloads/GMR2016.pdf.
-\newblock Accessed: 2017-03-01.
-
-\bibitem[Hassouna et~al.(2015)Hassouna, Tarhini, Elyas, Aboutrab, Kingdom,
-  Kingdom, and Arabia]{Hassouna2015}
-Mohammed Hassouna, Ali Tarhini, Tariq Elyas, Mohammad~Saeed Aboutrab, United
-  Kingdom, United Kingdom, and Saudi Arabia.
-\newblock {Customer Churn in Mobile Markets: A Comparison of Techniques}.
-\newblock 8\penalty0 (6):\penalty0 224--237, 2015.
-\newblock \doi{10.5539/ibr.v8n6p224}.
-
-\bibitem[Lu et~al.(2014)Lu, Lin, Lu, and Zhang]{Lu2014}
-Ning Lu, Hua Lin, Jie Lu, and Guangquan Zhang.
-\newblock {A customer churn prediction model in telecom industry using
-  boosting}.
-\newblock \emph{IEEE Transactions on Industrial Informatics}, 10\penalty0
-  (2):\penalty0 1659--1665, 2014.
-\newblock ISSN 15513203.
-\newblock \doi{10.1109/TII.2012.2224355}.
-
-\bibitem[Khan et~al.(2015)Khan, Manoj, Singh, and Blumenstock]{Khan2015}
-Muhammad~Raza Khan, Joshua Manoj, Anikate Singh, and Joshua Blumenstock.
-\newblock {Behavioral Modeling for Churn Prediction: Early Indicators and
-  Accurate Predictors of Custom Defection and Loyalty}.
-\newblock \emph{Proceedings - 2015 IEEE International Congress on Big Data,
-  BigData Congress 2015}, pages 677--680, 2015.
-\newblock \doi{10.1109/BigDataCongress.2015.107}.
-
-\bibitem[Mahajan et~al.(2015)Mahajan, Misra, and Mahajan]{mahajan2015review}
-Vishal Mahajan, Richa Misra, and Renuka Mahajan.
-\newblock Review of data mining techniques for churn prediction in telecom.
-\newblock \emph{Journal of Information and Organizational Sciences},
-  39\penalty0 (2):\penalty0 183--197, 2015.
-
-\bibitem[Hennig-Thurau and Klee(1997)]{hennig1997impact}
-Thorsten Hennig-Thurau and Alexander Klee.
-\newblock The impact of customer satisfaction and relationship quality on
-  customer retention: A critical reassessment and model development.
-\newblock \emph{Psychology \& marketing}, 14\penalty0 (8):\penalty0 737--764,
-  1997.
-
-\bibitem[Morgan and Rego(2006)]{morgan2006value}
-Neil~A Morgan and Lopo~Leotte Rego.
-\newblock The value of different customer satisfaction and loyalty metrics in
-  predicting business performance.
-\newblock \emph{Marketing Science}, 25\penalty0 (5):\penalty0 426--439, 2006.
 
 \bibitem[eu2()]{eu2017protection}
 {Protection of personal data}.
@@ -115,11 +56,53 @@ James Bennett, Stan Lanning, et~al.
 \newblock https://environment.google/projects/announcement-100/.
 \newblock Accessed: 2017-07-01.
 
+\bibitem[net()]{netflixsh}
+{Netflix Quarterly Earnings}.
+\newblock https://ir.netflix.com/results.cfm.
+\newblock Acessed: 2017-03-01.
+
+\bibitem[spo()]{spotifypress}
+{Spotify Press}.
+\newblock https://press.spotify.com/us/about/.
+\newblock Accessed: 2017-03-01.
+
+\bibitem[ifp()]{ifpi}
+{IFPI Global Music Report 2016}.
+\newblock http://www.ifpi.org/downloads/GMR2016.pdf.
+\newblock Accessed: 2017-03-01.
+
+\bibitem[Hennig-Thurau and Klee(1997)]{hennig1997impact}
+Thorsten Hennig-Thurau and Alexander Klee.
+\newblock The impact of customer satisfaction and relationship quality on
+  customer retention: A critical reassessment and model development.
+\newblock \emph{Psychology \& marketing}, 14\penalty0 (8):\penalty0 737--764,
+  1997.
+
+\bibitem[Morgan and Rego(2006)]{morgan2006value}
+Neil~A Morgan and Lopo~Leotte Rego.
+\newblock The value of different customer satisfaction and loyalty metrics in
+  predicting business performance.
+\newblock \emph{Marketing Science}, 25\penalty0 (5):\penalty0 426--439, 2006.
+
 \bibitem[Cox(1958)]{cox1958regression}
 David~R Cox.
 \newblock The regression analysis of binary sequences.
 \newblock \emph{Journal of the Royal Statistical Society. Series B
   (Methodological)}, pages 215--242, 1958.
+
+\bibitem[Mahajan et~al.(2015)Mahajan, Misra, and Mahajan]{mahajan2015review}
+Vishal Mahajan, Richa Misra, and Renuka Mahajan.
+\newblock Review of data mining techniques for churn prediction in telecom.
+\newblock \emph{Journal of Information and Organizational Sciences},
+  39\penalty0 (2):\penalty0 183--197, 2015.
+
+\bibitem[Hassouna et~al.(2015)Hassouna, Tarhini, Elyas, Aboutrab, Kingdom,
+  Kingdom, and Arabia]{Hassouna2015}
+Mohammed Hassouna, Ali Tarhini, Tariq Elyas, Mohammad~Saeed Aboutrab, United
+  Kingdom, United Kingdom, and Saudi Arabia.
+\newblock {Customer Churn in Mobile Markets: A Comparison of Techniques}.
+\newblock 8\penalty0 (6):\penalty0 224--237, 2015.
+\newblock \doi{10.5539/ibr.v8n6p224}.
 
 \bibitem[Ballings and {Van Den Poel}(2012)]{Ballings2012}
 Michel Ballings and Dirk {Van Den Poel}.
@@ -130,6 +113,14 @@ Michel Ballings and Dirk {Van Den Poel}.
 \newblock ISSN 09574174.
 \newblock \doi{10.1016/j.eswa.2012.07.006}.
 \newblock URL \url{http://dx.doi.org/10.1016/j.eswa.2012.07.006}.
+
+\bibitem[Khan et~al.(2015)Khan, Manoj, Singh, and Blumenstock]{Khan2015}
+Muhammad~Raza Khan, Joshua Manoj, Anikate Singh, and Joshua Blumenstock.
+\newblock {Behavioral Modeling for Churn Prediction: Early Indicators and
+  Accurate Predictors of Custom Defection and Loyalty}.
+\newblock \emph{Proceedings - 2015 IEEE International Congress on Big Data,
+  BigData Congress 2015}, pages 677--680, 2015.
+\newblock \doi{10.1109/BigDataCongress.2015.107}.
 
 \bibitem[Breiman et~al.(1984)Breiman, Friedman, Stone, and
   Olshen]{breiman1984classification}
@@ -284,6 +275,15 @@ Harold Hotelling.
 \newblock \emph{Journal of educational psychology}, 24\penalty0 (6):\penalty0
   417, 1933.
 
+\bibitem[Lu et~al.(2014)Lu, Lin, Lu, and Zhang]{Lu2014}
+Ning Lu, Hua Lin, Jie Lu, and Guangquan Zhang.
+\newblock {A customer churn prediction model in telecom industry using
+  boosting}.
+\newblock \emph{IEEE Transactions on Industrial Informatics}, 10\penalty0
+  (2):\penalty0 1659--1665, 2014.
+\newblock ISSN 15513203.
+\newblock \doi{10.1109/TII.2012.2224355}.
+
 \bibitem[Borbora et~al.(2011)Borbora, Srivastava, Hsu, and Iams]{Borbora2011}
 Zoheb Borbora, Jaideep Srivastava, Kuo~Wei Hsu, and Dmitri~Wil Iams.
 \newblock {Churn prediction in MMORPGs using player motivation theories and an
@@ -388,18 +388,18 @@ Boxun Zhang, Gunnar Kreitz, Marcus Isaksson, Javier Ubillos, Guido Urdaneta,
 \newblock URL
   \url{http://ieeexplore.ieee.org/lpdocs/epic03/wrapper.htm?arnumber=6566767}.
 
-\bibitem[Sato(2012)]{sato2012inside}
-Kazunori Sato.
-\newblock An inside look at google bigquery.
-\newblock \emph{White paper, URL: https://cloud. google.
-  com/files/BigQueryTechnicalWP. pdf}, 2012.
-
 \bibitem[LeCun et~al.(2012)LeCun, Bottou, Orr, and
   M{\"u}ller]{lecun2012efficient}
 Yann~A LeCun, L{\'e}on Bottou, Genevieve~B Orr, and Klaus-Robert M{\"u}ller.
 \newblock Efficient backprop.
 \newblock In \emph{Neural networks: Tricks of the trade}, pages 9--48.
   Springer, 2012.
+
+\bibitem[Sato(2012)]{sato2012inside}
+Kazunori Sato.
+\newblock An inside look at google bigquery.
+\newblock \emph{White paper, URL: https://cloud. google.
+  com/files/BigQueryTechnicalWP. pdf}, 2012.
 
 \bibitem[Spotify(2015)]{scio}
 Spotify.
@@ -487,11 +487,40 @@ Guillaume Lema{{\^i}}tre, Fernando Nogueira, and Christos~K. Aridas.
   (17):\penalty0 1--5, 2017.
 \newblock URL \url{http://jmlr.org/papers/v18/16-365.html}.
 
+\bibitem[Fawcett(2004)]{fawcett2004roc}
+Tom Fawcett.
+\newblock Roc graphs: Notes and practical considerations for researchers.
+\newblock \emph{Machine learning}, 31\penalty0 (1):\penalty0 1--38, 2004.
+
+\bibitem[Saito and Rehmsmeier(2015)]{saito2015precision}
+Takaya Saito and Marc Rehmsmeier.
+\newblock The precision-recall plot is more informative than the roc plot when
+  evaluating binary classifiers on imbalanced datasets.
+\newblock \emph{PloS one}, 10\penalty0 (3):\penalty0 e0118432, 2015.
+
 \bibitem[Domingos(2012)]{domingos2012few}
 Pedro Domingos.
 \newblock A few useful things to know about machine learning.
 \newblock \emph{Communications of the ACM}, 55\penalty0 (10):\penalty0 78--87,
   2012.
+
+\bibitem[Tomek(1976)]{tomek1976two}
+Ivan Tomek.
+\newblock Two modifications of cnn.
+\newblock \emph{IEEE Trans. Systems, Man and Cybernetics}, 6:\penalty0
+  769--772, 1976.
+
+\bibitem[Smith et~al.(2014)Smith, Martinez, and
+  Giraud-Carrier]{smith2014instance}
+Michael~R Smith, Tony Martinez, and Christophe Giraud-Carrier.
+\newblock An instance level analysis of data complexity.
+\newblock \emph{Machine learning}, 95\penalty0 (2):\penalty0 225--256, 2014.
+
+\bibitem[Chen and Guestrin(2016)]{chen2016xgboost}
+Tianqi Chen and Carlos Guestrin.
+\newblock Xgboost: A scalable tree boosting system.
+\newblock In \emph{Proceedings of the 22nd acm sigkdd international conference
+  on knowledge discovery and data mining}, pages 785--794. ACM, 2016.
 
 \bibitem[Cho et~al.(2014)Cho, Van~Merri{\"e}nboer, Gulcehre, Bahdanau,
   Bougares, Schwenk, and Bengio]{cho2014learning}
