@@ -21,6 +21,7 @@ EXP=coolexp
 ## Install Python Dependencies
 reqs: test_environment
 	pip install -r requirements.txt
+	python setup.py develop
 
 ## Make Dataset
 data: package
