@@ -1,7 +1,33 @@
 churnr
 ==============================
 
-A churn prediction study for a music streaming service
+A churn prediction project for a music streaming service
+
+### Requirements
+* [Anaconda](https://www.anaconda.com/download/) Python 2.7
+* [Google Cloud SDK](https://cloud.google.com/sdk/docs/#install_the_latest_cloud_tools_version_cloudsdk_current_version)
+
+### Installing
+```bash
+$ make env
+$ source activate churnr
+$ make reqs
+```
+
+### Create Data
+```bash
+$ make data
+```
+
+### Dispatch Training Job
+```bash
+$ make submit
+```
+
+### Download Model Predictions
+```bash
+$ make download
+```
 
 Project Organization
 ------------
@@ -10,44 +36,31 @@ Project Organization
     ├── Makefile           <- Makefile with commands like `make data` or `make train`
     ├── README.md          <- The top-level README for developers using this project.
     ├── data
-    │   ├── external       <- Data from third party sources.
-    │   ├── interim        <- Intermediate data that has been transformed.
-    │   ├── processed      <- The final, canonical data sets for modeling.
-    │   └── raw            <- The original, immutable data dump.
+    │   ├── README.md      <- Data description and source paths
     │
-    ├── docs               <- A default Sphinx project; see sphinx-doc.org for details
+    ├── models             <- Model predictions
     │
-    ├── models             <- Trained and serialized models, model predictions, or model summaries
-    │
-    ├── notebooks          <- Jupyter notebooks. Naming convention is a number (for ordering),
-    │                         the creator's initials, and a short `-` delimited description, e.g.
-    │                         `1.0-jqp-initial-data-exploration`.
-    │
-    ├── references         <- Data dictionaries, manuals, and all other explanatory materials.
+    ├── notebooks          <- Jupyter notebooks. 
     │
     ├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
     │   └── figures        <- Generated graphics and figures to be used in reporting
     │
-    ├── requirements.txt   <- The requirements file for reproducing the analysis environment, e.g.
-    │                         generated with `pip freeze > requirements.txt`
+    ├── requirements.txt   <- The requirements file for reproducing the analysis environment
     │
-    ├── src                <- Source code for use in this project.
+    ├── churnr             <- Source code for use in this project.
     │   ├── __init__.py    <- Makes src a Python module
     │   │
-    │   ├── data           <- Scripts to download or generate data
-    │   │   └── make_dataset.py
+    │   ├── app.py         <- Application entry point for the experiment dispatcher
     │   │
-    │   ├── features       <- Scripts to turn raw data into features for modeling
-    │   │   └── build_features.py
+    │   ├── submitter.py   <- Script for submitting training jobs to CloudML
     │   │
-    │   ├── models         <- Scripts to train models and then use trained models to make
-    │   │   │                 predictions
-    │   │   ├── predict_model.py
-    │   │   └── train_model.py
+    │   ├── sample.pys     <- Script for sampling user ids for the experimentss
     │   │
-    │   └── visualization  <- Scripts to create exploratory and results oriented visualizations
-    │       └── visualize.py
-    │
+    │   ├── scala/parse.sh <- Dispatches a play context parser job on Dataflow on the sampled data in 'sample.py'
+    │   │
+    │   ├── extract.py     <- Engineer features and aggregate into timesteps the data parse at 'parse.sh'
+    │   │
+    │   └── process.py     <- Normalize data from 'extract.py' and export to files in GCS
     └── tox.ini            <- tox file with settings for running tox; see tox.testrun.org
 
 
