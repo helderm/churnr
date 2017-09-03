@@ -147,6 +147,12 @@ Jonathan Burez and Dirk Van~den Poel.
 \newblock \emph{Expert Systems with Applications}, 35\penalty0 (1):\penalty0
   497--514, 2008.
 
+\bibitem[Buja et~al.(2005)Buja, Stuetzle, and Shen]{buja2005loss}
+Andreas Buja, Werner Stuetzle, and Yi~Shen.
+\newblock Loss functions for binary class probability estimation and
+  classification: Structure and applications.
+\newblock \emph{Working draft, November}, 2005.
+
 \bibitem[Glorot and Bengio(2010)]{glorot2010understanding}
 Xavier Glorot and Yoshua Bengio.
 \newblock Understanding the difficulty of training deep feedforward neural
@@ -376,17 +382,6 @@ Isabelle Guyon and Andr{\'e} Elisseeff.
 \newblock An introduction to variable and feature selection.
 \newblock \emph{Journal of machine learning research}, 3\penalty0
   (Mar):\penalty0 1157--1182, 2003.
-
-\bibitem[Zhang et~al.(2013)Zhang, Kreitz, Isaksson, Ubillos, Urdaneta,
-  Pouwelse, and Epema]{Zhang2013}
-Boxun Zhang, Gunnar Kreitz, Marcus Isaksson, Javier Ubillos, Guido Urdaneta,
-  Johan~a. Pouwelse, and Dick Epema.
-\newblock {Understanding user behavior in Spotify}.
-\newblock \emph{2013 Proceedings IEEE INFOCOM}, pages 220--224, 2013.
-\newblock ISSN 0743-166X.
-\newblock \doi{10.1109/INFCOM.2013.6566767}.
-\newblock URL
-  \url{http://ieeexplore.ieee.org/lpdocs/epic03/wrapper.htm?arnumber=6566767}.
 
 \bibitem[LeCun et~al.(2012)LeCun, Bottou, Orr, and
   M{\"u}ller]{lecun2012efficient}
