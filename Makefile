@@ -25,7 +25,7 @@ reqs: test_environment
 ## Make Dataset
 data: package
 	gcloud compute copy-files dist/churnr-$(VERSION).tar.gz  helder-gpu-1:~/churnr --project "deep-learning-1216" --zone "us-central1-b"
-	gcloud compute ssh helder-gpu-1 --project "deep-learning-1216" --zone "us-central1-b" -- -n -f 'rm -fr ~/venv > ~/job.log 2>&1; virtualenv ~/venv > ~/job.log 2>&1; source ~/venv/bin/activate > ~/job.log 2>&1; pip install ~/churnr/churnr-$(VERSION).tar.gz > ~/job.log 2>&1; nohup churnr --experiment $(EXP) --stages process > ~/job.log 2>&1 &'
+	gcloud compute ssh helder-gpu-1 --project "deep-learning-1216" --zone "us-central1-b" -- -n -f 'rm -fr ~/venv > ~/job.log 2>&1; virtualenv ~/venv >> ~/job.log 2>&1; source ~/venv/bin/activate >> ~/job.log 2>&1; pip install ~/churnr/churnr-$(VERSION).tar.gz >> ~/job.log 2>&1; nohup churnr --experiment $(EXP) --stages sample parse extract process >> ~/job.log 2>&1 &'
 
 ## Delete all compiled Python files
 clean:
@@ -35,22 +35,14 @@ clean:
 package:
 	$(PYTHON_INTERPRETER) setup.py sdist
 
-## Lint using flake8
-lint:
-	flake8 --exclude=lib/,bin/,docs/conf.py .
-
-## Upload Data to GCS
-upload:
-	gsutil -m cp -r churnr/experiments.json gs://helder/churnr/
-
-## Download Data from GCS
+## Download models predictions from GCS
 download:
 	mkdir -p models/$(EXP)
 	gsutil -m cp -n -r gs://helder/churnr/$(EXP)/* models/$(EXP)
 
 ## Submit a training job to CloudML
 submit: package
-	gcloud ml-engine jobs submit training helderm_$(EXP)_lstm_$(NOW) --config config.yaml --job-dir gs://helderm/churnr/ --runtime-version 1.0 --module-name churnr.submitter --region us-east1 --packages dist/churnr-$(VERSION).tar.gz,libs/imbalanced-learn-0.3.0.dev0.tar.gz --project user-attributes-bq -- --experiment $(EXP) --stages train --expfile experiments_ua.json --tuned --epochs 1
+	gcloud ml-engine jobs submit training helderm_$(EXP)_$(NOW) --config config.yaml --job-dir gs://helderm/churnr/ --runtime-version 1.0 --module-name churnr.submitter --region us-east1 --packages dist/churnr-$(VERSION).tar.gz,libs/imbalanced-learn-0.3.0.dev0.tar.gz --project user-lifecycle -- --experiment $(EXP)
 
 ## Set up python interpreter environment
 env:
