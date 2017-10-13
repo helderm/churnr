@@ -32,40 +32,39 @@
 \BOOKMARK [1][-]{section.4.3}{Data Exploration}{chapter.4}% 32
 \BOOKMARK [2][-]{subsection.4.3.1}{User Distribution}{section.4.3}% 33
 \BOOKMARK [2][-]{subsection.4.3.2}{User Behavior Through Time}{section.4.3}% 34
-\BOOKMARK [2][-]{subsection.4.3.3}{Feature Correlation to Churn}{section.4.3}% 35
-\BOOKMARK [2][-]{subsection.4.3.4}{Dimensionality Reduction}{section.4.3}% 36
-\BOOKMARK [1][-]{section.4.4}{Software and Libraries}{chapter.4}% 37
-\BOOKMARK [0][-]{chapter.5}{Methodology}{}% 38
-\BOOKMARK [1][-]{section.5.1}{Handling the Class Imbalance Problem}{chapter.5}% 39
-\BOOKMARK [1][-]{section.5.2}{Cross-Validation}{chapter.5}% 40
-\BOOKMARK [1][-]{section.5.3}{Hyperparameter Search}{chapter.5}% 41
-\BOOKMARK [1][-]{section.5.4}{Model Training}{chapter.5}% 42
-\BOOKMARK [2][-]{subsection.5.4.1}{The LSTM Recurrent Network}{section.5.4}% 43
-\BOOKMARK [2][-]{subsection.5.4.2}{Training Procedure}{section.5.4}% 44
-\BOOKMARK [1][-]{section.5.5}{Evaluation Metrics}{chapter.5}% 45
-\BOOKMARK [2][-]{subsection.5.5.1}{Confusion Matrix}{section.5.5}% 46
-\BOOKMARK [2][-]{subsection.5.5.2}{Classification Accuracy}{section.5.5}% 47
-\BOOKMARK [2][-]{subsection.5.5.3}{Precision, Recall and Other Metrics}{section.5.5}% 48
-\BOOKMARK [2][-]{subsection.5.5.4}{Receiver Operating Characteristic}{section.5.5}% 49
-\BOOKMARK [2][-]{subsection.5.5.5}{Precision-Recall Curves}{section.5.5}% 50
-\BOOKMARK [1][-]{section.5.6}{Software and Libraries}{chapter.5}% 51
-\BOOKMARK [0][-]{chapter.6}{Results}{}% 52
-\BOOKMARK [1][-]{section.6.1}{LSTM vs. Baseline Models}{chapter.6}% 53
-\BOOKMARK [1][-]{section.6.2}{Experimenting on Different Window Sizes}{chapter.6}% 54
-\BOOKMARK [2][-]{subsection.6.2.1}{Observation Window}{section.6.2}% 55
-\BOOKMARK [2][-]{subsection.6.2.2}{Prediction Window}{section.6.2}% 56
-\BOOKMARK [1][-]{section.6.3}{Effect of Class Distribution}{chapter.6}% 57
-\BOOKMARK [1][-]{section.6.4}{Experimenting with Dimensionality Reduction}{chapter.6}% 58
-\BOOKMARK [0][-]{chapter.7}{Discussion}{}% 59
-\BOOKMARK [1][-]{section.7.1}{Comparing LSTM to Baseline Models}{chapter.7}% 60
-\BOOKMARK [1][-]{section.7.2}{The Class Imbalance Problem}{chapter.7}% 61
-\BOOKMARK [1][-]{section.7.3}{The Impact of the Time Windows}{chapter.7}% 62
-\BOOKMARK [1][-]{section.7.4}{Training Time}{chapter.7}% 63
-\BOOKMARK [1][-]{section.7.5}{System Improvements}{chapter.7}% 64
-\BOOKMARK [1][-]{section.7.6}{Future Work}{chapter.7}% 65
-\BOOKMARK [0][-]{chapter.8}{Conclusions}{}% 66
-\BOOKMARK [0][-]{chapter*.47}{Bibliography}{}% 67
-\BOOKMARK [0][-]{appendix.A}{Additional Results}{}% 68
-\BOOKMARK [1][-]{section.A.1}{Metrics tables}{appendix.A}% 69
-\BOOKMARK [1][-]{section.A.2}{Precision-recall curves}{appendix.A}% 70
-\BOOKMARK [1][-]{section.A.3}{ROC curves}{appendix.A}% 71
+\BOOKMARK [2][-]{subsection.4.3.3}{Dimensionality Reduction}{section.4.3}% 35
+\BOOKMARK [1][-]{section.4.4}{Software and Libraries}{chapter.4}% 36
+\BOOKMARK [0][-]{chapter.5}{Methodology}{}% 37
+\BOOKMARK [1][-]{section.5.1}{Handling the Class Imbalance Problem}{chapter.5}% 38
+\BOOKMARK [1][-]{section.5.2}{Cross-Validation}{chapter.5}% 39
+\BOOKMARK [1][-]{section.5.3}{Hyperparameter Search}{chapter.5}% 40
+\BOOKMARK [1][-]{section.5.4}{Model Training}{chapter.5}% 41
+\BOOKMARK [2][-]{subsection.5.4.1}{The LSTM Recurrent Network}{section.5.4}% 42
+\BOOKMARK [2][-]{subsection.5.4.2}{Training Procedure}{section.5.4}% 43
+\BOOKMARK [1][-]{section.5.5}{Evaluation Metrics}{chapter.5}% 44
+\BOOKMARK [2][-]{subsection.5.5.1}{Confusion Matrix}{section.5.5}% 45
+\BOOKMARK [2][-]{subsection.5.5.2}{Classification Accuracy}{section.5.5}% 46
+\BOOKMARK [2][-]{subsection.5.5.3}{Precision, Recall and Other Metrics}{section.5.5}% 47
+\BOOKMARK [2][-]{subsection.5.5.4}{Receiver Operating Characteristic}{section.5.5}% 48
+\BOOKMARK [2][-]{subsection.5.5.5}{Precision-Recall Curves}{section.5.5}% 49
+\BOOKMARK [1][-]{section.5.6}{Software and Libraries}{chapter.5}% 50
+\BOOKMARK [0][-]{chapter.6}{Results}{}% 51
+\BOOKMARK [1][-]{section.6.1}{LSTM vs. Baseline Models}{chapter.6}% 52
+\BOOKMARK [1][-]{section.6.2}{Experimenting on Different Window Sizes}{chapter.6}% 53
+\BOOKMARK [2][-]{subsection.6.2.1}{Observation Window}{section.6.2}% 54
+\BOOKMARK [2][-]{subsection.6.2.2}{Prediction Window}{section.6.2}% 55
+\BOOKMARK [1][-]{section.6.3}{Effect of Class Distribution}{chapter.6}% 56
+\BOOKMARK [1][-]{section.6.4}{Experimenting with Dimensionality Reduction}{chapter.6}% 57
+\BOOKMARK [0][-]{chapter.7}{Discussion}{}% 58
+\BOOKMARK [1][-]{section.7.1}{Comparing LSTM to Baseline Models}{chapter.7}% 59
+\BOOKMARK [1][-]{section.7.2}{The Class Imbalance Problem}{chapter.7}% 60
+\BOOKMARK [1][-]{section.7.3}{The Impact of the Time Windows}{chapter.7}% 61
+\BOOKMARK [1][-]{section.7.4}{Training Time}{chapter.7}% 62
+\BOOKMARK [1][-]{section.7.5}{System Improvements}{chapter.7}% 63
+\BOOKMARK [1][-]{section.7.6}{Future Work}{chapter.7}% 64
+\BOOKMARK [0][-]{chapter.8}{Conclusions}{}% 65
+\BOOKMARK [0][-]{chapter*.45}{Bibliography}{}% 66
+\BOOKMARK [0][-]{appendix.A}{Additional Results}{}% 67
+\BOOKMARK [1][-]{section.A.1}{Metrics tables}{appendix.A}% 68
+\BOOKMARK [1][-]{section.A.2}{Precision-recall curves}{appendix.A}% 69
+\BOOKMARK [1][-]{section.A.3}{ROC curves}{appendix.A}% 70
